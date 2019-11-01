@@ -5,7 +5,7 @@ Mobitra is a Windows desktop application that tracks Telkom Mobile prepaid LTE d
 over Huawei LTE routers (e.g. B618). It aims to provide more finer grained data usage
 reports and charts (e.g. total data downloaded and uploaded on a daily basis) than the
 official Telkom site and mobile app, where only the total data usage and balances
-are reported. This gives prepaid LTE users better insight into their data usage patterns.
+are reported. This gives you better insight into your prepaid LTE data usage patterns.
 
 ## Requirements and Planned Features:
 
