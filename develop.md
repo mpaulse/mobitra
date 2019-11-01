@@ -7,8 +7,9 @@ https://gist.github.com/jewelsea/e231e89e8d36ef4e5d8a
 where tN is the last sample time.
 - Plot charts per time ranges.
 
+
 ## Huawei LTE Router API
----
+
 GET http://192.168.1.254/api/monitoring/month_statistics
 
 ```
@@ -43,8 +44,8 @@ month stats
 </response>
 ```
 
+
 ## Telkom API
----
 
 POST http://onnet.telkom.co.za/onnet/public/api/checkOnnet
 
