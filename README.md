@@ -1,5 +1,5 @@
-Mobitra - Telkom Mobile LTE Traffic Monitor
-===========================================
+Mobitra - Telkom Mobile LTE Data Usage Monitor
+==============================================
 
 Mobitra is a Windows desktop application that tracks Telkom Mobile prepaid LTE data usage
 over Huawei LTE routers (e.g. B618). It aims to provide more finer grained data usage
