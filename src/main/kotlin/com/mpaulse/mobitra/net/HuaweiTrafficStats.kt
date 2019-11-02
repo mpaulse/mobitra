@@ -20,35 +20,30 @@
  * SOFTWARE.
  */
 
-@file:JvmName("Mobitra")
+package com.mpaulse.mobitra.net
 
-package mobitra
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
 
-import javafx.application.Application
-import javafx.stage.Stage
-import org.slf4j.LoggerFactory
-import java.nio.file.Files
-import java.nio.file.Path
+@JacksonXmlRootElement(localName = "response")
+data class HuaweiTrafficStats(
 
-private const val VERSION = "Version 0.1"
-private val homePath = Path.of(System.getProperty("user.home"), ".Mobitra")
+    @JsonProperty("CurrentConnectTime")
+    val sessionConnectionUptime: Long,
 
-class MobitraApplication: Application() {
+    @JsonProperty("CurrentUpload")
+    val sessionTotalBytesUploaded: Long,
 
-    private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
+    @JsonProperty("CurrentDownload")
+    val sessionTotalBytesDownloaded: Long,
 
-    override fun start(stage: Stage) {
-        Thread.setDefaultUncaughtExceptionHandler { _, e ->
-            logger.error("Application error", e)
-        }
-    }
+    @JsonProperty("TotalConnectTime")
+    val totalConnectionUptime: Long,
 
-}
+    @JsonProperty("TotalUpload")
+    val totalBytesUploaded: Long,
 
-fun main(args: Array<String>) {
-    if (!Files.exists(homePath)) {
-        Files.createDirectories(homePath)
-    }
+    @JsonProperty("TotalDownload")
+    val totalBytesDownloaded: Long
 
-    Application.launch(MobitraApplication::class.java, *args)
-}
+)

@@ -15,14 +15,17 @@ repositories {
 
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.0")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.0")
     implementation("ch.qos.logback:logback-classic:1.2.3")
+    implementation("org.hsqldb:hsqldb:2.5.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
+    testImplementation("com.github.tomakehurst:wiremock-jre8:2.25.1")
 }
 
 javafx {
@@ -31,7 +34,7 @@ javafx {
 }
 
 application {
-    mainClassName = "mobitra.Mobitra"
+    mainClassName = "com.mpaulse.mobitra.Mobitra"
 }
 
 tasks {
@@ -45,7 +48,7 @@ tasks {
     jar {
         manifest {
             attributes(
-                "Main-Class" to "mobitra.Mobitra")
+                "Main-Class" to "com.mpaulse.mobitra.Mobitra")
         }
         exclude("images\\*.xcf")
     }
@@ -94,7 +97,7 @@ tasks {
             "--output",
             "release",
             "--identifier",
-            "mobitra.Mobitra",
+            "com.mpaulse.mobitra.Mobitra",
             "--name",
             "Mobitra",
             "--version",

@@ -1,1 +1,1 @@
-rootProject.name = "mobitra"
+rootProject.name = "com.mpaulse.mobitra"
