@@ -59,7 +59,7 @@ class MonitoringAPIClientTest {
     }
 
     @Test
-    fun `getHuaweiTrafficStatistics() - successful response`() {
+    fun `getHuaweiTrafficStatistics - successful response`() {
         stubFor(get(urlEqualTo("/api/monitoring/traffic-statistics"))
             .willReturn(okForContentType("text/html",
                 """
@@ -88,7 +88,7 @@ class MonitoringAPIClientTest {
     }
 
     @Test
-    fun `getHuaweiTrafficStatistics() - missing response data`() {
+    fun `getHuaweiTrafficStatistics - missing response data`() {
         stubFor(get(urlEqualTo("/api/monitoring/traffic-statistics"))
             .willReturn(okForContentType("text/html",
                 """
@@ -112,7 +112,7 @@ class MonitoringAPIClientTest {
     }
 
     @Test
-    fun `getHuaweiTrafficStatistics() - blank response`() {
+    fun `getHuaweiTrafficStatistics - blank response`() {
         stubFor(get(urlEqualTo("/api/monitoring/traffic-statistics"))
             .willReturn(ok()))
 
@@ -124,7 +124,7 @@ class MonitoringAPIClientTest {
     }
 
     @Test
-    fun `getHuaweiTrafficStatistics() - server error status`() {
+    fun `getHuaweiTrafficStatistics - server error status`() {
         stubFor(get(urlEqualTo("/api/monitoring/traffic-statistics"))
             .willReturn(serverError()))
 
@@ -136,7 +136,7 @@ class MonitoringAPIClientTest {
     }
 
     @Test
-    fun `getHuaweiTrafficStatistics() - bad XML response`() {
+    fun `getHuaweiTrafficStatistics - bad XML response`() {
         stubFor(get(urlEqualTo("/api/monitoring/traffic-statistics"))
             .willReturn(okForContentType("text/html",
                 """
@@ -155,7 +155,7 @@ class MonitoringAPIClientTest {
     }
 
     @Test
-    fun `getHuaweiTrafficStatistics() - no connection`() {
+    fun `getHuaweiTrafficStatistics - no connection`() {
         wireMock.stop()
 
         assertThrows<MonitoringAPIException>("MonitoringAPIException not thrown") {
@@ -166,7 +166,7 @@ class MonitoringAPIClientTest {
     }
 
     @Test
-    fun `getHuaweiTrafficStatistics() - response timeout`() {
+    fun `getHuaweiTrafficStatistics - response timeout`() {
         stubFor(get(urlEqualTo("/api/monitoring/traffic-statistics"))
             .willReturn(ok().withFixedDelay((HTTP_TIMEOUT + 500).toInt())))
 
