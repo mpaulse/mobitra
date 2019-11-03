@@ -45,6 +45,10 @@ tasks {
         }
     }
 
+    test {
+        useJUnitPlatform()
+    }
+
     jar {
         manifest {
             attributes(

@@ -22,12 +22,12 @@
 
 package com.mpaulse.mobitra.net
 
+import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import java.io.IOException
 import java.io.InputStream
 import java.net.URI
 import java.net.URLEncoder
@@ -37,26 +37,34 @@ import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration
 
-private const val HTTP_TIMEOUT_SEC = 15L
+private const val HTTP_TIMEOUT_MILLIS = 15000L
 
 class MonitoringAPIException(
-    message: String
-): IOException(message)
+    message: String,
+    cause: Throwable? = null
+): Exception(message, cause)
 
 class MonitoringAPIClient(
-    private val huaweiIpAddr: String
+    private val huaweiIpAddr: String,
+    private val huaweiPort: Int = 80,
+    private val telkomApiBaseUrl: String = "http://onnet.telkom.co.za/onnet/public/api",
+    private val timeout: Long = HTTP_TIMEOUT_MILLIS
 ) {
 
     private val httpClient = HttpClient.newBuilder().build()
+    private val xmlMapper = XmlMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES)
+    private val jsonMapper = jacksonObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES)
 
-    private val xmlMapper = XmlMapper()
-    private val jsonMapper = jacksonObjectMapper()
-
-    suspend fun getHuaweiTrafficStatistics(): HuaweiTrafficStats? =
-        withContext(Dispatchers.IO) {
-        xmlMapper.readValue(
-            doHttpGet("http://${huaweiIpAddr}/api/monitoring/traffic-statistics"),
-            HuaweiTrafficStats::class.java)
+    suspend fun getHuaweiTrafficStatistics(): HuaweiTrafficStats = withContext(Dispatchers.IO) {
+        try {
+            xmlMapper.readValue(
+                doHttpGet("http://$huaweiIpAddr:$huaweiPort/api/monitoring/traffic-statistics"),
+                HuaweiTrafficStats::class.java)
+        } catch (e: MonitoringAPIException) {
+            throw e
+        } catch (e: Exception) {
+            throw MonitoringAPIException("Failed to get Huawei traffic statistics", e)
+        }
     }
 
     suspend fun getTelkomFreeResources(): Array<TelkomFreeResource> {
@@ -79,35 +87,50 @@ class MonitoringAPIClient(
         throw MonitoringAPIException("Failed to check for Telkom Onnet:\n$checkRsp")
     }
 
-    private suspend fun checkTelkomOnnet(): TelkomCheckOnnetResponse =
-        withContext(Dispatchers.IO) {
-        jsonMapper.readValue(
-            doHttpGet("http://onnet.telkom.co.za/onnet/public/api/checkOnnet"),
-            TelkomCheckOnnetResponse::class.java)
+    private suspend fun checkTelkomOnnet(): TelkomCheckOnnetResponse = withContext(Dispatchers.IO) {
+        try {
+            jsonMapper.readValue(
+                doHttpGet("$telkomApiBaseUrl/checkOnnet"),
+                TelkomCheckOnnetResponse::class.java)
+        } catch (e: MonitoringAPIException) {
+            throw e
+        } catch (e: Exception) {
+            throw MonitoringAPIException("Failed to check for Telkom Onnet", e)
+        }
     }
 
-    private suspend fun createTelkomOnnetSession(sessionToken: String): TelkomCreateOnnetSessionResponse =
-        withContext(Dispatchers.IO) {
-        jsonMapper.readValue(
-            doUrlEncodedHttpPost(
-                "http://onnet.telkom.co.za/onnet/public/api/createOnnetSession",
-                mapOf("sid" to sessionToken)),
-            TelkomCreateOnnetSessionResponse::class.java)
+    private suspend fun createTelkomOnnetSession(sessionToken: String): TelkomCreateOnnetSessionResponse = withContext(Dispatchers.IO) {
+        try {
+            jsonMapper.readValue(
+                doUrlEncodedHttpPost(
+                    "$telkomApiBaseUrl/createOnnetSession",
+                    mapOf("sid" to sessionToken)),
+                TelkomCreateOnnetSessionResponse::class.java)
+        } catch (e: MonitoringAPIException) {
+            throw e
+        } catch (e: Exception) {
+            throw MonitoringAPIException("Failed to create Telkom Onnet session", e)
+        }
     }
 
-    private suspend fun getTelkomFreeResources(msisdn: String): TelkomFreeResourcesResponse =
-        withContext(Dispatchers.IO) {
-        jsonMapper.readValue(
-            doUrlEncodedHttpPost(
-                "http://onnet.telkom.co.za/onnet/public/api/getFreeResources",
-                mapOf("msisdn" to msisdn)),
-            TelkomFreeResourcesResponse::class.java)
+    private suspend fun getTelkomFreeResources(msisdn: String): TelkomFreeResourcesResponse = withContext(Dispatchers.IO) {
+        try {
+            jsonMapper.readValue(
+                doUrlEncodedHttpPost(
+                    "$telkomApiBaseUrl/getFreeResources",
+                    mapOf("msisdn" to msisdn)),
+                TelkomFreeResourcesResponse::class.java)
+        } catch (e: MonitoringAPIException) {
+            throw e
+        } catch (e: Exception) {
+            throw MonitoringAPIException("Failed to retrieve Telkom free resources", e)
+        }
     }
 
     private fun doHttpGet(uri: String): InputStream {
         return doHttpRequest(HttpRequest.newBuilder()
             .uri(URI.create(uri))
-            .timeout(Duration.ofSeconds(HTTP_TIMEOUT_SEC))
+            .timeout(Duration.ofMillis(timeout))
             .GET()
             .build())
     }
@@ -115,7 +138,7 @@ class MonitoringAPIClient(
     private fun doUrlEncodedHttpPost(uri: String, params: Map<String, String>): InputStream {
         return doHttpRequest(HttpRequest.newBuilder()
             .uri(URI.create(uri))
-            .timeout(Duration.ofSeconds(HTTP_TIMEOUT_SEC))
+            .timeout(Duration.ofMillis(timeout))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .POST(BodyPublishers.ofString(urlEncode(params)))
             .build())
