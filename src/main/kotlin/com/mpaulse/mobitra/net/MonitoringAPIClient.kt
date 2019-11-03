@@ -39,11 +39,11 @@ import java.time.Duration
 
 private const val HTTP_TIMEOUT_SEC = 15L
 
-class DataUsageServiceException(
+class MonitoringAPIException(
     message: String
 ): IOException(message)
 
-class DataUsageService(
+class MonitoringAPIClient(
     private val huaweiIpAddr: String
 ) {
 
@@ -52,7 +52,8 @@ class DataUsageService(
     private val xmlMapper = XmlMapper()
     private val jsonMapper = jacksonObjectMapper()
 
-    suspend fun getHuaweiTrafficStatistics(): HuaweiTrafficStats? = withContext(Dispatchers.IO) {
+    suspend fun getHuaweiTrafficStatistics(): HuaweiTrafficStats? =
+        withContext(Dispatchers.IO) {
         xmlMapper.readValue(
             doHttpGet("http://${huaweiIpAddr}/api/monitoring/traffic-statistics"),
             HuaweiTrafficStats::class.java)
@@ -69,23 +70,23 @@ class DataUsageService(
                 if (freeResourcesRsp.resultCode == 0) {
                     return freeResourcesRsp.freeResources
                 } else {
-                    throw DataUsageServiceException("Failed to retrieve Telkom free resources:\n$freeResourcesRsp")
+                    throw MonitoringAPIException("Failed to retrieve Telkom free resources:\n$freeResourcesRsp")
                 }
             } else {
-                throw DataUsageServiceException("Failed to create Telkom Onnet session:\n$createSessionRsp")
+                throw MonitoringAPIException("Failed to create Telkom Onnet session:\n$createSessionRsp")
             }
         }
-        throw DataUsageServiceException("Failed to check for Telkom Onnet:\n$checkRsp")
+        throw MonitoringAPIException("Failed to check for Telkom Onnet:\n$checkRsp")
     }
 
-    suspend fun checkTelkomOnnet(): TelkomCheckOnnetResponse =
+    private suspend fun checkTelkomOnnet(): TelkomCheckOnnetResponse =
         withContext(Dispatchers.IO) {
         jsonMapper.readValue(
             doHttpGet("http://onnet.telkom.co.za/onnet/public/api/checkOnnet"),
             TelkomCheckOnnetResponse::class.java)
     }
 
-    suspend fun createTelkomOnnetSession(sessionToken: String): TelkomCreateOnnetSessionResponse =
+    private suspend fun createTelkomOnnetSession(sessionToken: String): TelkomCreateOnnetSessionResponse =
         withContext(Dispatchers.IO) {
         jsonMapper.readValue(
             doUrlEncodedHttpPost(
@@ -94,7 +95,7 @@ class DataUsageService(
             TelkomCreateOnnetSessionResponse::class.java)
     }
 
-    suspend fun getTelkomFreeResources(msisdn: String): TelkomFreeResourcesResponse =
+    private suspend fun getTelkomFreeResources(msisdn: String): TelkomFreeResourcesResponse =
         withContext(Dispatchers.IO) {
         jsonMapper.readValue(
             doUrlEncodedHttpPost(
@@ -124,7 +125,7 @@ class DataUsageService(
         val rsp = httpClient.send(req, BodyHandlers.ofInputStream())
         val status = rsp.statusCode()
         if (rsp.statusCode() < 200 || rsp.statusCode() >= 300) {
-            throw DataUsageServiceException("${req.method()} ${req.uri()} failed: response status $status")
+            throw MonitoringAPIException("${req.method()} ${req.uri()} failed: response status $status")
         }
         return rsp.body()
     }

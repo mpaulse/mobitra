@@ -79,14 +79,14 @@ private class TelkomFreeResourcesDeserializer
     override fun deserialize(parser: JsonParser, context: DeserializationContext): TelkomFreeResourcesResponse {
         val root = parser.readValueAsTree<JsonNode>()
         if (!root.isObject) {
-            throw DataUsageServiceException("Expected a root JSON object, but got ${root.nodeType}")
+            throw MonitoringAPIException("Expected a root JSON object, but got ${root.nodeType}")
         }
 
         return TelkomFreeResourcesResponse(
             root["resultCode"]?.intValue()
-                ?: throw DataUsageServiceException("Missing resultCode"),
+                ?: throw MonitoringAPIException("Missing resultCode"),
             root["resultMessageCode"]?.textValue()
-                ?: throw DataUsageServiceException("Missing resultMessageCode"),
+                ?: throw MonitoringAPIException("Missing resultMessageCode"),
             deserializeFreeResources(root["payload"]))
     }
 
@@ -99,35 +99,35 @@ private class TelkomFreeResourcesDeserializer
                     continue
                 }
                 if (resource["measure"]?.asText()?.toLowerCase() != "bytes") {
-                    throw DataUsageServiceException("Invalid subscriberFreeResource measure: ${resource["measure"]?.asText()} (expected \"Bytes\")")
+                    throw MonitoringAPIException("Invalid subscriberFreeResource measure: ${resource["measure"]?.asText()} (expected \"Bytes\")")
                 }
                 freeResources += TelkomFreeResource(
                     resource["type"]?.asText()
-                        ?: throw DataUsageServiceException("Missing subscriberFreeResource type"),
+                        ?: throw MonitoringAPIException("Missing subscriberFreeResource type"),
                     resource["typeName"]?.asText()
-                        ?: throw DataUsageServiceException("Missing subscriberFreeResource typeName"),
+                        ?: throw MonitoringAPIException("Missing subscriberFreeResource typeName"),
                     resource["service"]?.asText()
-                        ?: throw DataUsageServiceException("Missing subscriberFreeResource service"),
+                        ?: throw MonitoringAPIException("Missing subscriberFreeResource service"),
                     try {
                         resource["totalAmount"]?.asText()?.toLong()
-                            ?: throw DataUsageServiceException("Missing subscriberFreeResource totalAmount")
+                            ?: throw MonitoringAPIException("Missing subscriberFreeResource totalAmount")
                     } catch (e: NumberFormatException) {
-                        throw DataUsageServiceException("Invalid subscriberFreeResource usedAmount: ${resource["totalAmount"]?.asText()}")
+                        throw MonitoringAPIException("Invalid subscriberFreeResource usedAmount: ${resource["totalAmount"]?.asText()}")
                     },
                     try {
                         resource["usedAmount"]?.asText()?.toLong()
-                            ?: throw DataUsageServiceException("Missing subscriberFreeResource usedAmount")
+                            ?: throw MonitoringAPIException("Missing subscriberFreeResource usedAmount")
                     } catch (e: NumberFormatException) {
-                        throw DataUsageServiceException("Invalid subscriberFreeResource usedAmount: ${resource["usedAmount"]?.asText()}")
+                        throw MonitoringAPIException("Invalid subscriberFreeResource usedAmount: ${resource["usedAmount"]?.asText()}")
                     },
                     try {
                         LocalDate.parse(
                             resource["endBillCycle"]?.asText()
-                                ?: throw DataUsageServiceException("Missing subscriberFreeResource endBillCycle"),
+                                ?: throw MonitoringAPIException("Missing subscriberFreeResource endBillCycle"),
                             DateTimeFormatter.ofPattern("HH:mm:ss EEE MMM yyyy"))
                             .minusDays(1)
                     } catch (e: DateTimeParseException) {
-                        throw DataUsageServiceException("Invalid subscriberFreeResource endBillCycle: ${resource["endBillCycle"]?.asText()}")
+                        throw MonitoringAPIException("Invalid subscriberFreeResource endBillCycle: ${resource["endBillCycle"]?.asText()}")
                     }
                 )
             }

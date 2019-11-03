@@ -41,14 +41,14 @@ private class TelkomCheckOnnetDeserializer
     override fun deserialize(parser: JsonParser, context: DeserializationContext): TelkomCheckOnnetResponse {
         val root = parser.readValueAsTree<JsonNode>()
         if (!root.isObject) {
-            throw DataUsageServiceException("Expected a root JSON object, but got ${root.nodeType}")
+            throw MonitoringAPIException("Expected a root JSON object, but got ${root.nodeType}")
         }
 
         return TelkomCheckOnnetResponse(
             root["resultCode"]?.intValue()
-                ?: throw DataUsageServiceException("Missing resultCode"),
+                ?: throw MonitoringAPIException("Missing resultCode"),
             root["resultMessageCode"]?.textValue()
-                ?: throw DataUsageServiceException("Missing resultMessageCode"),
+                ?: throw MonitoringAPIException("Missing resultMessageCode"),
             root["payload"]?.get("sessionToken")?.textValue())
     }
 
