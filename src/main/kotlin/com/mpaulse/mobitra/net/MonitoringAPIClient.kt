@@ -36,8 +36,10 @@ import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration
+import javax.net.ssl.SSLContext
 
 private const val HTTP_TIMEOUT_MILLIS = 15000L
+private const val TELKOM_ONNET_BASE_PATH = "/onnet/public/api"
 
 class MonitoringAPIException(
     message: String,
@@ -45,20 +47,23 @@ class MonitoringAPIException(
 ): Exception(message, cause)
 
 class MonitoringAPIClient(
-    private val huaweiIpAddr: String,
-    private val huaweiPort: Int = 80,
-    private val telkomApiBaseUrl: String = "http://onnet.telkom.co.za/onnet/public/api",
+    private val huaweiHost: String,
+    private val telkomOnnetHttpHost: String = "onnet.telkom.co.za",
+    private val telkomOnnetHttpsHost: String= "onnetsecure.telkom.co.za",
+    private val httpPort: Int = 80,
+    private val httpsPort: Int = 443,
+    sslContext: SSLContext = SSLContext.getDefault(),
     private val timeout: Long = HTTP_TIMEOUT_MILLIS
 ) {
 
-    private val httpClient = HttpClient.newBuilder().build()
+    private val httpClient = HttpClient.newBuilder().sslContext(sslContext).build()
     private val xmlMapper = XmlMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES)
     private val jsonMapper = jacksonObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES)
 
     suspend fun getHuaweiTrafficStatistics(): HuaweiTrafficStats = withContext(Dispatchers.IO) {
         try {
             xmlMapper.readValue(
-                doHttpGet("http://$huaweiIpAddr:$huaweiPort/api/monitoring/traffic-statistics"),
+                doHttpGet("http://$huaweiHost:$httpPort/api/monitoring/traffic-statistics"),
                 HuaweiTrafficStats::class.java)
         } catch (e: MonitoringAPIException) {
             throw e
@@ -90,7 +95,7 @@ class MonitoringAPIClient(
     private suspend fun checkTelkomOnnet(): TelkomCheckOnnetResponse = withContext(Dispatchers.IO) {
         try {
             jsonMapper.readValue(
-                doHttpGet("$telkomApiBaseUrl/checkOnnet"),
+                doHttpGet("http://$telkomOnnetHttpHost:$httpPort$TELKOM_ONNET_BASE_PATH/checkOnnet"),
                 TelkomCheckOnnetResponse::class.java)
         } catch (e: MonitoringAPIException) {
             throw e
@@ -103,7 +108,7 @@ class MonitoringAPIClient(
         try {
             jsonMapper.readValue(
                 doUrlEncodedHttpPost(
-                    "$telkomApiBaseUrl/createOnnetSession",
+                    "https://$telkomOnnetHttpsHost:$httpsPort$TELKOM_ONNET_BASE_PATH/createOnnetSession",
                     mapOf("sid" to sessionToken)),
                 TelkomCreateOnnetSessionResponse::class.java)
         } catch (e: MonitoringAPIException) {
@@ -117,7 +122,7 @@ class MonitoringAPIClient(
         try {
             jsonMapper.readValue(
                 doUrlEncodedHttpPost(
-                    "$telkomApiBaseUrl/getFreeResources",
+                    "https://$telkomOnnetHttpsHost:$httpsPort$TELKOM_ONNET_BASE_PATH/getFreeResources",
                     mapOf("msisdn" to msisdn)),
                 TelkomFreeResourcesResponse::class.java)
         } catch (e: MonitoringAPIException) {

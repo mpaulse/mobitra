@@ -61,8 +61,8 @@ data class TelkomFreeResource(
     val type: String,
     val name: String,
     val service: String,
-    val totalAmountBytes: Long,
-    val usedAmountBytes: Long,
+    val totalAmount: Long,
+    val usedAmount: Long,
     val expiryDate: LocalDate
 ) {
 
@@ -98,9 +98,6 @@ private class TelkomFreeResourcesDeserializer
                 if (resource == null || !resource.isObject) {
                     continue
                 }
-                if (resource["measure"]?.asText()?.toLowerCase() != "bytes") {
-                    throw MonitoringAPIException("Invalid subscriberFreeResource measure: ${resource["measure"]?.asText()} (expected \"Bytes\")")
-                }
                 freeResources += TelkomFreeResource(
                     resource["type"]?.asText()
                         ?: throw MonitoringAPIException("Missing subscriberFreeResource type"),
@@ -124,7 +121,7 @@ private class TelkomFreeResourcesDeserializer
                         LocalDate.parse(
                             resource["endBillCycle"]?.asText()
                                 ?: throw MonitoringAPIException("Missing subscriberFreeResource endBillCycle"),
-                            DateTimeFormatter.ofPattern("HH:mm:ss EEE MMM yyyy"))
+                            DateTimeFormatter.ofPattern("HH:mm:ss EEE MMM dd yyyy"))
                             .minusDays(1)
                     } catch (e: DateTimeParseException) {
                         throw MonitoringAPIException("Invalid subscriberFreeResource endBillCycle: ${resource["endBillCycle"]?.asText()}")

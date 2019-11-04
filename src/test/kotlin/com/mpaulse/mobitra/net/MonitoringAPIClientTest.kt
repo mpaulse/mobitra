@@ -26,27 +26,59 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.ok
 import com.github.tomakehurst.wiremock.client.WireMock.okForContentType
+import com.github.tomakehurst.wiremock.client.WireMock.okJson
+import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.serverError
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.net.Socket
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLEngine
+import javax.net.ssl.X509ExtendedTrustManager
 import kotlin.test.assertEquals
 
 private const val HTTP_TIMEOUT = 2000L
+
+private fun createMockSSLContext(): SSLContext {
+    val context= SSLContext.getInstance("TLS")
+    context.init(null, arrayOf(MockTrustManager()), null)
+    return context
+}
+
+private class MockTrustManager: X509ExtendedTrustManager() {
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) {}
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) {}
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) {}
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) {}
+    override fun getAcceptedIssuers() = emptyArray<X509Certificate>()
+}
 
 class MonitoringAPIClientTest {
 
     private val client = MonitoringAPIClient(
         "localhost",
+        "localhost",
+        "localhost",
         8080,
-        "http://localhost:8080/onnet/public/api",
+        8433,
+        createMockSSLContext(),
         HTTP_TIMEOUT)
 
-    private val wireMock = WireMockServer()
+    private val wireMock = WireMockServer(
+        options()
+            .port(8080)
+            .httpsPort(8433)
+            .notifier(ConsoleNotifier(false)))
 
     @BeforeEach
     fun setUp() {
@@ -173,6 +205,110 @@ class MonitoringAPIClientTest {
         assertThrows<MonitoringAPIException>("MonitoringAPIException not thrown") {
             runBlocking() {
                 client.getHuaweiTrafficStatistics()
+            }
+        }
+    }
+
+    @Test
+    fun `getTelkomFreeResources - successful response`() {
+        stubFor(get(urlEqualTo("/onnet/public/api/checkOnnet"))
+            .willReturn(okJson(
+                """
+                {
+                    "resultCode": 0,
+                    "resultMessageCode": "api-co-002",
+                    "resultMessage": "Onnet session successfully established.",
+                    "friendlyCustomerMessage": "",
+                    "payload": {
+                        "sessionToken": "8474625425622783908",
+                        "friendlySecurityLevel": "Unprotected",
+                        "securityLevel": 0,
+                        "response": null,
+                        "secureHost": "onnetsecure.telkom.co.za"
+                    }
+                }
+                """.trimIndent())))
+        stubFor(post(urlEqualTo("/onnet/public/api/createOnnetSession"))
+            .willReturn(okJson(
+                """
+                {
+                    "resultCode": 0,
+                    "resultMessageCode": "api-cos-005",
+                    "resultMessage": "Onnet session created",
+                    "friendlyCustomerMessage": "",
+                    "payload": {
+                        "msisdn": "0123456789"
+                    }
+                }
+                """.trimIndent())))
+        stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+            .willReturn(okJson(
+                """
+                {
+                    "resultCode": 0,
+                    "resultMessageCode": "api-gfr-009",
+                    "resultMessage": "Free resources successfully retrieved",
+                    "friendlyCustomerMessage": "",
+                    "payload": [
+                        {
+                            "subscriberFreeResource": {
+                                "type": "5036",
+                                "typeName": "Campaign Welcome Bonus Messaging",
+                                "service": "SMS/MMS",
+                                "totalAmount": "5",
+                                "totalAmountAndMeasure": "5 Items",
+                                "usedAmount": "0",
+                                "usedAmountAndMeasure": "0 Items",
+                                "measure": "Items",
+                                "startBillCycle": "Tue Nov 05 2019",
+                                "endBillCycle": "00:00:00 Tue Nov 05 2019",
+                                "isTimeBased": false
+                            },
+                            "info": "SMS/MMS: 5 Items remaining 0 Items used  Expires on Tue Nov 05 2019",
+                            "service": "SMS/MMS"
+                        },
+                        {
+                            "subscriberFreeResource": {
+                                "type": "5125",
+                                "typeName": "Once-off LTE/LTE-A Night Surfer Data",
+                                "service": "GPRS",
+                                "totalAmount": "64183731327",
+                                "totalAmountAndMeasure": "61210 MB",
+                                "usedAmount": "240778113",
+                                "usedAmountAndMeasure": "230 MB",
+                                "measure": "Bytes",
+                                "startBillCycle": "Fri Nov 29 2019",
+                                "endBillCycle": "00:00:00 Fri Nov 29 2019",
+                                "isTimeBased": false
+                            },
+                            "info": "GPRS: 64183731327 Bytes remaining 240778113 Bytes used  Expires on Fri Nov 29 2019",
+                            "service": "GPRS"
+                        },
+                        {
+                            "subscriberFreeResource": {
+                                "type": "5127",
+                                "typeName": "Once-off LTE/LTE-A Anytime Data",
+                                "service": "GPRS",
+                                "totalAmount": "53002844210",
+                                "totalAmountAndMeasure": "50547 MB",
+                                "usedAmount": "11421665230",
+                                "usedAmountAndMeasure": "10893 MB",
+                                "measure": "Bytes",
+                                "startBillCycle": "Sun Dec 29 2019",
+                                "endBillCycle": "00:00:00 Sun Dec 29 2019",
+                                "isTimeBased": false
+                            },
+                            "info": "GPRS: 53002844210 Bytes remaining 11421665230 Bytes used  Expires on Sun Dec 29 2019",
+                            "service": "GPRS"
+                        }
+                    ]
+                }
+                """.trimIndent())))
+
+        runBlocking {
+            val resources = client.getTelkomFreeResources()
+            for (r in resources) {
+                println(r)
             }
         }
     }
