@@ -30,7 +30,9 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 
-private const val VERSION = "Version 0.1"
+const val APP_NAME = "Mobitra"
+const val VERSION = "0.1"
+
 private val homePath = Path.of(System.getProperty("user.home"), ".Mobitra")
 
 class MobitraApplication: Application() {

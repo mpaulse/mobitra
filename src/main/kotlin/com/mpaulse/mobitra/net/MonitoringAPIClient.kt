@@ -25,6 +25,8 @@ package com.mpaulse.mobitra.net
 import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.mpaulse.mobitra.APP_NAME
+import com.mpaulse.mobitra.VERSION
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
@@ -38,6 +40,7 @@ import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration
 import javax.net.ssl.SSLContext
 
+private const val HTTP_USER_AGENT = "$APP_NAME/$VERSION"
 private const val HTTP_TIMEOUT_MILLIS = 15000L
 private const val TELKOM_ONNET_BASE_PATH = "/onnet/public/api"
 
@@ -57,6 +60,7 @@ class MonitoringAPIClient(
 ) {
 
     private val httpClient = HttpClient.newBuilder().sslContext(sslContext).build()
+
     private val xmlMapper = XmlMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES)
     private val jsonMapper = jacksonObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES)
 
@@ -135,6 +139,7 @@ class MonitoringAPIClient(
     private fun doHttpGet(uri: String): InputStream {
         return doHttpRequest(HttpRequest.newBuilder()
             .uri(URI.create(uri))
+            .header("User-Agent", HTTP_USER_AGENT)
             .timeout(Duration.ofMillis(timeout))
             .GET()
             .build())
@@ -143,8 +148,9 @@ class MonitoringAPIClient(
     private fun doUrlEncodedHttpPost(uri: String, params: Map<String, String>): InputStream {
         return doHttpRequest(HttpRequest.newBuilder()
             .uri(URI.create(uri))
-            .timeout(Duration.ofMillis(timeout))
+            .header("User-Agent", HTTP_USER_AGENT)
             .header("Content-Type", "application/x-www-form-urlencoded")
+            .timeout(Duration.ofMillis(timeout))
             .POST(BodyPublishers.ofString(urlEncode(params)))
             .build())
     }
