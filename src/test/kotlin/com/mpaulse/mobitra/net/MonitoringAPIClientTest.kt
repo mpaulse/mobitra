@@ -51,6 +51,8 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.X509ExtendedTrustManager
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 private const val HTTP_TIMEOUT = 2000L
 
@@ -61,12 +63,12 @@ private fun createMockSSLContext(): SSLContext {
 }
 
 private class MockTrustManager : X509ExtendedTrustManager() {
-    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) {}
-    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) {}
-    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) {}
-    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) {}
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) = Unit
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) = Unit
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) = Unit
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) = Unit
     override fun getAcceptedIssuers() = emptyArray<X509Certificate>()
 }
 
@@ -355,6 +357,7 @@ class MonitoringAPIClientTest {
             assertEquals(5, resources[0].totalAmount, "Incorrect total amount")
             assertEquals(0, resources[0].usedAmount, "Incorrect used amount")
             assertEquals(LocalDate.of(2019, 11, 4), resources[0].expiryDate, "Incorrect expiry date")
+            assertFalse(resources[0].isMobileData, "Should not be mobile data")
 
             assertEquals("5125", resources[1].type, "Incorrect type")
             assertEquals("Once-off LTE/LTE-A Night Surfer Data", resources[1].name, "Incorrect name")
@@ -362,6 +365,7 @@ class MonitoringAPIClientTest {
             assertEquals(64183731327, resources[1].totalAmount, "Incorrect total amount")
             assertEquals(240778113, resources[1].usedAmount, "Incorrect used amount")
             assertEquals(LocalDate.of(2019, 11, 28), resources[1].expiryDate, "Incorrect expiry date")
+            assertTrue(resources[1].isMobileData, "Should be mobile data")
 
             assertEquals("5127", resources[2].type, "Incorrect type")
             assertEquals("Once-off LTE/LTE-A Anytime Data", resources[2].name, "Incorrect name")
@@ -369,6 +373,7 @@ class MonitoringAPIClientTest {
             assertEquals(53002844210, resources[2].totalAmount, "Incorrect total amount")
             assertEquals(11421665230, resources[2].usedAmount, "Incorrect used amount")
             assertEquals(LocalDate.of(2019, 12, 28), resources[2].expiryDate, "Incorrect expiry date")
+            assertTrue(resources[2].isMobileData, "Should be mobile data")
         }
 
         verify(getRequestedFor(
