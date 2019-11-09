@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.0")

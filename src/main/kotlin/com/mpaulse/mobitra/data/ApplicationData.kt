@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package com.mpaulse.mobitra
+package com.mpaulse.mobitra.data
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

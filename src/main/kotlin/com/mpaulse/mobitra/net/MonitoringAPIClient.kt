@@ -52,7 +52,7 @@ class MonitoringAPIException(
 class MonitoringAPIClient(
     private val huaweiHost: String,
     private val telkomOnnetHttpHost: String = "onnet.telkom.co.za",
-    private val telkomOnnetHttpsHost: String= "onnetsecure.telkom.co.za",
+    private val telkomOnnetHttpsHost: String = "onnetsecure.telkom.co.za",
     private val httpPort: Int = 80,
     private val httpsPort: Int = 443,
     sslContext: SSLContext = SSLContext.getDefault(),

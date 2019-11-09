@@ -20,38 +20,29 @@
  * SOFTWARE.
  */
 
-@file:JvmName("Mobitra")
+package com.mpaulse.mobitra.data
 
-package com.mpaulse.mobitra
+import com.mpaulse.mobitra.net.TelkomFreeResource
+import java.time.LocalDate
 
-import com.mpaulse.mobitra.data.ApplicationData
-import javafx.application.Application
-import javafx.stage.Stage
-import org.slf4j.LoggerFactory
-import java.nio.file.Files
-import java.nio.file.Path
+data class MobileDataResource(
+    val id: String,
+    val name: String,
+    val totalAmount: Long,
+    val usedAmount: Long,
+    val expiryDate: LocalDate
+) {
 
-const val APP_NAME = "Mobitra"
-const val VERSION = "0.1"
-private val homePath = Path.of(System.getProperty("user.home"), ".Mobitra")
-
-class MobitraApplication: Application() {
-
-    private val appData = ApplicationData(homePath)
-    private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
-
-    override fun start(stage: Stage) {
-        Thread.setDefaultUncaughtExceptionHandler { _, e ->
-            logger.error("Application error", e)
-        }
-    }
+    constructor(telkomFreeResource: TelkomFreeResource):
+        this(
+            generateId(telkomFreeResource),
+            telkomFreeResource.name,
+            telkomFreeResource.totalAmount,
+            telkomFreeResource.usedAmount,
+            telkomFreeResource.expiryDate)
 
 }
 
-fun main(args: Array<String>) {
-    if (!Files.exists(homePath)) {
-        Files.createDirectories(homePath)
-    }
-
-    Application.launch(MobitraApplication::class.java, *args)
+private fun generateId(telkomFreeResource: TelkomFreeResource): String {
+    return ""
 }
