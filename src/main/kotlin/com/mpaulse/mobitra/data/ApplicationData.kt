@@ -30,8 +30,7 @@ import java.nio.file.Path
 
 class ApplicationData(
     appHomePath: Path
-)
-{
+) {
 
     private val dataFilePath = appHomePath.resolve("application.dat")
     private val jsonHandler = jacksonObjectMapper()
