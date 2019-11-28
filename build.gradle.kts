@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 version = "0.1"
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.3.50"
+    id("org.jetbrains.kotlin.jvm") version "1.3.61"
     application
     id("org.openjfx.javafxplugin") version "0.0.8"
 }
@@ -18,8 +18,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.2")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.0")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.1")
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("org.hsqldb:hsqldb:2.5.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
@@ -105,7 +105,7 @@ tasks {
             "--name",
             "Mobitra",
             "--version",
-            project.version,
+            project.version.toString(),
             "--description",
             "Mobitra - Telkom Mobile LTE Data Usage Tracker",
             // TODO: icon

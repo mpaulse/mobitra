@@ -85,6 +85,7 @@ class MonitoringAPIClient(
                 yield()
                 val freeResourcesRsp = getTelkomFreeResources(createSessionRsp.msisdn)
                 if (freeResourcesRsp.resultCode == 0) {
+                    // TODO: merge free resources of the same ID
                     return freeResourcesRsp.freeResources
                 } else {
                     throw MonitoringAPIException("Failed to retrieve Telkom free resources:\n$freeResourcesRsp")

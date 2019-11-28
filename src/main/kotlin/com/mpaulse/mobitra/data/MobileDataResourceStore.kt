@@ -28,6 +28,7 @@ import java.sql.Date
 import java.sql.DriverManager
 import java.sql.SQLException
 import java.util.LinkedList
+import java.util.UUID
 
 class MobileDataResourceStore(
     homePath: Path
@@ -54,7 +55,7 @@ class MobileDataResourceStore(
 
             var exists = false
             conn.prepareStatement("SELECT id FROM mobile_data_resource WHERE id = ?").use { stmt ->
-                stmt.setString(1, resource.id)
+                stmt.setObject(1, resource.id)
                 stmt.executeQuery().use { rs ->
                     exists = rs.next()
                 }
@@ -67,7 +68,7 @@ class MobileDataResourceStore(
                             id, name, total_amount, used_amount, expiry_date, update_timestamp
                         ) VALUES (?, ?, ?, ?, NOW())
                         """.trimIndent()).use { stmt ->
-                    stmt.setString(1, resource.id)
+                    stmt.setObject(1, resource.id)
                     stmt.setString(2, resource.name)
                     stmt.setLong(3, resource.totalAmount)
                     stmt.setLong(4, resource.usedAmount)
@@ -89,7 +90,7 @@ class MobileDataResourceStore(
                     stmt.setLong(2, resource.totalAmount)
                     stmt.setLong(3, resource.usedAmount)
                     stmt.setDate(4, Date.valueOf(resource.expiryDate))
-                    stmt.setString(5, resource.id)
+                    stmt.setObject(5, resource.id)
                 }
             }
 
@@ -110,7 +111,7 @@ class MobileDataResourceStore(
         }
     }
 
-    fun getResource(id: String): MobileDataResource {
+    fun getResource(id: UUID): MobileDataResource {
         try {
             conn.prepareStatement(
                     """
@@ -118,7 +119,7 @@ class MobileDataResourceStore(
                     FROM mobile_data_resource
                     WHERE id = ?
                     """.trimIndent()).use { stmt ->
-                stmt.setString(1, id)
+                stmt.setObject(1, id)
                 stmt.executeQuery().use { rs ->
                     if (rs.next()) {
                         return MobileDataResource(
@@ -147,7 +148,7 @@ class MobileDataResourceStore(
                         """.trimIndent()).use { rs ->
                     while (rs.next()) {
                         resources += MobileDataResource(
-                            rs.getString(1),
+                            rs.getObject(1, UUID::class.java),
                             rs.getString(2),
                             rs.getLong(3),
                             rs.getLong(4),
@@ -169,7 +170,7 @@ class MobileDataResourceStore(
                         id, timestamp, download_amount, upload_amount
                     ) VALUES (?, NOW(), ?, ?)
                     """.trimIndent()).use { stmt ->
-                stmt.setString(1, resource.id)
+                stmt.setObject(1, resource.id)
                 stmt.setLong(2, downloadAmount);
                 stmt.setLong(3, uploadAmount)
                 stmt.executeUpdate()
@@ -194,7 +195,7 @@ class MobileDataResourceStore(
             stmt.execute(
                 """
                 CREATE TABLE IF NOT EXISTS mobile_data_resource (
-                    id VARCHAR NOT NULL PRIMARY KEY,
+                    id UUID NOT NULL PRIMARY KEY,
                     name VARCHAR(255) NOT NULL,
                     total_amount BIGINT NOT NULL,
                     used_amount BIGINT NOT NULL,
@@ -209,7 +210,7 @@ class MobileDataResourceStore(
             stmt.execute(
                 """
                 CREATE CACHED TABLE IF NOT EXISTS mobile_data_resource_usage (
-                    id VARCHAR NOT NULL FOREIGN KEY REFERENCES resource.id ON DELETE CASCADE ON UPDATE CASCADE,
+                    id UUID NOT NULL FOREIGN KEY REFERENCES resource(id) ON DELETE CASCADE ON UPDATE CASCADE,
                     timestamp TIMESTAMP NOT NULL,
                     download_amount BIGINT NOT NULL DEFAULT 0,
                     upload_amount BIGINT NOT NULL DEFAULT 0

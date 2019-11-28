@@ -24,9 +24,10 @@ package com.mpaulse.mobitra.data
 
 import com.mpaulse.mobitra.net.TelkomFreeResource
 import java.time.LocalDate
+import java.util.UUID
 
 data class MobileDataResource(
-    val id: String,
+    val id: UUID,
     val name: String,
     val totalAmount: Long,
     val usedAmount: Long,
@@ -43,6 +44,7 @@ data class MobileDataResource(
 
 }
 
-private fun generateId(telkomFreeResource: TelkomFreeResource): String {
-    return ""
+private fun generateId(telkomFreeResource: TelkomFreeResource): UUID {
+    // TODO
+    return UUID.fromString("")
 }
