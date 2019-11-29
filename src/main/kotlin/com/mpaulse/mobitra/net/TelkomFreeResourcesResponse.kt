@@ -27,9 +27,11 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.UUID
 
 @JsonDeserialize(using = TelkomFreeResourcesDeserializer::class)
 data class TelkomFreeResourcesResponse(
@@ -65,6 +67,16 @@ data class TelkomFreeResource(
     val usedAmount: Long,
     val expiryDate: LocalDate
 ) {
+
+    val id: UUID
+
+    init {
+        val digest = MessageDigest.getInstance("MD5")
+        digest.update(type.toByteArray())
+        digest.update(service.toByteArray())
+        digest.update(expiryDate.toString().toByteArray())
+        id = UUID.nameUUIDFromBytes(digest.digest())
+    }
 
     val isMobileData: Boolean
         get() =

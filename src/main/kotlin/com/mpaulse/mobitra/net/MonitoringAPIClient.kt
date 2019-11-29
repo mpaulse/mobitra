@@ -38,6 +38,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration
+import java.util.UUID
 import javax.net.ssl.SSLContext
 
 private const val HTTP_USER_AGENT = "$APP_NAME/$VERSION"
@@ -85,8 +86,7 @@ class MonitoringAPIClient(
                 yield()
                 val freeResourcesRsp = getTelkomFreeResources(createSessionRsp.msisdn)
                 if (freeResourcesRsp.resultCode == 0) {
-                    // TODO: merge free resources of the same ID
-                    return freeResourcesRsp.freeResources
+                    return mergeTelkomFreeResources(freeResourcesRsp.freeResources)
                 } else {
                     throw MonitoringAPIException("Failed to retrieve Telkom free resources:\n$freeResourcesRsp")
                 }
@@ -95,6 +95,25 @@ class MonitoringAPIClient(
             }
         }
         throw MonitoringAPIException("Failed to check for Telkom Onnet:\n$checkRsp")
+    }
+
+    private fun mergeTelkomFreeResources(freeResources: Array<TelkomFreeResource>): Array<TelkomFreeResource> {
+        val merged = mutableMapOf<UUID, TelkomFreeResource>()
+        for (r in freeResources) {
+            val r2 = merged[r.id]
+            if (r2 != null) {
+               merged[r.id] = TelkomFreeResource(
+                   r.type,
+                   r.name,
+                   r.service,
+                   r.totalAmount + r2.totalAmount,
+                   r.usedAmount + r2.usedAmount,
+                   r.expiryDate)
+            } else {
+                merged[r.id] = r
+            }
+        }
+        return merged.values.toTypedArray()
     }
 
     private suspend fun checkTelkomOnnet(): TelkomCheckOnnetResponse = withContext(Dispatchers.IO) {
