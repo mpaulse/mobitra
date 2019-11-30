@@ -23,6 +23,7 @@
 package com.mpaulse.mobitra.data
 
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 data class MobileDataResource(
@@ -31,4 +32,10 @@ data class MobileDataResource(
     val totalAmount: Long,
     val usedAmount: Long,
     val expiryDate: LocalDate
+)
+
+data class MobileDataResourceUsageData(
+    val timestamp: LocalDateTime,
+    val downloadAmount: Long = 0,
+    val uploadAmount: Long = 0
 )

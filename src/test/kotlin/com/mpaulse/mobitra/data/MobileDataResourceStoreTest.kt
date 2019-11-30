@@ -89,10 +89,10 @@ class MobileDataResourceStoreTest {
     }
 
     @Test
-    fun `addUsage`() {
+    fun `addUsage and getUsage`() {
         val resource = MobileDataResource(
             UUID.randomUUID(),
-            "Test addUsage",
+            "Test addUsage and getUsage",
             7832478178423,
             32895894578,
             LocalDate.now())
@@ -103,7 +103,24 @@ class MobileDataResourceStoreTest {
         store!!.addUsage(resource, uploadAmount = 2)
         store!!.addUsage(resource, 3, 4)
 
-        // TODO: get usage
+        val usage = store!!.getUsage(
+            resource,
+            LocalDate.now().atStartOfDay(),
+            LocalDate.now().plusDays(1).atStartOfDay())
+
+        assertEquals(4, usage.size, "Incorrect no. usage data")
+
+        assertEquals(0, usage[0].downloadAmount, "Incorrect download amount")
+        assertEquals(0, usage[0].uploadAmount, "Incorrect upload amount")
+
+        assertEquals(1, usage[1].downloadAmount, "Incorrect download amount")
+        assertEquals(0, usage[1].uploadAmount, "Incorrect upload amount")
+
+        assertEquals(0, usage[2].downloadAmount, "Incorrect download amount")
+        assertEquals(2, usage[2].uploadAmount, "Incorrect upload amount")
+
+        assertEquals(3, usage[3].downloadAmount, "Incorrect download amount")
+        assertEquals(4, usage[3].uploadAmount, "Incorrect upload amount")
     }
 
 }

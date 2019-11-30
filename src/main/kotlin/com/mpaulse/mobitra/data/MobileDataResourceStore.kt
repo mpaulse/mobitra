@@ -27,6 +27,8 @@ import java.sql.Connection
 import java.sql.Date
 import java.sql.DriverManager
 import java.sql.SQLException
+import java.sql.Timestamp
+import java.time.LocalDateTime
 import java.util.LinkedList
 import java.util.UUID
 
@@ -178,6 +180,37 @@ class MobileDataResourceStore(
         } catch (e: SQLException) {
             throw MobileDataResourceStoreException("Failed to save resource usage data", e)
         }
+    }
+
+    fun getUsage(
+        resource: MobileDataResource,
+        timestampFrom: LocalDateTime = LocalDateTime.now(),
+        timestampTo: LocalDateTime = LocalDateTime.now()
+    ): List<MobileDataResourceUsageData> {
+        val usage = LinkedList<MobileDataResourceUsageData>()
+        try {
+            conn.prepareStatement(
+                    """
+                    SELECT timestamp, download_amount, upload_amount
+                    FROM mobile_data_resource_usage
+                    WHERE id = ? AND timestamp >= ? AND timestamp <= ?
+                    """.trimIndent()).use { stmt ->
+                stmt.setObject(1, resource.id)
+                stmt.setTimestamp(2, Timestamp.valueOf(timestampFrom))
+                stmt.setTimestamp(3, Timestamp.valueOf(timestampTo))
+                stmt.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        usage += MobileDataResourceUsageData(
+                            rs.getTimestamp(1).toLocalDateTime(),
+                            rs.getLong(2),
+                            rs.getLong(3))
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            throw MobileDataResourceStoreException("Failed to retrieve resource usage data", e)
+        }
+        return usage
     }
 
     fun close() {
