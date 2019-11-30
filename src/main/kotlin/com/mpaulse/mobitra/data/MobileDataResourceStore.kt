@@ -61,12 +61,12 @@ class MobileDataResourceStore(
                 }
             }
 
-            if (exists) {
+            if (!exists) {
                 conn.prepareStatement(
                         """
                         INSERT INTO mobile_data_resource (
                             id, name, total_amount, used_amount, expiry_date, update_timestamp
-                        ) VALUES (?, ?, ?, ?, NOW())
+                        ) VALUES (?, ?, ?, ?, ?, NOW())
                         """.trimIndent()).use { stmt ->
                     stmt.setObject(1, resource.id)
                     stmt.setString(2, resource.name)
@@ -166,7 +166,7 @@ class MobileDataResourceStore(
         try {
             conn.prepareStatement(
                     """
-                    INSERT INTO mobile_data_resource_data (
+                    INSERT INTO mobile_data_resource_usage (
                         id, timestamp, download_amount, upload_amount
                     ) VALUES (?, NOW(), ?, ?)
                     """.trimIndent()).use { stmt ->
@@ -210,10 +210,10 @@ class MobileDataResourceStore(
             stmt.execute(
                 """
                 CREATE CACHED TABLE IF NOT EXISTS mobile_data_resource_usage (
-                    id UUID NOT NULL FOREIGN KEY REFERENCES resource(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                    id UUID NOT NULL FOREIGN KEY REFERENCES mobile_data_resource(id) ON DELETE CASCADE ON UPDATE CASCADE,
                     timestamp TIMESTAMP NOT NULL,
-                    download_amount BIGINT NOT NULL DEFAULT 0,
-                    upload_amount BIGINT NOT NULL DEFAULT 0
+                    download_amount BIGINT DEFAULT 0 NOT NULL,
+                    upload_amount BIGINT DEFAULT 0 NOT NULL
                 )
                 """.trimIndent())
             stmt.execute(

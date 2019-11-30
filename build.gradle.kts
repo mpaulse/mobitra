@@ -21,6 +21,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.1")
     implementation("ch.qos.logback:logback-classic:1.2.3")
+    implementation("org.slf4j:log4j-over-slf4j:1.7.29")
     implementation("org.hsqldb:hsqldb:2.5.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")

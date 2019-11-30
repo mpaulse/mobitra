@@ -21,4 +21,5 @@
   -->
 
 <configuration>
+    <logger name="org.hsqldb" level="warn"/>
 </configuration>
