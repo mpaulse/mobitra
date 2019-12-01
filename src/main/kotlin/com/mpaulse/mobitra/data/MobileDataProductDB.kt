@@ -106,7 +106,7 @@ class MobileDataProductDB(
             throw MobileDataProductDBException("Failed to store product", e)
         } finally {
             try {
-                conn.autoCommit = false
+                conn.autoCommit = true
             } catch (e: SQLException) {
                 throw MobileDataProductDBException("Unexpected failure", e)
             }
