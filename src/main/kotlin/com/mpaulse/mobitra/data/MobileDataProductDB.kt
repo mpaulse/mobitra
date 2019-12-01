@@ -32,7 +32,7 @@ import java.time.LocalDateTime
 import java.util.LinkedList
 import java.util.UUID
 
-class MobileDataResourceStore(
+class MobileDataProductDB(
     homePath: Path
 ) {
 
@@ -47,17 +47,17 @@ class MobileDataResourceStore(
                 "")
             createTables()
         } catch (e: Exception) {
-            throw MobileDataResourceStoreException("Resource store connection failure", e)
+            throw MobileDataProductDBException("Resource store connection failure", e)
         }
     }
 
-    fun storeResource(resource: MobileDataResource) {
+    fun storeProduct(product: MobileDataProduct) {
         try {
             conn.autoCommit = false
 
             var exists = false
-            conn.prepareStatement("SELECT id FROM mobile_data_resource WHERE id = ?").use { stmt ->
-                stmt.setObject(1, resource.id)
+            conn.prepareStatement("SELECT id FROM mobile_data_product WHERE id = ?").use { stmt ->
+                stmt.setObject(1, product.id)
                 stmt.executeQuery().use { rs ->
                     exists = rs.next()
                 }
@@ -66,21 +66,21 @@ class MobileDataResourceStore(
             if (!exists) {
                 conn.prepareStatement(
                         """
-                        INSERT INTO mobile_data_resource (
+                        INSERT INTO mobile_data_product (
                             id, name, total_amount, used_amount, expiry_date, update_timestamp
                         ) VALUES (?, ?, ?, ?, ?, NOW())
                         """.trimIndent()).use { stmt ->
-                    stmt.setObject(1, resource.id)
-                    stmt.setString(2, resource.name)
-                    stmt.setLong(3, resource.totalAmount)
-                    stmt.setLong(4, resource.usedAmount)
-                    stmt.setDate(5, Date.valueOf(resource.expiryDate))
+                    stmt.setObject(1, product.id)
+                    stmt.setString(2, product.name)
+                    stmt.setLong(3, product.totalAmount)
+                    stmt.setLong(4, product.usedAmount)
+                    stmt.setDate(5, Date.valueOf(product.expiryDate))
                     stmt.executeUpdate()
                 }
             } else {
                 conn.prepareStatement(
                         """
-                            UPDATE mobile_data_resource SET
+                            UPDATE mobile_data_product SET
                             name = ?,
                             total_amount = ?,
                             used_amount = ?,
@@ -88,11 +88,11 @@ class MobileDataResourceStore(
                             update_timestamp = NOW()
                             WHERE id = ?
                         """.trimIndent()).use { stmt ->
-                    stmt.setString(1, resource.name)
-                    stmt.setLong(2, resource.totalAmount)
-                    stmt.setLong(3, resource.usedAmount)
-                    stmt.setDate(4, Date.valueOf(resource.expiryDate))
-                    stmt.setObject(5, resource.id)
+                    stmt.setString(1, product.name)
+                    stmt.setLong(2, product.totalAmount)
+                    stmt.setLong(3, product.usedAmount)
+                    stmt.setDate(4, Date.valueOf(product.expiryDate))
+                    stmt.setObject(5, product.id)
                 }
             }
 
@@ -101,30 +101,30 @@ class MobileDataResourceStore(
             try {
                 conn.rollback()
             } catch (re: SQLException) {
-                throw MobileDataResourceStoreException("Error rolling back failed resource store operation", re)
+                throw MobileDataProductDBException("Error rolling back failed product store operation", re)
             }
-            throw MobileDataResourceStoreException("Failed to store resource", e)
+            throw MobileDataProductDBException("Failed to store product", e)
         } finally {
             try {
                 conn.autoCommit = false
             } catch (e: SQLException) {
-                throw MobileDataResourceStoreException("Unexpected failure", e)
+                throw MobileDataProductDBException("Unexpected failure", e)
             }
         }
     }
 
-    fun getResource(id: UUID): MobileDataResource {
+    fun getProduct(id: UUID): MobileDataProduct {
         try {
             conn.prepareStatement(
                     """
                     SELECT name, total_amount, used_amount, expiry_date
-                    FROM mobile_data_resource
+                    FROM mobile_data_product
                     WHERE id = ?
                     """.trimIndent()).use { stmt ->
                 stmt.setObject(1, id)
                 stmt.executeQuery().use { rs ->
                     if (rs.next()) {
-                        return MobileDataResource(
+                        return MobileDataProduct(
                             id,
                             rs.getString(1),
                             rs.getLong(2),
@@ -134,22 +134,22 @@ class MobileDataResourceStore(
                 }
             }
         } catch (e: SQLException) {
-            throw MobileDataResourceStoreException("Error retrieving resource: $id", e)
+            throw MobileDataProductDBException("Error retrieving product: $id", e)
         }
-        throw MobileDataResourceStoreException("Failed to retrieve unknown resource: $id")
+        throw MobileDataProductDBException("Failed to retrieve unknown product: $id")
     }
 
-    fun getResources(): List<MobileDataResource> {
-        val resources = LinkedList<MobileDataResource>()
+    fun getProducts(): List<MobileDataProduct> {
+        val product = LinkedList<MobileDataProduct>()
         try {
             conn.createStatement().use { stmt ->
                 stmt.executeQuery(
                         """
                         SELECT id, name, total_amount, used_amount, expiry_date
-                        FROM mobile_data_resource
+                        FROM mobile_data_product
                         """.trimIndent()).use { rs ->
                     while (rs.next()) {
-                        resources += MobileDataResource(
+                        product += MobileDataProduct(
                             rs.getObject(1, UUID::class.java),
                             rs.getString(2),
                             rs.getLong(3),
@@ -159,40 +159,40 @@ class MobileDataResourceStore(
                 }
             }
         } catch (e: SQLException) {
-            throw MobileDataResourceStoreException("Error retrieving resources", e)
+            throw MobileDataProductDBException("Error retrieving products", e)
         }
-        return resources
+        return product
     }
 
-    fun addUsage(resource: MobileDataResource, downloadAmount: Long = 0, uploadAmount: Long = 0) {
+    fun addDataUsage(product: MobileDataProduct, downloadAmount: Long = 0, uploadAmount: Long = 0) {
         try {
             conn.prepareStatement(
                     """
-                    INSERT INTO mobile_data_resource_usage (
+                    INSERT INTO mobile_data_usage (
                         id, timestamp, download_amount, upload_amount
                     ) VALUES (?, NOW(), ?, ?)
                     """.trimIndent()).use { stmt ->
-                stmt.setObject(1, resource.id)
+                stmt.setObject(1, product.id)
                 stmt.setLong(2, downloadAmount);
                 stmt.setLong(3, uploadAmount)
                 stmt.executeUpdate()
             }
         } catch (e: SQLException) {
-            throw MobileDataResourceStoreException("Failed to save resource usage data", e)
+            throw MobileDataProductDBException("Failed to save data usage", e)
         }
     }
 
-    fun getUsage(
-        resource: MobileDataResource,
+    fun getDataUsage(
+        resource: MobileDataProduct,
         timestampFrom: LocalDateTime = LocalDateTime.now(),
         timestampTo: LocalDateTime = LocalDateTime.now()
-    ): List<MobileDataResourceUsageData> {
-        val usage = LinkedList<MobileDataResourceUsageData>()
+    ): List<MobileDataUsage> {
+        val usage = LinkedList<MobileDataUsage>()
         try {
             conn.prepareStatement(
                     """
                     SELECT timestamp, download_amount, upload_amount
-                    FROM mobile_data_resource_usage
+                    FROM mobile_data_usage
                     WHERE id = ? AND timestamp >= ? AND timestamp <= ?
                     """.trimIndent()).use { stmt ->
                 stmt.setObject(1, resource.id)
@@ -200,7 +200,7 @@ class MobileDataResourceStore(
                 stmt.setTimestamp(3, Timestamp.valueOf(timestampTo))
                 stmt.executeQuery().use { rs ->
                     while (rs.next()) {
-                        usage += MobileDataResourceUsageData(
+                        usage += MobileDataUsage(
                             rs.getTimestamp(1).toLocalDateTime(),
                             rs.getLong(2),
                             rs.getLong(3))
@@ -208,7 +208,7 @@ class MobileDataResourceStore(
                 }
             }
         } catch (e: SQLException) {
-            throw MobileDataResourceStoreException("Failed to retrieve resource usage data", e)
+            throw MobileDataProductDBException("Failed to retrieve data usage", e)
         }
         return usage
     }
@@ -227,7 +227,7 @@ class MobileDataResourceStore(
         conn.createStatement().use { stmt ->
             stmt.execute(
                 """
-                CREATE TABLE IF NOT EXISTS mobile_data_resource (
+                CREATE TABLE IF NOT EXISTS mobile_data_product (
                     id UUID NOT NULL PRIMARY KEY,
                     name VARCHAR(255) NOT NULL,
                     total_amount BIGINT NOT NULL,
@@ -238,12 +238,12 @@ class MobileDataResourceStore(
                 """.trimIndent())
             stmt.execute(
                 """
-                CREATE INDEX IF NOT EXISTS ix_md_res_exp_date ON mobile_data_resource (expiry_date ASC)
+                CREATE INDEX IF NOT EXISTS ix_prod_exp_date ON mobile_data_product (expiry_date ASC)
                 """.trimIndent())
             stmt.execute(
                 """
-                CREATE CACHED TABLE IF NOT EXISTS mobile_data_resource_usage (
-                    id UUID NOT NULL FOREIGN KEY REFERENCES mobile_data_resource(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CREATE CACHED TABLE IF NOT EXISTS mobile_data_usage (
+                    id UUID NOT NULL FOREIGN KEY REFERENCES mobile_data_product(id) ON DELETE CASCADE ON UPDATE CASCADE,
                     timestamp TIMESTAMP NOT NULL,
                     download_amount BIGINT DEFAULT 0 NOT NULL,
                     upload_amount BIGINT DEFAULT 0 NOT NULL
@@ -251,7 +251,7 @@ class MobileDataResourceStore(
                 """.trimIndent())
             stmt.execute(
                 """
-                CREATE INDEX IF NOT EXISTS ix_mb_res_usage_ts ON mobile_data_resource_usage (timestamp ASC)
+                CREATE INDEX IF NOT EXISTS ix_usage_ts ON mobile_data_usage (timestamp ASC)
                 """.trimIndent())
 
         }
@@ -259,7 +259,7 @@ class MobileDataResourceStore(
 
 }
 
-class MobileDataResourceStoreException(
+class MobileDataProductDBException(
     message: String,
     cause: Throwable? = null
 ): Exception(message, cause)

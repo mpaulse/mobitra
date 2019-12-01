@@ -33,78 +33,78 @@ import kotlin.test.assertTrue
 
 val TEST_DATA_PATH: Path = Path.of("src/test/data")
 
-class MobileDataResourceStoreTest {
+class MobileDataProductDBTest {
 
-    var store: MobileDataResourceStore? = null
+    var productDB: MobileDataProductDB? = null
 
     @BeforeEach
     fun setUp() {
         TEST_DATA_PATH.toFile().deleteRecursively()
-        store = MobileDataResourceStore(TEST_DATA_PATH)
+        productDB = MobileDataProductDB(TEST_DATA_PATH)
     }
 
     @AfterEach
     fun tearDown() {
-        store?.close()
+        productDB?.close()
     }
 
     @Test
-    fun `storeResource and getResource`() {
-        val resource = MobileDataResource(
+    fun `storeProduct and getProduct`() {
+        val product = MobileDataProduct(
             UUID.randomUUID(),
-            "Test storeResource and getResource",
+            "Test storeProduct and getProduct",
             7832478178423,
             32895894578,
             LocalDate.now())
-        store!!.storeResource(resource)
-        val resource2 = store!!.getResource(resource.id)
-        assertEquals(resource2, resource2)
+        productDB!!.storeProduct(product)
+        val product2 = productDB!!.getProduct(product.id)
+        assertEquals(product, product2)
     }
 
     @Test
-    fun `getResources - available`() {
-        val resourceList = mutableListOf<MobileDataResource>()
+    fun `getProduct - available`() {
+        val productList = mutableListOf<MobileDataProduct>()
         for (i in 0..9) {
-            val resource = MobileDataResource(
+            val product = MobileDataProduct(
                 UUID.randomUUID(),
-                "Test getResources $i",
+                "Test getProduct $i",
                 i.toLong(),
                 i.toLong(),
                 LocalDate.now())
-            store!!.storeResource(resource)
-            resourceList += resource
+            productDB!!.storeProduct(product)
+            productList += product
         }
 
-        val resourceSet = store!!.getResources().toSet()
-        assertEquals(resourceList.size, resourceSet.size, "Incorrect no. resources")
-        for (resource in resourceList) {
-            assertTrue(resource in resourceSet, "Resource not found:\n$resource")
+        val productSet = productDB!!.getProducts().toSet()
+        assertEquals(productList.size, productSet.size, "Incorrect no. products")
+        for (product in productList) {
+            assertTrue(product in productSet, "Product not found:\n$product")
         }
     }
 
     @Test
-    fun `getResources - none`() {
-        val resources = store!!.getResources()
-        assertTrue(resources.isEmpty())
+    fun `getProducts - none`() {
+        val products = productDB!!.getProducts()
+        assertTrue(products.isEmpty())
     }
 
     @Test
-    fun `addUsage and getUsage`() {
-        val resource = MobileDataResource(
+    fun `addDataUsage and getDataUsage`() {
+        val product = MobileDataProduct(
             UUID.randomUUID(),
-            "Test addUsage and getUsage",
+            "Test addDataUsage and getDataUsage",
             7832478178423,
             32895894578,
             LocalDate.now())
-        store!!.storeResource(resource)
+        productDB!!.storeProduct(product)
 
-        store!!.addUsage(resource)
-        store!!.addUsage(resource, 1)
-        store!!.addUsage(resource, uploadAmount = 2)
-        store!!.addUsage(resource, 3, 4)
+        productDB!!.addDataUsage(product)
+        productDB!!.addDataUsage(product, 1)
+        productDB!!.addDataUsage(product, uploadAmount = 2)
+        productDB!!.addDataUsage(product, 3, 4)
 
-        val usage = store!!.getUsage(
-            resource,
+        val usage = productDB!!.getDataUsage(
+            product,
             LocalDate.now().atStartOfDay(),
             LocalDate.now().plusDays(1).atStartOfDay())
 

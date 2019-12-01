@@ -26,7 +26,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
-data class MobileDataResource(
+data class MobileDataProduct(
     val id: UUID,
     val name: String,
     val totalAmount: Long,
@@ -34,7 +34,7 @@ data class MobileDataResource(
     val expiryDate: LocalDate
 )
 
-data class MobileDataResourceUsageData(
+data class MobileDataUsage(
     val timestamp: LocalDateTime,
     val downloadAmount: Long = 0,
     val uploadAmount: Long = 0
