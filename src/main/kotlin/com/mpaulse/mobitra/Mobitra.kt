@@ -26,6 +26,14 @@ package com.mpaulse.mobitra
 
 import com.mpaulse.mobitra.data.ApplicationData
 import javafx.application.Application
+import javafx.application.Platform
+import javafx.event.ActionEvent
+import javafx.fxml.FXML
+import javafx.fxml.FXMLLoader
+import javafx.scene.Scene
+import javafx.scene.control.ToggleButton
+import javafx.scene.control.ToggleGroup
+import javafx.scene.layout.Region
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -40,10 +48,72 @@ class MobitraApplication: Application() {
     private val appData = ApplicationData(homePath)
     private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
 
+    private lateinit var mainWindow: Stage
+    @FXML private lateinit var historyBtn: ToggleButton
+    @FXML private lateinit var summaryBtn: ToggleButton
+
     override fun start(stage: Stage) {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
             logger.error("Application error", e)
         }
+
+        createMainWindow(stage)
+        initControls()
+        mainWindow.show()
+    }
+
+    private fun createMainWindow(stage: Stage) {
+        mainWindow = stage
+        mainWindow.scene = Scene(loadFXMLPane("MainWindow", this))
+        //mainWindow?.scene?.stylesheets?.add("styles/Main.css")
+        mainWindow.width = if (appData.windowSize.first >= 200.0) appData.windowSize.first else 200.0
+        mainWindow.minWidth = 200.0
+        mainWindow.height = if (appData.windowSize.second >= 200.0) appData.windowSize.second else 200.0
+        mainWindow.minHeight = 200.0
+        //mainWindow?.icons?.add(Images.get("images/Mobitra.png"))
+
+        val pos = appData.windowPosition
+        if (pos != null) {
+            mainWindow.x = pos.first
+            mainWindow.y = pos.second
+        } else {
+            mainWindow.centerOnScreen()
+        }
+
+        mainWindow.title = APP_NAME
+    }
+
+    private fun initControls() {
+        val toggleGroup = ToggleGroup()
+        summaryBtn.toggleGroup = toggleGroup
+        historyBtn.toggleGroup = toggleGroup
+        summaryBtn.selectedProperty().set(true)
+    }
+
+    private fun loadFXMLPane(pane: String, controller: Any): Region {
+        val loader = FXMLLoader()
+        loader.setController(controller)
+        loader.setControllerFactory {
+            controller // Needed for imported/nested FXML files
+        }
+        loader.location = controller.javaClass.getResource("/fxml/$pane.fxml")
+        return loader.load<Region>()
+    }
+
+    @FXML
+    fun onViewSummary(event: ActionEvent) {
+        event.consume()
+    }
+
+    @FXML
+    fun onViewHistory(event: ActionEvent) {
+        event.consume()
+    }
+
+    @FXML
+    fun onExit(event: ActionEvent) {
+        Platform.exit()
+        event.consume()
     }
 
 }
