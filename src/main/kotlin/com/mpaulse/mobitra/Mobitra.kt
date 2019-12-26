@@ -39,6 +39,7 @@ import javafx.scene.control.ToggleButton
 import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Region
+import javafx.scene.layout.VBox
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -183,37 +184,43 @@ class MobitraApplication: Application() {
     }
 
     fun onActiveProductSelected(event: ActionEvent? = null) {
-        val product: MobileDataProduct?
+        var product: MobileDataProduct? = null
         var dataUsage: List<MobileDataUsage>? = null
 
-        val productId = activeProductsMenu.selectionModel.selectedItem.productId
-        if (productId != null) {
-            product = activeProducts[productId]
-            if (product != null) {
-                dataUsage = productDB.getDataUsage(product)
-            }
-        } else {
-            var totalAmount = 0L
-            var usedAmount = 0L
-            var expiryDate: LocalDate? = null
-            for (p in activeProducts.values) {
-                totalAmount += p.totalAmount
-                usedAmount += p.usedAmount
-                if (expiryDate == null || expiryDate < p.expiryDate) {
-                    expiryDate = p.expiryDate
+        if (activeProducts.isNotEmpty()) {
+            val productId = activeProductsMenu.selectionModel.selectedItem.productId
+            if (productId != null) {
+                product = activeProducts[productId]
+                if (product != null) {
+                    dataUsage = productDB.getDataUsage(product)
                 }
+            } else {
+                var totalAmount = 0L
+                var usedAmount = 0L
+                var expiryDate: LocalDate? = null
+                for (p in activeProducts.values) {
+                    totalAmount += p.totalAmount
+                    usedAmount += p.usedAmount
+                    if (expiryDate == null || expiryDate < p.expiryDate) {
+                        expiryDate = p.expiryDate
+                    }
+                }
+                product = MobileDataProduct(
+                    UUID.randomUUID(),
+                    "All",
+                    totalAmount,
+                    usedAmount,
+                    expiryDate as LocalDate)
+                dataUsage = productDB.getActiveProductDataUsage()
             }
-            product = MobileDataProduct(
-                UUID.randomUUID(),
-                "All",
-                totalAmount,
-                usedAmount,
-                expiryDate as LocalDate)
-            dataUsage = productDB.getActiveProductDataUsage()
         }
 
         if (product != null && dataUsage != null) {
-            activeProductsPane.center = DataUsageAreaChart(product, dataUsage)
+            val charts = VBox()
+            charts.children.addAll(
+                DataUsageAreaChart(product, dataUsage),
+                DataUsageBarChart(product, dataUsage))
+            activeProductsPane.center = charts
         } else {
             activeProductsPane.center = noDataPane
         }

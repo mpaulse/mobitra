@@ -31,7 +31,7 @@
       <HBox alignment="CENTER" spacing="10.0" BorderPane.alignment="CENTER">
          <children>
             <Label text="Product:" />
-            <ChoiceBox fx:id="activeProductsMenu" prefWidth="150.0" />
+            <ChoiceBox fx:id="activeProductsMenu" prefWidth="300.0" />
          </children>
          <BorderPane.margin>
             <Insets bottom="10.0" />

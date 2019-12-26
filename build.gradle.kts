@@ -31,7 +31,7 @@ dependencies {
 
 javafx {
     version = "13.0.1"
-    modules = listOf("javafx.controls", "javafx.fxml", "javafx.web") // TODO: need web?
+    modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 application {
@@ -97,7 +97,7 @@ tasks {
             "--module-path",
             "$buildDir/modules;tools/jpackager",
             "--add-modules",
-            "javafx.controls,javafx.fxml,javafx.web", // TODO: need web?
+            "javafx.controls,javafx.fxml",
             "--strip-native-commands",
             "--output",
             "release",

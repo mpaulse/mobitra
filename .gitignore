@@ -1,4 +1,6 @@
 .gradle
 .idea
+.openjfx
+.Mobitra
 build
 src/test/data/db.*
