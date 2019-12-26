@@ -27,6 +27,7 @@ package com.mpaulse.mobitra
 import com.mpaulse.mobitra.data.ApplicationData
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
+import com.mpaulse.mobitra.data.MobileDataUsage
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.event.ActionEvent
@@ -42,6 +43,8 @@ import javafx.stage.Stage
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDate
+import java.util.UUID
 
 const val APP_NAME = "Mobitra"
 const val VERSION = "0.1"
@@ -51,7 +54,7 @@ class MobitraApplication: Application() {
 
     private val appData = ApplicationData(homePath)
     private val productDB = MobileDataProductDB(homePath)
-    private lateinit var products: List<MobileDataProduct>
+    private val activeProducts = mutableMapOf<UUID, MobileDataProduct>()
     private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
 
     private lateinit var mainWindow: Stage
@@ -69,7 +72,10 @@ class MobitraApplication: Application() {
             logger.error("Application error", e)
         }
 
-        products = productDB.getActiveProducts()
+        val products = productDB.getActiveProducts()
+        for (product in products) {
+            activeProducts[product.id] = product
+        }
 
         createMainWindow(stage)
         noDataPane = loadFXMLPane("NoDataPane")
@@ -110,17 +116,30 @@ class MobitraApplication: Application() {
 
     private fun createActiveProductsPane() {
         activeProductsPane = loadFXMLPane("ActiveProductsPane")
-
-        val allProductsItem = ActiveProductMenuItem("All", null)
-        activeProductsMenu.items.add(allProductsItem)
-        for (product in products) {
-            activeProductsMenu.items.add(ActiveProductMenuItem(product.name, product.id))
-        }
-        activeProductsMenu.value = allProductsItem
-
+        refreshActiveProductsMenu()
         activeProductsMenu.setOnAction {
             onActiveProductSelected(it)
         }
+        onActiveProductSelected()
+    }
+
+    private fun refreshActiveProductsMenu() {
+        var selectedItem = activeProductsMenu.selectionModel.selectedItem
+
+        activeProductsMenu.items.clear()
+
+        val allProductsItem = ActiveProductMenuItem("All", null)
+        activeProductsMenu.items.add(allProductsItem)
+
+        for ((productId, product) in activeProducts) {
+            val item = ActiveProductMenuItem(product.name, productId)
+            activeProductsMenu.items.add(item)
+            if (productId == selectedItem?.productId) {
+                selectedItem = item
+            }
+        }
+
+        activeProductsMenu.value = selectedItem ?: allProductsItem
     }
 
     private fun createHistoryPane() {
@@ -148,7 +167,7 @@ class MobitraApplication: Application() {
     @FXML
     fun onViewActiveProducts(event: ActionEvent? = null) {
         mainWindowPane.center = activeProductsPane
-        if (products.isEmpty()) {
+        if (activeProducts.isEmpty()) {
             activeProductsPane.center = noDataPane
         }
         event?.consume()
@@ -157,15 +176,49 @@ class MobitraApplication: Application() {
     @FXML
     fun onViewHistory(event: ActionEvent) {
         mainWindowPane.center = historyPane
-        if (products.isEmpty()) {
+        if (activeProducts.isEmpty()) {
             historyPane.center = noDataPane
         }
         event.consume()
     }
 
-    fun onActiveProductSelected(event: ActionEvent) {
-        println(event)
-        event.consume()
+    fun onActiveProductSelected(event: ActionEvent? = null) {
+        val product: MobileDataProduct?
+        var dataUsage: List<MobileDataUsage>? = null
+
+        val productId = activeProductsMenu.selectionModel.selectedItem.productId
+        if (productId != null) {
+            product = activeProducts[productId]
+            if (product != null) {
+                dataUsage = productDB.getDataUsage(product)
+            }
+        } else {
+            var totalAmount = 0L
+            var usedAmount = 0L
+            var expiryDate: LocalDate? = null
+            for (p in activeProducts.values) {
+                totalAmount += p.totalAmount
+                usedAmount += p.usedAmount
+                if (expiryDate == null || expiryDate < p.expiryDate) {
+                    expiryDate = p.expiryDate
+                }
+            }
+            product = MobileDataProduct(
+                UUID.randomUUID(),
+                "All",
+                totalAmount,
+                usedAmount,
+                expiryDate as LocalDate)
+            dataUsage = productDB.getActiveProductDataUsage()
+        }
+
+        if (product != null && dataUsage != null) {
+            activeProductsPane.center = DataUsageAreaChart(product, dataUsage)
+        } else {
+            activeProductsPane.center = noDataPane
+        }
+
+        event?.consume()
     }
 
     @FXML

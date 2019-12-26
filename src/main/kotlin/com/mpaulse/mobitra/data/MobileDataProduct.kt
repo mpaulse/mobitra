@@ -38,4 +38,9 @@ data class MobileDataUsage(
     val timestamp: Instant,
     val downloadAmount: Long = 0,
     val uploadAmount: Long = 0
-)
+) {
+
+    val totalAmount: Long
+        get() = downloadAmount + uploadAmount
+
+}

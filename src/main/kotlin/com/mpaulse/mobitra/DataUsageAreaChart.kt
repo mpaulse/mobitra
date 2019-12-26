@@ -25,25 +25,47 @@ package com.mpaulse.mobitra
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataUsage
 import javafx.scene.chart.AreaChart
+import javafx.scene.chart.CategoryAxis
 import javafx.scene.chart.NumberAxis
 
 class DataUsageAreaChart(
     product: MobileDataProduct,
     usageData: List<MobileDataUsage>
-): AreaChart<Number, Number>(NumberAxis(), NumberAxis()) {
+): AreaChart<String, Number>(CategoryAxis(), NumberAxis()) {
 
-    private val dataSeries = Series<Number, Number>()
+    private val dataSeries = Series<String, Number>()
+
+    private var usedAmount = 0L
 
     init {
-        for (usage in usageData) {
+        createSymbols = false
+        isLegendVisible = false
 
+        if (usageData.isNotEmpty()) {
+            // Account for data usage at the beginning of the product period that was not tracked
+            var usedAmountTracked = 0L
+            for (usage in usageData) {
+                usedAmountTracked += usage.totalAmount
+            }
+            if (usedAmountTracked < product.usedAmount) {
+                addDataUsage(MobileDataUsage(
+                    usageData.first().timestamp,
+                    product.usedAmount - usedAmountTracked))
+            }
+
+            for (usage in usageData) {
+                addDataUsage(usage)
+            }
         }
+
+        data.add(dataSeries)
     }
 
     fun addDataUsage(dataUsage: MobileDataUsage) {
-        //dataSeries.data.add(Data(
-        //    dataUsage.timestamp.toEpochSecond(),
-        //    dataUsage.downloadAmount + dataUsage.uploadAmount))
+        usedAmount += dataUsage.downloadAmount + dataUsage.uploadAmount
+        dataSeries.data.add(Data(
+            dataUsage.timestamp.toString(),
+            usedAmount))
     }
 
 }

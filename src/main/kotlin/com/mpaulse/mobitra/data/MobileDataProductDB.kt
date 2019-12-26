@@ -196,22 +196,42 @@ class MobileDataProductDB(
         }
     }
 
-    fun getDataUsage(
-        resource: MobileDataProduct,
-        timestampFrom: Instant = Instant.now(),
-        timestampTo: Instant = Instant.now()
-    ): List<MobileDataUsage> {
+    fun getDataUsage(product: MobileDataProduct): List<MobileDataUsage> {
         val usage = LinkedList<MobileDataUsage>()
         try {
             conn.prepareStatement(
                     """
                     SELECT timestamp, download_amount, upload_amount
                     FROM mobile_data_usage
-                    WHERE id = ? AND timestamp >= ? AND timestamp <= ?
+                    WHERE id = ?
                     """.trimIndent()).use { stmt ->
-                stmt.setObject(1, resource.id)
-                stmt.setTimestamp(2, Timestamp.from(timestampFrom))
-                stmt.setTimestamp(3, Timestamp.from(timestampTo))
+                stmt.setObject(1, product.id)
+                stmt.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        usage += MobileDataUsage(
+                            rs.getTimestamp(1).toInstant(),
+                            rs.getLong(2),
+                            rs.getLong(3))
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            throw MobileDataProductDBException("Failed to retrieve data usage", e)
+        }
+        return usage
+    }
+
+    fun getActiveProductDataUsage(): List<MobileDataUsage> {
+        val usage = LinkedList<MobileDataUsage>()
+        try {
+            conn.prepareStatement(
+                    """
+                    SELECT timestamp, download_amount, upload_amount
+                    FROM mobile_data_usage u
+                    INNER JOIN mobile_data_products p ON u.id = p.id 
+                    WHERE expiry_date > NOW()
+                    ORDER BY timestamp ASC
+                    """.trimIndent()).use { stmt ->
                 stmt.executeQuery().use { rs ->
                     while (rs.next()) {
                         usage += MobileDataUsage(

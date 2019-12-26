@@ -26,6 +26,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.UUID
@@ -134,10 +135,7 @@ class MobileDataProductDBTest {
         productDB.addDataUsage(product, uploadAmount = 2)
         productDB.addDataUsage(product, 3, 4)
 
-        val usage = productDB.getDataUsage(
-            product,
-            LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant(),
-            LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant())
+        val usage = productDB.getDataUsage(product)
 
         assertEquals(4, usage.size, "Incorrect no. usage data")
 
@@ -152,6 +150,53 @@ class MobileDataProductDBTest {
 
         assertEquals(3, usage[3].downloadAmount, "Incorrect download amount")
         assertEquals(4, usage[3].uploadAmount, "Incorrect upload amount")
+    }
+
+    @Test
+    fun `getActiveProductDataUsage`() {
+        for (i in 0..4) {
+            val product = MobileDataProduct(
+                UUID.randomUUID(),
+                "Test getDataUsage - expired",
+                7832478178423,
+                32895894578,
+                LocalDate.now())
+            productDB.storeProduct(product)
+            productDB.addDataUsage(product, 123, 567)
+        }
+
+        for (i in 0..1) {
+            val product = MobileDataProduct(
+                UUID.randomUUID(),
+                "Test getDataUsage - active",
+                7832478178423,
+                32895894578,
+                LocalDate.now().plusDays(1))
+            productDB.storeProduct(product)
+
+            productDB.addDataUsage(product, 1)
+            productDB.addDataUsage(product, uploadAmount = 2, timestamp = Instant.now().plusSeconds(30))
+            productDB.addDataUsage(product, 3, 4, timestamp = Instant.now().plusSeconds(60))
+        }
+
+        val usage = productDB.getActiveProductDataUsage()
+
+        assertEquals(6, usage.size, "Incorrect no. usage data")
+
+        assertEquals(1, usage[0].downloadAmount, "Incorrect download amount")
+        assertEquals(0, usage[0].uploadAmount, "Incorrect upload amount")
+        assertEquals(1, usage[1].downloadAmount, "Incorrect download amount")
+        assertEquals(0, usage[1].uploadAmount, "Incorrect upload amount")
+
+        assertEquals(0, usage[2].downloadAmount, "Incorrect download amount")
+        assertEquals(2, usage[2].uploadAmount, "Incorrect upload amount")
+        assertEquals(0, usage[3].downloadAmount, "Incorrect download amount")
+        assertEquals(2, usage[3].uploadAmount, "Incorrect upload amount")
+
+        assertEquals(3, usage[4].downloadAmount, "Incorrect download amount")
+        assertEquals(4, usage[4].uploadAmount, "Incorrect upload amount")
+        assertEquals(3, usage[5].downloadAmount, "Incorrect download amount")
+        assertEquals(4, usage[5].uploadAmount, "Incorrect upload amount")
     }
 
 }
