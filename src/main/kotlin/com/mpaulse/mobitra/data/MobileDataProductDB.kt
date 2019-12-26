@@ -173,17 +173,22 @@ class MobileDataProductDB(
         return products
     }
 
-    fun addDataUsage(product: MobileDataProduct, downloadAmount: Long = 0, uploadAmount: Long = 0) {
+    fun addDataUsage(
+            product: MobileDataProduct,
+            downloadAmount: Long = 0,
+            uploadAmount: Long = 0,
+            timestamp: LocalDateTime = LocalDateTime.now()) {
         try {
             conn.prepareStatement(
                     """
                     INSERT INTO mobile_data_usage (
                         id, timestamp, download_amount, upload_amount
-                    ) VALUES (?, NOW(), ?, ?)
+                    ) VALUES (?, ?, ?, ?)
                     """.trimIndent()).use { stmt ->
                 stmt.setObject(1, product.id)
-                stmt.setLong(2, downloadAmount);
-                stmt.setLong(3, uploadAmount)
+                stmt.setTimestamp(2, Timestamp.valueOf(timestamp))
+                stmt.setLong(3, downloadAmount);
+                stmt.setLong(4, uploadAmount)
                 stmt.executeUpdate()
             }
         } catch (e: SQLException) {

@@ -26,20 +26,51 @@ import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
 import java.nio.file.Path
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.random.Random
 
 val productDB = MobileDataProductDB(Path.of(System.getProperty("user.home"), ".Mobitra"))
 
 fun generateProductData(productName: String, totalAmount: Long, startDate: LocalDate, expiryDate: LocalDate) {
+    val usedAmount = Random.nextLong(0, totalAmount)
+    var remAmount = totalAmount - usedAmount
+
     val product = MobileDataProduct(
         UUID.randomUUID(),
         productName,
         totalAmount,
-        Random.nextLong(0, totalAmount),
+        usedAmount,
         expiryDate)
     println("Generating data for product: $product")
     productDB.storeProduct(product)
+
+    val now = LocalDateTime.now()
+    val endTimestamp =
+        if (now.toLocalDate() < expiryDate) now
+        else expiryDate.atStartOfDay()
+    var timestamp = startDate.atStartOfDay()
+
+    val maxBytesPerHour = 268_435_456L
+    while (remAmount > 0 && timestamp < endTimestamp) {
+        var max = if (remAmount > maxBytesPerHour) maxBytesPerHour else remAmount
+        val downloadAmount = Random.nextLong(0, max + 1)
+        remAmount -= downloadAmount
+
+        max = if (remAmount > maxBytesPerHour) maxBytesPerHour else remAmount
+        val uploadAmount =
+            if (remAmount > 0) Random.nextLong(0, max + 1)
+            else 0
+        remAmount -= uploadAmount
+
+        productDB.addDataUsage(
+            product,
+            downloadAmount,
+            uploadAmount,
+            timestamp)
+
+        timestamp = timestamp.plusHours(1)
+    }
 }
 
 fun main() {
