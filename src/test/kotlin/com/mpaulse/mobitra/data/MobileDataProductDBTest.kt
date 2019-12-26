@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -135,8 +136,8 @@ class MobileDataProductDBTest {
 
         val usage = productDB.getDataUsage(
             product,
-            LocalDate.now().atStartOfDay(),
-            LocalDate.now().plusDays(1).atStartOfDay())
+            LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant(),
+            LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant())
 
         assertEquals(4, usage.size, "Incorrect no. usage data")
 

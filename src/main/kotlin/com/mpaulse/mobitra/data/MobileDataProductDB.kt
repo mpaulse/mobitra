@@ -28,7 +28,7 @@ import java.sql.Date
 import java.sql.DriverManager
 import java.sql.SQLException
 import java.sql.Timestamp
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.LinkedList
 import java.util.UUID
 
@@ -177,7 +177,7 @@ class MobileDataProductDB(
             product: MobileDataProduct,
             downloadAmount: Long = 0,
             uploadAmount: Long = 0,
-            timestamp: LocalDateTime = LocalDateTime.now()) {
+            timestamp: Instant = Instant.now()) {
         try {
             conn.prepareStatement(
                     """
@@ -186,7 +186,7 @@ class MobileDataProductDB(
                     ) VALUES (?, ?, ?, ?)
                     """.trimIndent()).use { stmt ->
                 stmt.setObject(1, product.id)
-                stmt.setTimestamp(2, Timestamp.valueOf(timestamp))
+                stmt.setTimestamp(2, Timestamp.from(timestamp))
                 stmt.setLong(3, downloadAmount);
                 stmt.setLong(4, uploadAmount)
                 stmt.executeUpdate()
@@ -198,8 +198,8 @@ class MobileDataProductDB(
 
     fun getDataUsage(
         resource: MobileDataProduct,
-        timestampFrom: LocalDateTime = LocalDateTime.now(),
-        timestampTo: LocalDateTime = LocalDateTime.now()
+        timestampFrom: Instant = Instant.now(),
+        timestampTo: Instant = Instant.now()
     ): List<MobileDataUsage> {
         val usage = LinkedList<MobileDataUsage>()
         try {
@@ -210,12 +210,12 @@ class MobileDataProductDB(
                     WHERE id = ? AND timestamp >= ? AND timestamp <= ?
                     """.trimIndent()).use { stmt ->
                 stmt.setObject(1, resource.id)
-                stmt.setTimestamp(2, Timestamp.valueOf(timestampFrom))
-                stmt.setTimestamp(3, Timestamp.valueOf(timestampTo))
+                stmt.setTimestamp(2, Timestamp.from(timestampFrom))
+                stmt.setTimestamp(3, Timestamp.from(timestampTo))
                 stmt.executeQuery().use { rs ->
                     while (rs.next()) {
                         usage += MobileDataUsage(
-                            rs.getTimestamp(1).toLocalDateTime(),
+                            rs.getTimestamp(1).toInstant(),
                             rs.getLong(2),
                             rs.getLong(3))
                     }

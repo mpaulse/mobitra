@@ -25,8 +25,10 @@ package com.mpaulse.mobitra
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
 import java.nio.file.Path
+import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlin.random.Random
 
@@ -45,11 +47,10 @@ fun generateProductData(productName: String, totalAmount: Long, startDate: Local
     println("Generating data for product: $product")
     productDB.storeProduct(product)
 
-    val now = LocalDateTime.now()
-    val endTimestamp =
-        if (now.toLocalDate() < expiryDate) now
-        else expiryDate.atStartOfDay()
-    var timestamp = startDate.atStartOfDay()
+    val now = Instant.now()
+    val expiry = expiryDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
+    val endTimestamp = if (now < expiry) now else expiry
+    var timestamp = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
 
     val maxBytesPerHour = 268_435_456L
     while (remAmount > 0 && timestamp < endTimestamp) {
@@ -69,7 +70,7 @@ fun generateProductData(productName: String, totalAmount: Long, startDate: Local
             uploadAmount,
             timestamp)
 
-        timestamp = timestamp.plusHours(1)
+        timestamp = timestamp.plus(1, ChronoUnit.HOURS)
     }
 }
 

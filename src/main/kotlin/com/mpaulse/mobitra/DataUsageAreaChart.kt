@@ -20,22 +20,30 @@
  * SOFTWARE.
  */
 
-package com.mpaulse.mobitra.data
+package com.mpaulse.mobitra
 
-import java.time.Instant
-import java.time.LocalDate
-import java.util.UUID
+import com.mpaulse.mobitra.data.MobileDataProduct
+import com.mpaulse.mobitra.data.MobileDataUsage
+import javafx.scene.chart.AreaChart
+import javafx.scene.chart.NumberAxis
 
-data class MobileDataProduct(
-    val id: UUID,
-    val name: String,
-    val totalAmount: Long,
-    val usedAmount: Long,
-    val expiryDate: LocalDate
-)
+class DataUsageAreaChart(
+    product: MobileDataProduct,
+    usageData: List<MobileDataUsage>
+): AreaChart<Number, Number>(NumberAxis(), NumberAxis()) {
 
-data class MobileDataUsage(
-    val timestamp: Instant,
-    val downloadAmount: Long = 0,
-    val uploadAmount: Long = 0
-)
+    private val dataSeries = Series<Number, Number>()
+
+    init {
+        for (usage in usageData) {
+
+        }
+    }
+
+    fun addDataUsage(dataUsage: MobileDataUsage) {
+        //dataSeries.data.add(Data(
+        //    dataUsage.timestamp.toEpochSecond(),
+        //    dataUsage.downloadAmount + dataUsage.uploadAmount))
+    }
+
+}
