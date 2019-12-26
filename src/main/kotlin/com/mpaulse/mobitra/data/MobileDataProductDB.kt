@@ -56,7 +56,7 @@ class MobileDataProductDB(
             conn.autoCommit = false
 
             var exists = false
-            conn.prepareStatement("SELECT id FROM mobile_data_product WHERE id = ?").use { stmt ->
+            conn.prepareStatement("SELECT id FROM mobile_data_products WHERE id = ?").use { stmt ->
                 stmt.setObject(1, product.id)
                 stmt.executeQuery().use { rs ->
                     exists = rs.next()
@@ -66,7 +66,7 @@ class MobileDataProductDB(
             if (!exists) {
                 conn.prepareStatement(
                         """
-                        INSERT INTO mobile_data_product (
+                        INSERT INTO mobile_data_products (
                             id, name, total_amount, used_amount, expiry_date, update_timestamp
                         ) VALUES (?, ?, ?, ?, ?, NOW())
                         """.trimIndent()).use { stmt ->
@@ -80,7 +80,7 @@ class MobileDataProductDB(
             } else {
                 conn.prepareStatement(
                         """
-                            UPDATE mobile_data_product SET
+                            UPDATE mobile_data_products SET
                             name = ?,
                             total_amount = ?,
                             used_amount = ?,
@@ -118,7 +118,7 @@ class MobileDataProductDB(
             conn.prepareStatement(
                     """
                     SELECT name, total_amount, used_amount, expiry_date
-                    FROM mobile_data_product
+                    FROM mobile_data_products
                     WHERE id = ?
                     """.trimIndent()).use { stmt ->
                 stmt.setObject(1, id)
@@ -139,17 +139,26 @@ class MobileDataProductDB(
         throw MobileDataProductDBException("Failed to retrieve unknown product: $id")
     }
 
-    fun getProducts(): List<MobileDataProduct> {
-        val product = LinkedList<MobileDataProduct>()
+    fun getAllProducts(): List<MobileDataProduct> {
+        return getProducts()
+    }
+
+    fun getActiveProducts(): List<MobileDataProduct> {
+        return getProducts(activeOnly = true)
+    }
+
+    private fun getProducts(activeOnly: Boolean = false): List<MobileDataProduct> {
+        val products = LinkedList<MobileDataProduct>()
         try {
             conn.createStatement().use { stmt ->
                 stmt.executeQuery(
                         """
                         SELECT id, name, total_amount, used_amount, expiry_date
-                        FROM mobile_data_product
-                        """.trimIndent()).use { rs ->
+                        FROM mobile_data_products
+                        """.trimIndent()
+                        + if (activeOnly) " WHERE expiry_date > NOW()" else "").use { rs ->
                     while (rs.next()) {
-                        product += MobileDataProduct(
+                        products += MobileDataProduct(
                             rs.getObject(1, UUID::class.java),
                             rs.getString(2),
                             rs.getLong(3),
@@ -161,7 +170,7 @@ class MobileDataProductDB(
         } catch (e: SQLException) {
             throw MobileDataProductDBException("Error retrieving products", e)
         }
-        return product
+        return products
     }
 
     fun addDataUsage(product: MobileDataProduct, downloadAmount: Long = 0, uploadAmount: Long = 0) {
@@ -213,6 +222,16 @@ class MobileDataProductDB(
         return usage
     }
 
+    fun clearAllData() {
+        try {
+            conn.createStatement().use { stmt ->
+                stmt.executeUpdate("DELETE FROM mobile_data_products")
+            }
+        } catch (e: SQLException) {
+            throw MobileDataProductDBException("Failed to clear data", e)
+        }
+    }
+
     fun close() {
         try {
             conn.createStatement().use { stmt ->
@@ -227,7 +246,7 @@ class MobileDataProductDB(
         conn.createStatement().use { stmt ->
             stmt.execute(
                 """
-                CREATE TABLE IF NOT EXISTS mobile_data_product (
+                CREATE TABLE IF NOT EXISTS mobile_data_products (
                     id UUID NOT NULL PRIMARY KEY,
                     name VARCHAR(255) NOT NULL,
                     total_amount BIGINT NOT NULL,
@@ -238,12 +257,12 @@ class MobileDataProductDB(
                 """.trimIndent())
             stmt.execute(
                 """
-                CREATE INDEX IF NOT EXISTS ix_prod_exp_date ON mobile_data_product (expiry_date ASC)
+                CREATE INDEX IF NOT EXISTS ix_prod_exp_date ON mobile_data_products (expiry_date ASC)
                 """.trimIndent())
             stmt.execute(
                 """
                 CREATE CACHED TABLE IF NOT EXISTS mobile_data_usage (
-                    id UUID NOT NULL FOREIGN KEY REFERENCES mobile_data_product(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                    id UUID NOT NULL FOREIGN KEY REFERENCES mobile_data_products(id) ON DELETE CASCADE ON UPDATE CASCADE,
                     timestamp TIMESTAMP NOT NULL,
                     download_amount BIGINT DEFAULT 0 NOT NULL,
                     upload_amount BIGINT DEFAULT 0 NOT NULL

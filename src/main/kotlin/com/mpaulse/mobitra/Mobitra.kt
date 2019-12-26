@@ -69,7 +69,7 @@ class MobitraApplication: Application() {
             logger.error("Application error", e)
         }
 
-        products = productDB.getProducts()
+        products = productDB.getActiveProducts()
 
         createMainWindow(stage)
         noDataPane = loadFXMLPane("NoDataPane")
@@ -78,6 +78,13 @@ class MobitraApplication: Application() {
         initControls()
         onViewActiveProducts()
         mainWindow.show()
+    }
+
+    override fun stop() {
+        productDB.close()
+        appData.windowPosition = Pair(mainWindow.x, mainWindow.y)
+        appData.windowSize = Pair(mainWindow.width, mainWindow.height)
+        appData.save()
     }
 
     private fun createMainWindow(stage: Stage) {

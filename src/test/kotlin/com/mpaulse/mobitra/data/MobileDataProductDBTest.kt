@@ -35,7 +35,7 @@ val TEST_DATA_PATH: Path = Path.of("src/test/data")
 
 class MobileDataProductDBTest {
 
-    var productDB: MobileDataProductDB? = null
+    lateinit var productDB: MobileDataProductDB
 
     @BeforeEach
     fun setUp() {
@@ -45,7 +45,7 @@ class MobileDataProductDBTest {
 
     @AfterEach
     fun tearDown() {
-        productDB?.close()
+        productDB.close()
     }
 
     @Test
@@ -56,13 +56,13 @@ class MobileDataProductDBTest {
             7832478178423,
             32895894578,
             LocalDate.now())
-        productDB!!.storeProduct(product)
-        val product2 = productDB!!.getProduct(product.id)
+        productDB.storeProduct(product)
+        val product2 = productDB.getProduct(product.id)
         assertEquals(product, product2)
     }
 
     @Test
-    fun `getProduct - available`() {
+    fun `getAllProducts - available`() {
         val productList = mutableListOf<MobileDataProduct>()
         for (i in 0..9) {
             val product = MobileDataProduct(
@@ -71,11 +71,11 @@ class MobileDataProductDBTest {
                 i.toLong(),
                 i.toLong(),
                 LocalDate.now())
-            productDB!!.storeProduct(product)
+            productDB.storeProduct(product)
             productList += product
         }
 
-        val productSet = productDB!!.getProducts().toSet()
+        val productSet = productDB.getAllProducts().toSet()
         assertEquals(productList.size, productSet.size, "Incorrect no. products")
         for (product in productList) {
             assertTrue(product in productSet, "Product not found:\n$product")
@@ -83,9 +83,39 @@ class MobileDataProductDBTest {
     }
 
     @Test
-    fun `getProducts - none`() {
-        val products = productDB!!.getProducts()
+    fun `getAllProducts - none`() {
+        val products = productDB.getAllProducts()
         assertTrue(products.isEmpty())
+    }
+
+    @Test
+    fun `getActiveProducts - available`() {
+        val activeProductList = mutableListOf<MobileDataProduct>()
+        for (i in 0..9) {
+            val product = MobileDataProduct(
+                UUID.randomUUID(),
+                "Test getProduct $i",
+                i.toLong(),
+                i.toLong(),
+                LocalDate.now())
+            productDB.storeProduct(product)
+        }
+        for (i in 10..12) {
+            val product = MobileDataProduct(
+                UUID.randomUUID(),
+                "Test getProduct $i",
+                i.toLong(),
+                i.toLong(),
+                LocalDate.now().plusDays(1))
+            productDB.storeProduct(product)
+            activeProductList += product
+        }
+
+        val productSet = productDB.getActiveProducts().toSet()
+        assertEquals(activeProductList.size, productSet.size, "Incorrect no. products")
+        for (product in activeProductList) {
+            assertTrue(product in productSet, "Product not found:\n$product")
+        }
     }
 
     @Test
@@ -96,14 +126,14 @@ class MobileDataProductDBTest {
             7832478178423,
             32895894578,
             LocalDate.now())
-        productDB!!.storeProduct(product)
+        productDB.storeProduct(product)
 
-        productDB!!.addDataUsage(product)
-        productDB!!.addDataUsage(product, 1)
-        productDB!!.addDataUsage(product, uploadAmount = 2)
-        productDB!!.addDataUsage(product, 3, 4)
+        productDB.addDataUsage(product)
+        productDB.addDataUsage(product, 1)
+        productDB.addDataUsage(product, uploadAmount = 2)
+        productDB.addDataUsage(product, 3, 4)
 
-        val usage = productDB!!.getDataUsage(
+        val usage = productDB.getDataUsage(
             product,
             LocalDate.now().atStartOfDay(),
             LocalDate.now().plusDays(1).atStartOfDay())
