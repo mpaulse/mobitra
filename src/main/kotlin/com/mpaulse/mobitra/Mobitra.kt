@@ -25,14 +25,18 @@
 package com.mpaulse.mobitra
 
 import com.mpaulse.mobitra.data.ApplicationData
+import com.mpaulse.mobitra.data.MobileDataProduct
+import com.mpaulse.mobitra.data.MobileDataProductDB
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
+import javafx.scene.control.ChoiceBox
 import javafx.scene.control.ToggleButton
 import javafx.scene.control.ToggleGroup
+import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Region
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
@@ -46,30 +50,44 @@ private val homePath = Path.of(System.getProperty("user.home"), ".Mobitra")
 class MobitraApplication: Application() {
 
     private val appData = ApplicationData(homePath)
+    private val productDB = MobileDataProductDB(homePath)
+    private lateinit var products: List<MobileDataProduct>
     private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
 
     private lateinit var mainWindow: Stage
+    @FXML private lateinit var mainWindowPane: BorderPane
+    private lateinit var activeProductsPane: BorderPane
+    private lateinit var historyPane: BorderPane
+    private lateinit var noDataPane: Region
+
     @FXML private lateinit var historyBtn: ToggleButton
-    @FXML private lateinit var summaryBtn: ToggleButton
+    @FXML private lateinit var activeProductsBtn: ToggleButton
+    @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
 
     override fun start(stage: Stage) {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
             logger.error("Application error", e)
         }
 
+        products = productDB.getProducts()
+
         createMainWindow(stage)
+        noDataPane = loadFXMLPane("NoDataPane")
+        createActiveProductsPane()
+        createHistoryPane()
         initControls()
+        onViewActiveProducts()
         mainWindow.show()
     }
 
     private fun createMainWindow(stage: Stage) {
         mainWindow = stage
-        mainWindow.scene = Scene(loadFXMLPane("MainWindow", this))
+        mainWindow.scene = Scene(loadFXMLPane("MainWindow"))
         //mainWindow?.scene?.stylesheets?.add("styles/Main.css")
-        mainWindow.width = if (appData.windowSize.first >= 200.0) appData.windowSize.first else 200.0
-        mainWindow.minWidth = 200.0
-        mainWindow.height = if (appData.windowSize.second >= 200.0) appData.windowSize.second else 200.0
-        mainWindow.minHeight = 200.0
+        mainWindow.minWidth = 600.0
+        mainWindow.width = if (appData.windowSize.first >= mainWindow.minWidth) appData.windowSize.first else mainWindow.minWidth
+        mainWindow.minHeight = 480.0
+        mainWindow.height = if (appData.windowSize.second >= mainWindow.minHeight) appData.windowSize.second else mainWindow.minHeight
         //mainWindow?.icons?.add(Images.get("images/Mobitra.png"))
 
         val pos = appData.windowPosition
@@ -83,30 +101,63 @@ class MobitraApplication: Application() {
         mainWindow.title = APP_NAME
     }
 
-    private fun initControls() {
-        val toggleGroup = ToggleGroup()
-        summaryBtn.toggleGroup = toggleGroup
-        historyBtn.toggleGroup = toggleGroup
-        summaryBtn.selectedProperty().set(true)
+    private fun createActiveProductsPane() {
+        activeProductsPane = loadFXMLPane("ActiveProductsPane")
+
+        val allProductsItem = ActiveProductMenuItem("All", null)
+        activeProductsMenu.items.add(allProductsItem)
+        for (product in products) {
+            activeProductsMenu.items.add(ActiveProductMenuItem(product.name, product.id))
+        }
+        activeProductsMenu.value = allProductsItem
+
+        activeProductsMenu.setOnAction {
+            onActiveProductSelected(it)
+        }
     }
 
-    private fun loadFXMLPane(pane: String, controller: Any): Region {
+    private fun createHistoryPane() {
+        historyPane = BorderPane()
+        historyPane.center = noDataPane
+    }
+
+    private fun initControls() {
+        val toggleGroup = ToggleGroup()
+        activeProductsBtn.toggleGroup = toggleGroup
+        historyBtn.toggleGroup = toggleGroup
+        activeProductsBtn.selectedProperty().set(true)
+    }
+
+    private fun <T> loadFXMLPane(pane: String): T {
         val loader = FXMLLoader()
-        loader.setController(controller)
+        loader.setController(this)
         loader.setControllerFactory {
-            controller // Needed for imported/nested FXML files
+            this // Needed for imported/nested FXML files
         }
-        loader.location = controller.javaClass.getResource("/fxml/$pane.fxml")
-        return loader.load<Region>()
+        loader.location = javaClass.getResource("/fxml/$pane.fxml")
+        return loader.load<T>()
     }
 
     @FXML
-    fun onViewSummary(event: ActionEvent) {
-        event.consume()
+    fun onViewActiveProducts(event: ActionEvent? = null) {
+        mainWindowPane.center = activeProductsPane
+        if (products.isEmpty()) {
+            activeProductsPane.center = noDataPane
+        }
+        event?.consume()
     }
 
     @FXML
     fun onViewHistory(event: ActionEvent) {
+        mainWindowPane.center = historyPane
+        if (products.isEmpty()) {
+            historyPane.center = noDataPane
+        }
+        event.consume()
+    }
+
+    fun onActiveProductSelected(event: ActionEvent) {
+        println(event)
         event.consume()
     }
 
