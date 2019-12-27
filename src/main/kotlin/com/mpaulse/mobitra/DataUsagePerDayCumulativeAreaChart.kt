@@ -25,16 +25,21 @@ package com.mpaulse.mobitra
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataUsage
 import javafx.scene.chart.AreaChart
-import javafx.scene.chart.CategoryAxis
 import javafx.scene.chart.NumberAxis
+import javafx.util.StringConverter
+import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 class DataUsagePerDayCumulativeAreaChart(
-    product: MobileDataProduct,
+    private val product: MobileDataProduct,
     usageData: List<MobileDataUsage>
-): AreaChart<String, Number>(CategoryAxis(), NumberAxis()) {
+): AreaChart<Number, Number>(
+        NumberAxis(0.0, dateToXValue(product.expiryDate.plusDays(5), product).toDouble(), 1.0),
+        NumberAxis()) {
 
-    private val dataSeries = Series<String, Number>()
+    private val dataSeries = Series<Number, Number>()
 
     private var usedAmount = 0L
 
@@ -42,10 +47,20 @@ class DataUsagePerDayCumulativeAreaChart(
         createSymbols = false
         isLegendVisible = false
         
-        val xAxis = xAxis as CategoryAxis
-        xAxis.isGapStartAndEnd = false
-        xAxis.isTickLabelsVisible = false
-        xAxis.isTickMarkVisible = false
+        val xAxis = xAxis as NumberAxis
+        xAxis.minorTickCount = 0
+        xAxis.tickLabelFormatter = object: StringConverter<Number>() {
+            private val todayXValue = dateToXValue(LocalDate.now(), product).toDouble()
+            private val expiryDateXValue = dateToXValue(product.expiryDate, product).toDouble()
+            override fun toString(n: Number) =
+                when (n) {
+                    0.0 -> "Activation\n${product.activationDate}"
+                    todayXValue -> "Today\n${LocalDate.now()}"
+                    expiryDateXValue -> "Expiry\n${product.expiryDate}"
+                    else -> ""
+                }
+            override fun fromString(s: String) = null
+        }
 
         if (usageData.isNotEmpty()) {
             // Account for data usage at the beginning of the product period that was not tracked
@@ -64,14 +79,26 @@ class DataUsagePerDayCumulativeAreaChart(
             }
         }
 
-        data.add(dataSeries)
+        // An upper bound line to express the product total amount.
+        val upperBoundSeries = Series<Number, Number>()
+        upperBoundSeries.data.add(Data(0, product.totalAmount))
+        upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate, product), product.totalAmount))
+
+        data.addAll(dataSeries, upperBoundSeries)
     }
 
     fun addDataUsage(dataUsage: MobileDataUsage) {
         usedAmount += dataUsage.downloadAmount + dataUsage.uploadAmount
         dataSeries.data.add(Data(
-            dataUsage.timestamp.atZone(ZoneId.systemDefault()).toLocalDate().toString(),
+            timestampToXValue(dataUsage.timestamp, product),
             usedAmount))
     }
 
 }
+
+private fun dateToXValue(date: LocalDate, product: MobileDataProduct) =
+    product.activationDate.until(date, ChronoUnit.DAYS)
+
+private fun timestampToXValue(timestamp: Instant, product: MobileDataProduct) =
+    dateToXValue(timestamp.atZone(ZoneId.systemDefault()).toLocalDate(), product)
+

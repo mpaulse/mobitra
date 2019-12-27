@@ -40,7 +40,7 @@ fun generateProductData(
     activationDate: LocalDate,
     expiryDate: LocalDate
 ) {
-    val usedAmount = Random.nextLong(0, totalAmount)
+    val usedAmount = Random.nextLong(0, totalAmount / 3)
     var remAmount = totalAmount - usedAmount
 
     val product = MobileDataProduct(
@@ -83,22 +83,22 @@ fun generateProductData(
 fun main() {
     productDB.clearAllData()
 
-    val months = 14L + 3
+    val months = 14L
     val today = LocalDate.now()
     var date = today.minusMonths(months)
 
     for (m in 0..months) {
-        val totalAmount = Random.nextLong(10, 226) * 1_073_741_824
+        val totalAmount = 225L * 1_073_741_824
         generateProductData(
             "Once-off LTE/LTE-A Anytime Data",
             totalAmount,
             date,
-            date.plusMonths(2))
+            date.plusDays(60))
         generateProductData(
             "Once-off LTE/LTE-A Night Surfer Data",
             totalAmount,
             date,
-            date.plusMonths(1))
+            date.plusDays(30))
         date = date.plusMonths(1)
     }
 

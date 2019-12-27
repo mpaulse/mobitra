@@ -40,6 +40,9 @@ class DataUsageBarChart(
         downloadDataSeries.name = "Download"
         uploadDataSeries.name = "Upload"
 
+        val xAxis = xAxis as CategoryAxis
+        xAxis.isGapStartAndEnd = false
+
         for (usage in dataUsage) {
             addDataUsage(usage)
         }
