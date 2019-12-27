@@ -32,6 +32,16 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
+private const val GB = 1_073_741_824
+private const val MB = 1_048_576
+private const val KB = 1_024
+
+private fun dateToXValue(date: LocalDate, product: MobileDataProduct) =
+    product.activationDate.until(date, ChronoUnit.DAYS)
+
+private fun timestampToXValue(timestamp: Instant, product: MobileDataProduct) =
+    dateToXValue(timestamp.atZone(ZoneId.systemDefault()).toLocalDate(), product)
+
 class DataUsagePerDayCumulativeAreaChart(
     private val product: MobileDataProduct,
     usageData: List<MobileDataUsage>
@@ -44,21 +54,38 @@ class DataUsagePerDayCumulativeAreaChart(
     private var usedAmount = 0L
 
     init {
+        title = "Cumulative data usage per day"
         createSymbols = false
         isLegendVisible = false
         
         val xAxis = xAxis as NumberAxis
         xAxis.minorTickCount = 0
         xAxis.tickLabelFormatter = object: StringConverter<Number>() {
-            private val todayXValue = dateToXValue(LocalDate.now(), product).toDouble()
-            private val expiryDateXValue = dateToXValue(product.expiryDate, product).toDouble()
+            private val todayXValue = dateToXValue(LocalDate.now(), product)
+            private val expiryDateXValue = dateToXValue(product.expiryDate, product)
             override fun toString(n: Number) =
-                when (n) {
-                    0.0 -> "Activation\n${product.activationDate}"
+                when (n.toLong()) {
+                    0L -> "Activation\n${product.activationDate}"
                     todayXValue -> "Today\n${LocalDate.now()}"
                     expiryDateXValue -> "Expiry\n${product.expiryDate}"
                     else -> ""
                 }
+            override fun fromString(s: String) = null
+        }
+
+        val yAxis = yAxis as NumberAxis
+        yAxis.tickLabelFormatter = object: StringConverter<Number>() {
+            override fun toString(n: Number): String {
+                val d = n.toDouble()
+                if (d >= GB) {
+                    return "%.2f GB".format(d / GB)
+                } else if (d >= MB) {
+                    return "%.2f MB".format(d / MB)
+                } else if (d >= KB) {
+                    return "%.2f KB".format(d / KB)
+                }
+                return "${d.toLong()} B"
+            }
             override fun fromString(s: String) = null
         }
 
@@ -95,10 +122,3 @@ class DataUsagePerDayCumulativeAreaChart(
     }
 
 }
-
-private fun dateToXValue(date: LocalDate, product: MobileDataProduct) =
-    product.activationDate.until(date, ChronoUnit.DAYS)
-
-private fun timestampToXValue(timestamp: Instant, product: MobileDataProduct) =
-    dateToXValue(timestamp.atZone(ZoneId.systemDefault()).toLocalDate(), product)
-
