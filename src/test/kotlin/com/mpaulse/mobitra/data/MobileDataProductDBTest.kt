@@ -121,7 +121,7 @@ class MobileDataProductDBTest {
     }
 
     @Test
-    fun `addDataUsage and getDataUsage`() {
+    fun `addDataUsage and getDataUsage for product`() {
         val product = MobileDataProduct(
             UUID.randomUUID(),
             "Test addDataUsage and getDataUsage",

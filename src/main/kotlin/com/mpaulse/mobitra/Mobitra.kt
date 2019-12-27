@@ -176,10 +176,13 @@ class MobitraApplication: Application() {
 
     @FXML
     fun onViewHistory(event: ActionEvent) {
-        mainWindowPane.center = historyPane
-        if (activeProducts.isEmpty()) {
+        val dataUsage = productDB.getAllProductDataUsagePerMonth()
+        if (dataUsage.isNotEmpty()) {
+            historyPane.center = DataUsageBarChart(dataUsage)
+        } else {
             historyPane.center = noDataPane
         }
+        mainWindowPane.center = historyPane
         event.consume()
     }
 
@@ -192,7 +195,7 @@ class MobitraApplication: Application() {
             if (productId != null) {
                 product = activeProducts[productId]
                 if (product != null) {
-                    dataUsage = productDB.getDataUsagePerDay(product)
+                    dataUsage = productDB.getProductDataUsagePerDay(product)
                 }
             } else {
                 var totalAmount = 0L
@@ -219,7 +222,7 @@ class MobitraApplication: Application() {
             val charts = VBox()
             charts.children.addAll(
                 DataUsageAreaChart(product, dataUsage),
-                DataUsageBarChart(product, dataUsage))
+                DataUsageBarChart(dataUsage))
             activeProductsPane.center = charts
         } else {
             activeProductsPane.center = noDataPane

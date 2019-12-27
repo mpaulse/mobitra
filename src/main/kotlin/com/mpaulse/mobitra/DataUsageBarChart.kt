@@ -29,7 +29,7 @@ import javafx.scene.chart.NumberAxis
 import javafx.scene.chart.StackedBarChart
 
 class DataUsageBarChart(
-    product: MobileDataProduct,
+    //product: MobileDataProduct?,
     dataUsage: List<MobileDataUsage>
 ): StackedBarChart<String, Number>(CategoryAxis(), NumberAxis()) {
 

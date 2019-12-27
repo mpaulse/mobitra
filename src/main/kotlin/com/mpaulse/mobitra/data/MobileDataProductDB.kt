@@ -176,10 +176,11 @@ class MobileDataProductDB(
     }
 
     fun addDataUsage(
-            product: MobileDataProduct,
-            downloadAmount: Long = 0,
-            uploadAmount: Long = 0,
-            timestamp: Instant = Instant.now()) {
+        product: MobileDataProduct,
+        downloadAmount: Long = 0,
+        uploadAmount: Long = 0,
+        timestamp: Instant = Instant.now()
+    ) {
         try {
             conn.prepareStatement(
                     """
@@ -199,7 +200,7 @@ class MobileDataProductDB(
     }
 
     fun getDataUsage(
-        product: MobileDataProduct,
+        product: MobileDataProduct? = null,
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
     ): List<MobileDataUsage> {
         val dataUsage = LinkedList<MobileDataUsage>()
@@ -208,9 +209,11 @@ class MobileDataProductDB(
                     """
                     SELECT timestamp, download_amount, upload_amount
                     FROM mobile_data_usage
-                    WHERE id = ?
-                    """.trimIndent()).use { stmt ->
-                stmt.setObject(1, product.id)
+                    """.trimIndent()
+                    + (if (product != null) " WHERE id = ?" else "")).use { stmt ->
+                if (product != null) {
+                    stmt.setObject(1, product.id)
+                }
                 stmt.executeQuery().use { rs ->
                     readDataUsage(rs, dataUsage, timestampsEqual)
                 }
@@ -221,8 +224,11 @@ class MobileDataProductDB(
         return dataUsage
     }
 
-    fun getDataUsagePerDay(product: MobileDataProduct) =
+    fun getProductDataUsagePerDay(product: MobileDataProduct) =
         getDataUsage(product, ::timestampsEqualByDay)
+
+    fun getAllProductDataUsagePerMonth() =
+        getDataUsage(timestampsEqual = ::timestampsEqualByMonth)
 
     fun getActiveProductDataUsage(
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
