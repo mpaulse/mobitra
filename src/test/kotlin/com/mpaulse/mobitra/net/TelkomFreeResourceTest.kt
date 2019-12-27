@@ -22,10 +22,12 @@
 
 package com.mpaulse.mobitra.net
 
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.Month
 
 class TelkomFreeResourceTest {
 
@@ -62,6 +64,30 @@ class TelkomFreeResourceTest {
             23432432,
             LocalDate.now())
         assertFalse(resource.isMobileData)
+    }
+
+    @Test
+    fun `activationDate - night surfer data`() {
+        val resource = TelkomFreeResource(
+            "5125",
+            "LTE",
+            "GPRS",
+            21343254,
+            23432432,
+            LocalDate.of(2019, Month.DECEMBER, 31))
+        assertEquals(LocalDate.of(2019, Month.DECEMBER, 1), resource.activationDate)
+    }
+
+    @Test
+    fun `activationDate - anytime data`() {
+        val resource = TelkomFreeResource(
+            "5127",
+            "LTE",
+            "GPRS",
+            21343254,
+            23432432,
+            LocalDate.of(2019, Month.DECEMBER, 31))
+        assertEquals(LocalDate.of(2019, Month.NOVEMBER, 1), resource.activationDate)
     }
 
 }

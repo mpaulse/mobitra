@@ -31,6 +31,7 @@ data class MobileDataProduct(
     val name: String,
     val totalAmount: Long,
     val usedAmount: Long,
+    val activationDate: LocalDate,
     val expiryDate: LocalDate
 )
 

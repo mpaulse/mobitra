@@ -70,6 +70,19 @@ data class TelkomFreeResource(
 
     val id: UUID
 
+    val activationDate: LocalDate?
+        get() {
+            if (isMobileData) {
+                when (type) {
+                    TelkomFreeResourceType.LTE_ONCE_OFF_NIGHT_SURFER_DATA.string
+                        -> return expiryDate.minusDays(30)
+                    TelkomFreeResourceType.LTE_ONCE_OFF_ANYTIME_DATA.string
+                        -> return expiryDate.minusDays(60)
+                }
+            }
+            return null
+        }
+
     init {
         val digest = MessageDigest.getInstance("MD5")
         digest.update(type.toByteArray())
@@ -83,6 +96,11 @@ data class TelkomFreeResource(
             service.toUpperCase() == "GPRS"
                 && type !in setOf("5124", "5749", "5135", "5136", "5149", "5177")
 
+}
+
+enum class TelkomFreeResourceType(val string: String) {
+    LTE_ONCE_OFF_NIGHT_SURFER_DATA("5125"),
+    LTE_ONCE_OFF_ANYTIME_DATA("5127")
 }
 
 private class TelkomFreeResourcesDeserializer

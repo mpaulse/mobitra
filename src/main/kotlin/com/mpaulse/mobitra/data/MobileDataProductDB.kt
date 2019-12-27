@@ -69,14 +69,15 @@ class MobileDataProductDB(
                 conn.prepareStatement(
                         """
                         INSERT INTO mobile_data_products (
-                            id, name, total_amount, used_amount, expiry_date, update_timestamp
-                        ) VALUES (?, ?, ?, ?, ?, NOW())
+                            id, name, total_amount, used_amount, activation_date, expiry_date, update_timestamp
+                        ) VALUES (?, ?, ?, ?, ?, ?, NOW())
                         """.trimIndent()).use { stmt ->
                     stmt.setObject(1, product.id)
                     stmt.setString(2, product.name)
                     stmt.setLong(3, product.totalAmount)
                     stmt.setLong(4, product.usedAmount)
-                    stmt.setDate(5, Date.valueOf(product.expiryDate))
+                    stmt.setDate(5, Date.valueOf(product.activationDate))
+                    stmt.setDate(6, Date.valueOf(product.expiryDate))
                     stmt.executeUpdate()
                 }
             } else {
@@ -86,6 +87,7 @@ class MobileDataProductDB(
                             name = ?,
                             total_amount = ?,
                             used_amount = ?,
+                            activation_date = ?,
                             expiry_date = ?,
                             update_timestamp = NOW()
                             WHERE id = ?
@@ -93,8 +95,9 @@ class MobileDataProductDB(
                     stmt.setString(1, product.name)
                     stmt.setLong(2, product.totalAmount)
                     stmt.setLong(3, product.usedAmount)
-                    stmt.setDate(4, Date.valueOf(product.expiryDate))
-                    stmt.setObject(5, product.id)
+                    stmt.setDate(4, Date.valueOf(product.activationDate))
+                    stmt.setDate(5, Date.valueOf(product.expiryDate))
+                    stmt.setObject(6, product.id)
                 }
             }
 
@@ -119,7 +122,7 @@ class MobileDataProductDB(
         try {
             conn.prepareStatement(
                     """
-                    SELECT name, total_amount, used_amount, expiry_date
+                    SELECT name, total_amount, used_amount, activation_date, expiry_date
                     FROM mobile_data_products
                     WHERE id = ?
                     """.trimIndent()).use { stmt ->
@@ -131,7 +134,8 @@ class MobileDataProductDB(
                             rs.getString(1),
                             rs.getLong(2),
                             rs.getLong(3),
-                            rs.getDate(4).toLocalDate())
+                            rs.getDate(4).toLocalDate(),
+                            rs.getDate(5).toLocalDate())
                     }
                 }
             }
@@ -155,7 +159,7 @@ class MobileDataProductDB(
             conn.createStatement().use { stmt ->
                 stmt.executeQuery(
                         """
-                        SELECT id, name, total_amount, used_amount, expiry_date
+                        SELECT id, name, total_amount, used_amount, activation_date, expiry_date
                         FROM mobile_data_products
                         """.trimIndent()
                         + if (activeOnly) " WHERE expiry_date > NOW()" else "").use { rs ->
@@ -165,7 +169,8 @@ class MobileDataProductDB(
                             rs.getString(2),
                             rs.getLong(3),
                             rs.getLong(4),
-                            rs.getDate(5).toLocalDate())
+                            rs.getDate(5).toLocalDate(),
+                            rs.getDate(6).toLocalDate())
                     }
                 }
             }
@@ -316,6 +321,7 @@ class MobileDataProductDB(
                     name VARCHAR(255) NOT NULL,
                     total_amount BIGINT NOT NULL,
                     used_amount BIGINT NOT NULL,
+                    activation_date DATE NULL,
                     expiry_date DATE NULL,
                     update_timestamp TIMESTAMP NOT NULL
                 )

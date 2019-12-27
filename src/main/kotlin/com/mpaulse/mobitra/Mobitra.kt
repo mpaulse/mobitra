@@ -200,10 +200,14 @@ class MobitraApplication: Application() {
             } else {
                 var totalAmount = 0L
                 var usedAmount = 0L
+                var activationDate: LocalDate? = null
                 var expiryDate: LocalDate? = null
                 for (p in activeProducts.values) {
                     totalAmount += p.totalAmount
                     usedAmount += p.usedAmount
+                    if (activationDate == null || activationDate > p.activationDate) {
+                        activationDate = p.activationDate
+                    }
                     if (expiryDate == null || expiryDate < p.expiryDate) {
                         expiryDate = p.expiryDate
                     }
@@ -213,6 +217,7 @@ class MobitraApplication: Application() {
                     "All",
                     totalAmount,
                     usedAmount,
+                    activationDate as LocalDate,
                     expiryDate as LocalDate)
                 dataUsage = productDB.getActiveProductDataUsagePerDay()
             }
@@ -221,7 +226,7 @@ class MobitraApplication: Application() {
         if (product != null && dataUsage != null) {
             val charts = VBox()
             charts.children.addAll(
-                DataUsageAreaChart(product, dataUsage),
+                DataUsagePerDayCumulativeAreaChart(product, dataUsage),
                 DataUsageBarChart(dataUsage))
             activeProductsPane.center = charts
         } else {

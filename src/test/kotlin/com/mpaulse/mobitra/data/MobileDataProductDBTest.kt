@@ -57,7 +57,8 @@ class MobileDataProductDBTest {
             "Test storeProduct and getProduct",
             7832478178423,
             32895894578,
-            LocalDate.now())
+            LocalDate.now(),
+            LocalDate.now().plusDays(1))
         productDB.storeProduct(product)
         val product2 = productDB.getProduct(product.id)
         assertEquals(product, product2)
@@ -72,7 +73,8 @@ class MobileDataProductDBTest {
                 "Test getProduct $i",
                 i.toLong(),
                 i.toLong(),
-                LocalDate.now())
+                LocalDate.now(),
+                LocalDate.now().plusDays(1))
             productDB.storeProduct(product)
             productList += product
         }
@@ -99,6 +101,7 @@ class MobileDataProductDBTest {
                 "Test getProduct $i",
                 i.toLong(),
                 i.toLong(),
+                LocalDate.now().minusDays(1),
                 LocalDate.now())
             productDB.storeProduct(product)
         }
@@ -108,6 +111,7 @@ class MobileDataProductDBTest {
                 "Test getProduct $i",
                 i.toLong(),
                 i.toLong(),
+                LocalDate.now(),
                 LocalDate.now().plusDays(1))
             productDB.storeProduct(product)
             activeProductList += product
@@ -127,7 +131,8 @@ class MobileDataProductDBTest {
             "Test addDataUsage and getDataUsage",
             7832478178423,
             32895894578,
-            LocalDate.now())
+            LocalDate.now(),
+            LocalDate.now().plusDays(1))
         productDB.storeProduct(product)
 
         productDB.addDataUsage(product)
@@ -160,6 +165,7 @@ class MobileDataProductDBTest {
                 "Test getDataUsage - expired",
                 7832478178423,
                 32895894578,
+                LocalDate.now().minusDays(1),
                 LocalDate.now())
             productDB.storeProduct(product)
             productDB.addDataUsage(product, 123, 567)
@@ -171,6 +177,7 @@ class MobileDataProductDBTest {
                 "Test getDataUsage - active",
                 7832478178423,
                 32895894578,
+                LocalDate.now(),
                 LocalDate.now().plusDays(1))
             productDB.storeProduct(product)
 

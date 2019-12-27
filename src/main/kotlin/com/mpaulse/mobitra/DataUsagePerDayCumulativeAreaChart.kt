@@ -27,8 +27,9 @@ import com.mpaulse.mobitra.data.MobileDataUsage
 import javafx.scene.chart.AreaChart
 import javafx.scene.chart.CategoryAxis
 import javafx.scene.chart.NumberAxis
+import java.time.ZoneId
 
-class DataUsageAreaChart(
+class DataUsagePerDayCumulativeAreaChart(
     product: MobileDataProduct,
     usageData: List<MobileDataUsage>
 ): AreaChart<String, Number>(CategoryAxis(), NumberAxis()) {
@@ -40,6 +41,11 @@ class DataUsageAreaChart(
     init {
         createSymbols = false
         isLegendVisible = false
+        
+        val xAxis = xAxis as CategoryAxis
+        xAxis.isGapStartAndEnd = false
+        xAxis.isTickLabelsVisible = false
+        xAxis.isTickMarkVisible = false
 
         if (usageData.isNotEmpty()) {
             // Account for data usage at the beginning of the product period that was not tracked
@@ -64,7 +70,7 @@ class DataUsageAreaChart(
     fun addDataUsage(dataUsage: MobileDataUsage) {
         usedAmount += dataUsage.downloadAmount + dataUsage.uploadAmount
         dataSeries.data.add(Data(
-            dataUsage.timestamp.toString(),
+            dataUsage.timestamp.atZone(ZoneId.systemDefault()).toLocalDate().toString(),
             usedAmount))
     }
 

@@ -34,7 +34,12 @@ import kotlin.random.Random
 
 val productDB = MobileDataProductDB(Path.of(System.getProperty("user.home"), ".Mobitra"))
 
-fun generateProductData(productName: String, totalAmount: Long, startDate: LocalDate, expiryDate: LocalDate) {
+fun generateProductData(
+    productName: String,
+    totalAmount: Long,
+    activationDate: LocalDate,
+    expiryDate: LocalDate
+) {
     val usedAmount = Random.nextLong(0, totalAmount)
     var remAmount = totalAmount - usedAmount
 
@@ -43,6 +48,7 @@ fun generateProductData(productName: String, totalAmount: Long, startDate: Local
         productName,
         totalAmount,
         usedAmount,
+        activationDate,
         expiryDate)
     println("Generating data for product: $product")
     productDB.storeProduct(product)
@@ -50,7 +56,7 @@ fun generateProductData(productName: String, totalAmount: Long, startDate: Local
     val now = Instant.now()
     val expiry = expiryDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
     val endTimestamp = if (now < expiry) now else expiry
-    var timestamp = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
+    var timestamp = activationDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
 
     val maxBytesPerHour = 268_435_456L
     while (remAmount > 0 && timestamp < endTimestamp) {
