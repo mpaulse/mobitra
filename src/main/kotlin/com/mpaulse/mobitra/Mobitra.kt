@@ -192,7 +192,7 @@ class MobitraApplication: Application() {
             if (productId != null) {
                 product = activeProducts[productId]
                 if (product != null) {
-                    dataUsage = productDB.getDataUsage(product)
+                    dataUsage = productDB.getDataUsagePerDay(product)
                 }
             } else {
                 var totalAmount = 0L
@@ -211,7 +211,7 @@ class MobitraApplication: Application() {
                     totalAmount,
                     usedAmount,
                     expiryDate as LocalDate)
-                dataUsage = productDB.getActiveProductDataUsage()
+                dataUsage = productDB.getActiveProductDataUsagePerDay()
             }
         }
 

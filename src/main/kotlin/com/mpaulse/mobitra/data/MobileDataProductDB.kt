@@ -26,9 +26,11 @@ import java.nio.file.Path
 import java.sql.Connection
 import java.sql.Date
 import java.sql.DriverManager
+import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Timestamp
 import java.time.Instant
+import java.time.ZoneId
 import java.util.LinkedList
 import java.util.UUID
 
@@ -196,8 +198,11 @@ class MobileDataProductDB(
         }
     }
 
-    fun getDataUsage(product: MobileDataProduct): List<MobileDataUsage> {
-        val usage = LinkedList<MobileDataUsage>()
+    fun getDataUsage(
+        product: MobileDataProduct,
+        timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
+    ): List<MobileDataUsage> {
+        val dataUsage = LinkedList<MobileDataUsage>()
         try {
             conn.prepareStatement(
                     """
@@ -207,22 +212,22 @@ class MobileDataProductDB(
                     """.trimIndent()).use { stmt ->
                 stmt.setObject(1, product.id)
                 stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        usage += MobileDataUsage(
-                            rs.getTimestamp(1).toInstant(),
-                            rs.getLong(2),
-                            rs.getLong(3))
-                    }
+                    readDataUsage(rs, dataUsage, timestampsEqual)
                 }
             }
         } catch (e: SQLException) {
             throw MobileDataProductDBException("Failed to retrieve data usage", e)
         }
-        return usage
+        return dataUsage
     }
 
-    fun getActiveProductDataUsage(): List<MobileDataUsage> {
-        val usage = LinkedList<MobileDataUsage>()
+    fun getDataUsagePerDay(product: MobileDataProduct) =
+        getDataUsage(product, ::timestampsEqualByDay)
+
+    fun getActiveProductDataUsage(
+        timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
+    ): List<MobileDataUsage> {
+        val dataUsage = LinkedList<MobileDataUsage>()
         try {
             conn.prepareStatement(
                     """
@@ -233,18 +238,47 @@ class MobileDataProductDB(
                     ORDER BY timestamp ASC
                     """.trimIndent()).use { stmt ->
                 stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        usage += MobileDataUsage(
-                            rs.getTimestamp(1).toInstant(),
-                            rs.getLong(2),
-                            rs.getLong(3))
-                    }
+                    readDataUsage(rs, dataUsage, timestampsEqual)
                 }
             }
         } catch (e: SQLException) {
             throw MobileDataProductDBException("Failed to retrieve data usage", e)
         }
-        return usage
+        return dataUsage
+    }
+
+    fun getActiveProductDataUsagePerDay() =
+        getActiveProductDataUsage(::timestampsEqualByDay)
+
+    private fun readDataUsage(
+        rs: ResultSet,
+        dataUsage: MutableList<MobileDataUsage>,
+        timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)?
+    ) {
+        var downloadAmount = 0L
+        var uploadAmount = 0L
+        var timestamp: Instant? = null
+
+        while (rs.next()) {
+            val t = rs.getTimestamp(1).toInstant()
+            val d = rs.getLong(2)
+            val u = rs.getLong(3)
+            if (timestampsEqual == null) {
+                dataUsage += MobileDataUsage(t, d, u)
+            } else if (timestamp == null || timestampsEqual(timestamp, t)) {
+                downloadAmount += d
+                uploadAmount += u
+                timestamp = t
+            } else {
+                dataUsage += MobileDataUsage(timestamp, downloadAmount, uploadAmount)
+                downloadAmount = 0
+                uploadAmount = 0
+                timestamp = null
+            }
+        }
+        if (timestamp != null) {
+            dataUsage += MobileDataUsage(timestamp, downloadAmount, uploadAmount)
+        }
     }
 
     fun clearAllData() {
@@ -299,6 +333,18 @@ class MobileDataProductDB(
                 """.trimIndent())
 
         }
+    }
+
+    private fun timestampsEqualByDay(t1: Instant, t2: Instant): Boolean {
+        val zone = ZoneId.systemDefault()
+        return t1.atZone(zone).toLocalDate() == t2.atZone(zone).toLocalDate()
+    }
+
+    private fun timestampsEqualByMonth(t1: Instant, t2: Instant): Boolean {
+        val zone = ZoneId.systemDefault()
+        val ld1 = t1.atZone(zone).toLocalDate()
+        val ld2 = t2.atZone(zone).toLocalDate()
+        return ld1.year == ld2.year && ld1.month == ld2.month
     }
 
 }
