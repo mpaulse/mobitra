@@ -37,6 +37,7 @@ import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Region
 import javafx.scene.layout.StackPane
+import javafx.scene.layout.VBox
 import javafx.util.StringConverter
 import java.time.Instant
 import java.time.LocalDate
@@ -52,71 +53,6 @@ private fun dateToXValue(date: LocalDate, product: MobileDataProduct) =
 
 private fun timestampToXValue(timestamp: Instant, product: MobileDataProduct) =
     dateToXValue(timestamp.atZone(ZoneId.systemDefault()).toLocalDate(), product)
-
-private class ChartOverlay(
-    private val chart: AreaChart<Number, Number>,
-    private val product: MobileDataProduct
-): Region() {
-
-    private val xAxis = chart.xAxis as NumberAxis
-    private val yAxis = chart.yAxis as NumberAxis
-    private val dataSeries = chart.data[0].data
-
-    init {
-        chart.widthProperty().addListener { _, _, _ ->
-            addChartLabels()
-        }
-        chart.heightProperty().addListener { _, _, _ ->
-            addChartLabels()
-        }
-
-        setOnMouseMoved {
-            onMouseMoved(it)
-        }
-        setOnMouseExited {
-            onMouseExited(it)
-        }
-    }
-
-    private fun addChartLabels() {
-        Platform.runLater {
-            val totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.totalAmount)} total")
-            setAmountLabelPosition(totalAmountLabel, product.totalAmount)
-
-            val usedAmountLabel = Label("${DataAmountStringFormatter.toString(product.usedAmount)} used")
-            setAmountLabelPosition(usedAmountLabel, product.usedAmount)
-
-            children.clear()
-            children.addAll(totalAmountLabel, usedAmountLabel)
-        }
-    }
-
-    private fun setAmountLabelPosition(label: Label, amount: Long) {
-        label.relocate(
-            xAxis.localToParent(Point2D(xAxis.getDisplayPosition(dateToXValue(LocalDate.now(), product)), 0.0)).x,
-            yAxis.localToParent(Point2D(0.0, yAxis.getDisplayPosition(amount))).y + 5)
-    }
-
-    private fun onMouseMoved(event: MouseEvent) {
-        val x = xAxis.getValueForDisplay(xAxis.parentToLocal(event.x, event.y).x).toLong()
-        val y = yAxis.getValueForDisplay(yAxis.parentToLocal(event.x, event.y).y - chart.padding.top).toLong()
-        if (x >= 0 && y >= 0) {
-            for (point in dataSeries) {
-                if (x == point.xValue.toLong() && y <= point.yValue.toLong()) {
-                    println("value: (${xValueToDate(x, product)}, ${point.yValue.toLong()}")
-                    break
-                }
-            }
-        }
-        event.consume()
-    }
-
-    private fun onMouseExited(event: MouseEvent) {
-        //println(event)
-        event.consume()
-    }
-
-}
 
 class DataUsagePerDayCumulativeAreaChart(
     private val product: MobileDataProduct,
@@ -192,6 +128,106 @@ class DataUsagePerDayCumulativeAreaChart(
         dataSeries.data.add(Data(
             timestampToXValue(dataUsage.timestamp, product),
             usedAmount))
+    }
+
+}
+
+private class ChartOverlay(
+    private val chart: AreaChart<Number, Number>,
+    private val product: MobileDataProduct
+): Region() {
+
+    private val xAxis = chart.xAxis as NumberAxis
+    private val yAxis = chart.yAxis as NumberAxis
+    private val dataSeries = chart.data[0].data
+    private var dataUsagePopup: DataUsagePopup? = null
+
+    init {
+        chart.widthProperty().addListener { _, _, _ ->
+            addChartLabels()
+        }
+        chart.heightProperty().addListener { _, _, _ ->
+            addChartLabels()
+        }
+
+        setOnMouseMoved {
+            onMouseMoved(it)
+        }
+        setOnMouseExited {
+            onMouseExited(it)
+        }
+    }
+
+    private fun addChartLabels() {
+        Platform.runLater {
+            val totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.totalAmount)} total")
+            setAmountLabelPosition(totalAmountLabel, product.totalAmount)
+
+            val usedAmountLabel = Label("${DataAmountStringFormatter.toString(product.usedAmount)} used")
+            setAmountLabelPosition(usedAmountLabel, product.usedAmount)
+
+            children.clear()
+            children.addAll(totalAmountLabel, usedAmountLabel)
+        }
+    }
+
+    private fun setAmountLabelPosition(label: Label, amount: Long) {
+        label.relocate(
+            xAxis.localToParent(Point2D(xAxis.getDisplayPosition(dateToXValue(LocalDate.now(), product)), 0.0)).x,
+            yAxis.localToParent(Point2D(0.0, yAxis.getDisplayPosition(amount))).y + chart.padding.top)
+    }
+
+    private fun onMouseMoved(event: MouseEvent) {
+        if (dataUsagePopup != null) {
+            children.remove(dataUsagePopup)
+            dataUsagePopup = null
+        }
+
+        val x = xAxis.getValueForDisplay(xAxis.parentToLocal(event.x, event.y).x).toLong()
+        val y = yAxis.getValueForDisplay(yAxis.parentToLocal(event.x, event.y).y - chart.padding.top).toLong()
+        if (x >= 0 && y >= 0) {
+            for (point in dataSeries) {
+                if (x == point.xValue.toLong() && y <= point.yValue.toLong()) {
+                    //println("value: (${xValueToDate(x, product)}, ${point.yValue.toLong()}")
+                    val date = xValueToDate(x, product)
+                    if (date != null) {
+                        dataUsagePopup = DataUsagePopup(date, product.totalAmount, point.yValue.toLong())
+                        break
+                    }
+                }
+            }
+        }
+
+        if (dataUsagePopup != null) {
+            dataUsagePopup!!.relocate(event.x, event.y)
+            children += dataUsagePopup
+        }
+
+        event.consume()
+    }
+
+    private fun onMouseExited(event: MouseEvent) {
+        if (dataUsagePopup != null) {
+            children.remove(dataUsagePopup)
+        }
+        event.consume()
+    }
+
+}
+
+private class DataUsagePopup(
+    date: LocalDate,
+    totalAmount: Long,
+    usedAmount: Long
+): Region() {
+
+    init {
+        val layout = VBox()
+        layout.children.addAll(
+            Label("Date: ${date}"),
+            Label("Data used: ${DataAmountStringFormatter.toString(usedAmount)}"),
+            Label("Data remaining: ${DataAmountStringFormatter.toString(totalAmount - usedAmount)}"))
+        children += layout
     }
 
 }
