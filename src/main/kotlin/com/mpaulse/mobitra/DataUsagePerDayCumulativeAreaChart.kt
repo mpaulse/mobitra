@@ -199,7 +199,7 @@ private class ChartOverlay(
         }
 
         if (dataUsagePopup != null) {
-            dataUsagePopup!!.relocate(event.x, event.y)
+            dataUsagePopup!!.relocate(event.x, event.y + 16)
             children += dataUsagePopup
         }
 
