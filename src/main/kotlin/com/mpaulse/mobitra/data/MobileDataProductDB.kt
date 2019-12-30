@@ -233,6 +233,9 @@ class MobileDataProductDB(
     fun getProductDataUsagePerDay(product: MobileDataProduct) =
         getDataUsage(product, ::timestampsEqualByDay)
 
+    fun getAllProductDataUsagePerDay() =
+        getDataUsage(timestampsEqual = ::timestampsEqualByDay)
+
     fun getAllProductDataUsagePerMonth() =
         getDataUsage(timestampsEqual = ::timestampsEqualByMonth)
 

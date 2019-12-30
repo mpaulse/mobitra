@@ -176,9 +176,17 @@ class MobitraApplication: Application() {
 
     @FXML
     fun onViewHistory(event: ActionEvent) {
-        val dataUsage = productDB.getAllProductDataUsagePerMonth()
-        if (dataUsage.isNotEmpty()) {
-            historyPane.center = DataUsageBarChart(dataUsage, DataUsageBarChartType.MONTHLY)
+        // TODO: Show a spinner and load in background to prevent UI lock-up for large data sets.
+        // TODO: Implement paged loading for better memory efficiency?
+        val dataUsagePerMonth = productDB.getAllProductDataUsagePerMonth()
+        val dataUsagePerDay = productDB.getAllProductDataUsagePerDay()
+        if (dataUsagePerMonth.isNotEmpty()) {
+            val charts = VBox()
+            charts.spacing = 25.0
+            charts.children.addAll(
+                DataUsageBarChart(dataUsagePerMonth, DataUsageBarChartType.MONTHLY),
+                DataUsageBarChart(dataUsagePerDay, DataUsageBarChartType.DAILY))
+            historyPane.center = charts
         } else {
             historyPane.center = noDataPane
         }
