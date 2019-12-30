@@ -226,7 +226,7 @@ class MobitraApplication: Application() {
         if (product != null && dataUsage != null) {
             val charts = VBox()
             charts.children.addAll(
-                DataUsagePerDayCumulativeAreaChart(product, dataUsage),
+                CumulativeDataUsagePerDayChart(dataUsage, product),
                 DataUsageBarChart(dataUsage))
             activeProductsPane.center = charts
         } else {

@@ -8,7 +8,7 @@
             <maxFileSize>3MB</maxFileSize>
         </triggeringPolicy>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <fileNamePattern>events.%i.log</fileNamePattern>
+            <fileNamePattern>${user.home}/.Mobitra/events.%i.log</fileNamePattern>
             <minIndex>1</minIndex>
             <maxIndex>3</maxIndex>
         </rollingPolicy>

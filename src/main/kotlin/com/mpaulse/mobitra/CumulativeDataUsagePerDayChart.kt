@@ -54,9 +54,9 @@ private fun dateToXValue(date: LocalDate, product: MobileDataProduct) =
 private fun timestampToXValue(timestamp: Instant, product: MobileDataProduct) =
     dateToXValue(timestamp.atZone(ZoneId.systemDefault()).toLocalDate(), product)
 
-class DataUsagePerDayCumulativeAreaChart(
-    private val product: MobileDataProduct,
-    usageData: List<MobileDataUsage>
+class CumulativeDataUsagePerDayChart(
+    usageData: List<MobileDataUsage>,
+    private val product: MobileDataProduct
 ): BorderPane() {
 
     private val xAxis = NumberAxis(0.0, dateToXValue(product.expiryDate.plusDays(5), product).toDouble(), 1.0)
@@ -111,16 +111,15 @@ class DataUsagePerDayCumulativeAreaChart(
         chart.data.addAll(dataSeries, upperBoundSeries)
 
         val chartPane = StackPane()
-        chartPane.children.addAll(chart, ChartOverlay(chart, product))
+        chartPane.children.addAll(chart, CumulativeDataUsagePerDayChartOverlay(chart, product))
+        center = chartPane
 
         // Use our own title label instead of the chart's internal title, so that the y-axis
         // coordinates are not affected.
         val titleBox = HBox()
         titleBox.alignment = CENTER
         titleBox.children.add(Label("Cumulative data usage per day"))
-
         top = titleBox
-        center = chartPane
     }
 
     fun addDataUsage(dataUsage: MobileDataUsage) {
@@ -132,7 +131,7 @@ class DataUsagePerDayCumulativeAreaChart(
 
 }
 
-private class ChartOverlay(
+private class CumulativeDataUsagePerDayChartOverlay(
     private val chart: AreaChart<Number, Number>,
     private val product: MobileDataProduct
 ): Region() {
@@ -140,7 +139,7 @@ private class ChartOverlay(
     private val xAxis = chart.xAxis as NumberAxis
     private val yAxis = chart.yAxis as NumberAxis
     private val dataSeries = chart.data[0].data
-    private var dataUsagePopup: DataUsagePopup? = null
+    private var dataUsagePopup: CumulativeDataUsagePerDayPopup? = null
 
     init {
         chart.widthProperty().addListener { _, _, _ ->
@@ -188,10 +187,9 @@ private class ChartOverlay(
         if (x >= 0 && y >= 0) {
             for (point in dataSeries) {
                 if (x == point.xValue.toLong() && y <= point.yValue.toLong()) {
-                    //println("value: (${xValueToDate(x, product)}, ${point.yValue.toLong()}")
                     val date = xValueToDate(x, product)
                     if (date != null) {
-                        dataUsagePopup = DataUsagePopup(date, product.totalAmount, point.yValue.toLong())
+                        dataUsagePopup = CumulativeDataUsagePerDayPopup(date, product.totalAmount, point.yValue.toLong())
                         break
                     }
                 }
@@ -215,7 +213,7 @@ private class ChartOverlay(
 
 }
 
-private class DataUsagePopup(
+private class CumulativeDataUsagePerDayPopup(
     date: LocalDate,
     totalAmount: Long,
     usedAmount: Long
