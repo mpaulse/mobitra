@@ -25,6 +25,7 @@ package com.mpaulse.mobitra
 import com.mpaulse.mobitra.data.MobileDataUsage
 import javafx.collections.FXCollections
 import javafx.geometry.Pos.CENTER
+import javafx.scene.Cursor
 import javafx.scene.chart.CategoryAxis
 import javafx.scene.chart.NumberAxis
 import javafx.scene.chart.StackedBarChart
@@ -79,7 +80,7 @@ class DataUsageBarChart(
         chart.data.addAll(uploadDataSeries, downloadDataSeries)
 
         val chartPane = StackPane()
-        chartPane.children.addAll(chart, DataUsageBarChartOverlay(chart, ::onPan))
+        chartPane.children.addAll(chart, DataUsageBarChartOverlay(chart, ::onHorizontalPan))
         center = chartPane
 
         // Use our own title label instead of the chart's internal title, so that the y-axis
@@ -98,7 +99,6 @@ class DataUsageBarChart(
 
     private fun adjustCategories(from: LocalDate, to: LocalDate) {
         // TODO: cater per-month adjustment too.
-
         if (categories.isEmpty()) {
             categories += from.toString()
             lowerBound = from
@@ -130,11 +130,14 @@ class DataUsageBarChart(
         upperBound = to
     }
 
-    private fun onPan(delta: Int) {
+    private fun onHorizontalPan(delta: Int) {
+        // TODO: Handle per-month too
         adjustCategories(lowerBound.plusDays(delta.toLong()), upperBound.plusDays(delta.toLong()))
 
         uploadDataSeries.data.clear()
         downloadDataSeries.data.clear()
+
+        // TODO: Don't bother adding data outside the lower and upper bound range
         for (usage in dataUsage) {
             addDataUsage(usage)
         }
@@ -144,7 +147,7 @@ class DataUsageBarChart(
 
 private class DataUsageBarChartOverlay(
     private val chart: StackedBarChart<String, Number>,
-    private val onPan: (delta: Int) -> Unit
+    private val onHorizontalPan: (delta: Int) -> Unit
 ): Region() {
 
     private val xAxis = chart.xAxis as CategoryAxis
@@ -152,7 +155,7 @@ private class DataUsageBarChartOverlay(
     private val uploadDataSeries = chart.data[0]
     private val downloadDataSeries = chart.data[1]
     private var dataUsagePopup: DataUsageBarChartPopup? = null
-    private var mousePressX = 0.0
+    private var mouseAchorX = 0.0
 
     init {
         setOnMouseMoved {
@@ -167,6 +170,9 @@ private class DataUsageBarChartOverlay(
         setOnMouseDragged {
             onMouseDragged(it)
         }
+        setOnMouseReleased {
+            onMouseReleased(it)
+        }
     }
 
     private fun onMouseMoved(event: MouseEvent) {
@@ -175,37 +181,41 @@ private class DataUsageBarChartOverlay(
             dataUsagePopup = null
         }
 
-        val date = xAxis.getValueForDisplay(xAxis.parentToLocal(event.x, event.y).x)
-        val y = yAxis.getValueForDisplay(yAxis.parentToLocal(event.x, event.y).y - chart.padding.top).toLong()
-        if (date != null && y >= 0) {
+        val chartValue = getChartValue(event.x, event.y)
+        if (chartValue != null) {
+            cursor = Cursor.MOVE
+
             var uploadAmount = 0L
             var downloadAmount = 0L
             for (point in uploadDataSeries.data) {
-                if (date == point.xValue) {
+                if (chartValue.first == point.xValue) {
                     uploadAmount = point.yValue.toLong()
                     break
                 }
             }
             for (point in downloadDataSeries.data) {
-                if (date == point.xValue) {
+                if (chartValue.first == point.xValue) {
                     downloadAmount = point.yValue.toLong()
                     break
                 }
             }
-            if (y <= uploadAmount + downloadAmount) {
-                dataUsagePopup = DataUsageBarChartPopup(date, downloadAmount, uploadAmount)
+            if (chartValue.second <= uploadAmount + downloadAmount) {
+                dataUsagePopup = DataUsageBarChartPopup(chartValue.first, downloadAmount, uploadAmount)
                 val x =
                     if (event.x + 100 > width) width - 116
                     else event.x
                 dataUsagePopup!!.relocate(x, event.y + 16)
                 children += dataUsagePopup
             }
+        } else {
+            cursor = Cursor.DEFAULT
         }
 
         event.consume()
     }
 
     private fun onMouseExited(event: MouseEvent) {
+        cursor = Cursor.DEFAULT
         if (dataUsagePopup != null) {
             children.remove(dataUsagePopup)
         }
@@ -213,13 +223,35 @@ private class DataUsageBarChartOverlay(
     }
 
     private fun onMousePressed(event: MouseEvent) {
-        mousePressX = event.x
+        if (getChartValue(event.x, event.y) != null) {
+            cursor = Cursor.CLOSED_HAND
+            mouseAchorX = event.x
+        }
         event.consume()
     }
 
     private fun onMouseDragged(event: MouseEvent) {
-        onPan(((mousePressX - event.x) / 100).toInt())
+        if (cursor == Cursor.CLOSED_HAND) {
+            val delta = ((mouseAchorX - event.x) / 30).toInt()
+            if (delta != 0) {
+                mouseAchorX = event.x
+                onHorizontalPan(delta)
+            }
+        }
         event.consume()
+    }
+
+    private fun onMouseReleased(event: MouseEvent) {
+        cursor =
+            if (getChartValue(event.x, event.y) != null) Cursor.MOVE
+            else Cursor.DEFAULT
+        event.consume()
+    }
+
+    private fun getChartValue(x: Double, y: Double): Pair<String, Long>? {
+        val date = xAxis.getValueForDisplay(xAxis.parentToLocal(x, y).x)
+        val y = yAxis.getValueForDisplay(yAxis.parentToLocal(x, y).y - chart.padding.top).toLong()
+        return if (date != null && y > 0) Pair(date, y) else null
     }
 
 }
