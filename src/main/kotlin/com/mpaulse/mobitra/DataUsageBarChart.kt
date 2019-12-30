@@ -73,6 +73,7 @@ class DataUsageBarChart(
         plotDataUsage()
 
         xAxis.isGapStartAndEnd = false
+        xAxis.tickLabelRotation = 90.0
         yAxis.tickLabelFormatter = DataAmountStringFormatter
 
         downloadDataSeries.name = "Download"
