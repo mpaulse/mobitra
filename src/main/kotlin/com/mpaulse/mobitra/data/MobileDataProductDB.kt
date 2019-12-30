@@ -214,9 +214,9 @@ class MobileDataProductDB(
                     """
                     SELECT timestamp, download_amount, upload_amount
                     FROM mobile_data_usage
-                    ORDER BY timestamp ASC
                     """.trimIndent()
-                    + (if (product != null) " WHERE id = ?" else "")).use { stmt ->
+                    + (if (product != null) " WHERE id = ?" else "")
+                    + " ORDER BY timestamp ASC").use { stmt ->
                 if (product != null) {
                     stmt.setObject(1, product.id)
                 }
