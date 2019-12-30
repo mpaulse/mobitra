@@ -177,10 +177,7 @@ private class CumulativeDataUsagePerDayChartOverlay(
     }
 
     private fun onMouseMoved(event: MouseEvent) {
-        if (dataUsagePopup != null) {
-            children.remove(dataUsagePopup)
-            dataUsagePopup = null
-        }
+        removePopup()
 
         val x = xAxis.getValueForDisplay(xAxis.parentToLocal(event.x, event.y).x).toLong()
         val y = yAxis.getValueForDisplay(yAxis.parentToLocal(event.x, event.y).y - chart.padding.top).toLong()
@@ -205,10 +202,15 @@ private class CumulativeDataUsagePerDayChartOverlay(
     }
 
     private fun onMouseExited(event: MouseEvent) {
+        removePopup()
+        event.consume()
+    }
+
+    private fun removePopup() {
         if (dataUsagePopup != null) {
             children.remove(dataUsagePopup)
+            dataUsagePopup = null
         }
-        event.consume()
     }
 
 }

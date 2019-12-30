@@ -99,6 +99,8 @@ class DataUsageBarChart(
 
     private fun adjustCategories(from: LocalDate, to: LocalDate) {
         // TODO: cater per-month adjustment too.
+        // TODO: Fix the number of categories shown
+
         if (categories.isEmpty()) {
             categories += from.toString()
             lowerBound = from
@@ -176,53 +178,18 @@ private class DataUsageBarChartOverlay(
     }
 
     private fun onMouseMoved(event: MouseEvent) {
-        if (dataUsagePopup != null) {
-            children.remove(dataUsagePopup)
-            dataUsagePopup = null
-        }
-
-        val chartValue = getChartValue(event.x, event.y)
-        if (chartValue != null) {
-            cursor = Cursor.MOVE
-
-            var uploadAmount = 0L
-            var downloadAmount = 0L
-            for (point in uploadDataSeries.data) {
-                if (chartValue.first == point.xValue) {
-                    uploadAmount = point.yValue.toLong()
-                    break
-                }
-            }
-            for (point in downloadDataSeries.data) {
-                if (chartValue.first == point.xValue) {
-                    downloadAmount = point.yValue.toLong()
-                    break
-                }
-            }
-            if (chartValue.second <= uploadAmount + downloadAmount) {
-                dataUsagePopup = DataUsageBarChartPopup(chartValue.first, downloadAmount, uploadAmount)
-                val x =
-                    if (event.x + 100 > width) width - 116
-                    else event.x
-                dataUsagePopup!!.relocate(x, event.y + 16)
-                children += dataUsagePopup
-            }
-        } else {
-            cursor = Cursor.DEFAULT
-        }
-
+        showPopup(event.x, event.y)
         event.consume()
     }
 
     private fun onMouseExited(event: MouseEvent) {
         cursor = Cursor.DEFAULT
-        if (dataUsagePopup != null) {
-            children.remove(dataUsagePopup)
-        }
+        removePopup()
         event.consume()
     }
 
     private fun onMousePressed(event: MouseEvent) {
+        removePopup()
         if (getChartValue(event.x, event.y) != null) {
             cursor = Cursor.CLOSED_HAND
             mouseAchorX = event.x
@@ -242,9 +209,7 @@ private class DataUsageBarChartOverlay(
     }
 
     private fun onMouseReleased(event: MouseEvent) {
-        cursor =
-            if (getChartValue(event.x, event.y) != null) Cursor.MOVE
-            else Cursor.DEFAULT
+        showPopup(event.x, event.y)
         event.consume()
     }
 
@@ -252,6 +217,46 @@ private class DataUsageBarChartOverlay(
         val date = xAxis.getValueForDisplay(xAxis.parentToLocal(x, y).x)
         val y = yAxis.getValueForDisplay(yAxis.parentToLocal(x, y).y - chart.padding.top).toLong()
         return if (date != null && y > 0) Pair(date, y) else null
+    }
+
+    private fun showPopup(x: Double, y: Double) {
+        removePopup()
+
+        val chartValue = getChartValue(x, y)
+        if (chartValue != null) {
+            cursor = Cursor.MOVE
+
+            var uploadAmount = 0L
+            var downloadAmount = 0L
+            for (point in uploadDataSeries.data) {
+                if (chartValue.first == point.xValue) {
+                    uploadAmount = point.yValue.toLong()
+                    break
+                }
+            }
+            for (point in downloadDataSeries.data) {
+                if (chartValue.first == point.xValue) {
+                    downloadAmount = point.yValue.toLong()
+                    break
+                }
+            }
+            if (chartValue.second <= uploadAmount + downloadAmount) {
+                dataUsagePopup = DataUsageBarChartPopup(chartValue.first, downloadAmount, uploadAmount)
+                dataUsagePopup!!.relocate(
+                    if (x + 100 > width) width - 116 else x,
+                    y + 16)
+                children += dataUsagePopup
+            }
+        } else {
+            cursor = Cursor.DEFAULT
+        }
+    }
+
+    private fun removePopup() {
+        if (dataUsagePopup != null) {
+            children.remove(dataUsagePopup)
+            dataUsagePopup = null
+        }
     }
 
 }
