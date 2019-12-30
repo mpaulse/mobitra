@@ -23,6 +23,7 @@
 package com.mpaulse.mobitra
 
 import com.mpaulse.mobitra.DataUsageBarChartType.DAILY
+import com.mpaulse.mobitra.DataUsageBarChartType.MONTHLY
 import com.mpaulse.mobitra.data.MobileDataUsage
 import javafx.collections.FXCollections
 import javafx.geometry.Pos.CENTER
@@ -97,20 +98,26 @@ class DataUsageBarChart(
 
     private fun setInitialDateRange() {
         val numBars = 40L
-        val dateFrom: LocalDate
-        val dateTo: LocalDate
+        var dateFrom: LocalDate
+        var dateTo: LocalDate
         if (dataUsage.size >= numBars) {
             dateTo = timestampToDate(dataUsage.last().timestamp)
+            if (type == MONTHLY) {
+                dateTo = dateTo.withDayOfMonth(1)
+            }
             dateFrom =
-                if (type == DAILY) dateTo.minusDays(numBars)
-                else dateTo.minusMonths(numBars)
+                if (type == DAILY) dateTo.minusDays(numBars - 1)
+                else dateTo.minusMonths(numBars - 1)
         } else {
             dateFrom =
                 if (dataUsage.isNotEmpty()) timestampToDate(dataUsage.first().timestamp)
                 else LocalDate.now()
+            if (type == MONTHLY) {
+                dateFrom = dateFrom.withDayOfMonth(1)
+            }
             dateTo =
-                if (type == DAILY) dateFrom.plusDays(numBars)
-                else dateFrom.plusMonths(numBars)
+                if (type == DAILY) dateFrom.plusDays(numBars - 1)
+                else dateFrom.plusMonths(numBars - 1)
         }
         adjustDateRange(dateFrom, dateTo)
     }
@@ -145,8 +152,8 @@ class DataUsageBarChart(
             if (from < dateRangeFrom) {
                 val n = from.until(dateRangeFrom,
                     if (type == DAILY) ChronoUnit.DAYS
-                    else ChronoUnit.MONTHS)
-                for (i in 0 until n) {
+                    else ChronoUnit.MONTHS) - 1
+                for (i in n downTo 0) {
                     dates.add(0, dateToString(
                         if (type == DAILY) from.plusDays(i)
                         else from.plusMonths(i)))
@@ -155,7 +162,7 @@ class DataUsageBarChart(
                 do {
                     dates.removeAt(0)
                     dateRangeFrom = stringToDate(dates.first())
-                } while (dateRangeFrom < from)
+                } while (from > dateRangeFrom)
             }
             dateRangeFrom = from
         }
