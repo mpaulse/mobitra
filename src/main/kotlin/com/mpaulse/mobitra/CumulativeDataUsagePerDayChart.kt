@@ -93,13 +93,13 @@ class CumulativeDataUsagePerDayChart(
                 usedAmountTracked += usage.totalAmount
             }
             if (usedAmountTracked < product.usedAmount) {
-                addDataUsage(MobileDataUsage(
+                plotDataUsage(MobileDataUsage(
                     usageData.first().timestamp,
                     product.usedAmount - usedAmountTracked))
             }
 
             for (usage in usageData) {
-                addDataUsage(usage)
+                plotDataUsage(usage)
             }
         }
 
@@ -122,7 +122,7 @@ class CumulativeDataUsagePerDayChart(
         top = titleBox
     }
 
-    fun addDataUsage(dataUsage: MobileDataUsage) {
+    private fun plotDataUsage(dataUsage: MobileDataUsage) {
         usedAmount += dataUsage.downloadAmount + dataUsage.uploadAmount
         dataSeries.data.add(Data(
             timestampToXValue(dataUsage.timestamp, product),

@@ -178,7 +178,7 @@ class MobitraApplication: Application() {
     fun onViewHistory(event: ActionEvent) {
         val dataUsage = productDB.getAllProductDataUsagePerMonth()
         if (dataUsage.isNotEmpty()) {
-            historyPane.center = DataUsageBarChart(dataUsage)
+            historyPane.center = DataUsageBarChart(dataUsage, DataUsageBarChartType.MONTHLY)
         } else {
             historyPane.center = noDataPane
         }

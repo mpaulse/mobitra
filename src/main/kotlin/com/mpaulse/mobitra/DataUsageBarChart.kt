@@ -22,6 +22,7 @@
 
 package com.mpaulse.mobitra
 
+import com.mpaulse.mobitra.DataUsageBarChartType.DAILY
 import com.mpaulse.mobitra.data.MobileDataUsage
 import javafx.collections.FXCollections
 import javafx.geometry.Pos.CENTER
@@ -47,33 +48,34 @@ import java.util.LinkedList
 private fun timestampToDate(timestamp: Instant) =
     timestamp.atZone(ZoneId.systemDefault()).toLocalDate()
 
+enum class DataUsageBarChartType {
+    DAILY,
+    MONTHLY
+}
+
 class DataUsageBarChart(
-    private val dataUsage: List<MobileDataUsage>
+    private val dataUsage: List<MobileDataUsage>,
+    private val type: DataUsageBarChartType = DAILY
 ): BorderPane() {
 
-    private var lowerBound = LocalDate.now()
-    private var upperBound = LocalDate.now()
-    private val categories = FXCollections.observableList(LinkedList<String>())
-    private val xAxis = CategoryAxis(categories)
+    private lateinit var dateRangeFrom: LocalDate
+    private lateinit var dateRangeTo: LocalDate
+    private val dates = FXCollections.observableList(LinkedList<String>())
+    private val xAxis = CategoryAxis(dates)
     private val yAxis = NumberAxis()
     private val chart = StackedBarChart<String, Number>(xAxis, yAxis)
     private val downloadDataSeries = Series<String, Number>()
     private val uploadDataSeries = Series<String, Number>()
 
     init {
-        if (dataUsage.isNotEmpty()) {
-            adjustCategories(timestampToDate(dataUsage.first().timestamp), timestampToDate(dataUsage.last().timestamp))
-        }
+        setInitialDateRange()
+        plotDataUsage()
 
         xAxis.isGapStartAndEnd = false
         yAxis.tickLabelFormatter = DataAmountStringFormatter
 
         downloadDataSeries.name = "Download"
         uploadDataSeries.name = "Upload"
-
-        for (usage in dataUsage) {
-            addDataUsage(usage)
-        }
 
         chart.animated = false
         chart.categoryGap = 1.0
@@ -87,69 +89,117 @@ class DataUsageBarChart(
         // coordinates are not affected.
         val titleBox = HBox()
         titleBox.alignment = CENTER
-        titleBox.children.add(Label("Data usage per day"))
+        titleBox.children.add(
+            Label("Data usage per "
+            + (if (type == DAILY) "day" else "month")))
         top = titleBox
     }
 
-    fun addDataUsage(usage: MobileDataUsage) {
-        val d = timestampToDate(usage.timestamp).toString()
-        downloadDataSeries.data.add(Data(d, usage.downloadAmount))
-        uploadDataSeries.data.add(Data(d, usage.uploadAmount))
-    }
-
-    private fun adjustCategories(from: LocalDate, to: LocalDate) {
-        // TODO: cater per-month adjustment too.
-        // TODO: Fix the number of categories shown
-
-        if (categories.isEmpty()) {
-            categories += from.toString()
-            lowerBound = from
-            upperBound = from
+    private fun setInitialDateRange() {
+        val numBars = 40L
+        val dateFrom: LocalDate
+        val dateTo: LocalDate
+        if (dataUsage.size >= numBars) {
+            dateTo = timestampToDate(dataUsage.last().timestamp)
+            dateFrom =
+                if (type == DAILY) dateTo.minusDays(numBars)
+                else dateTo.minusMonths(numBars)
         } else {
-            if (from < lowerBound) {
-                for (i in 0 until from.until(lowerBound, ChronoUnit.DAYS)) {
-                    categories.add(0, from.plusDays(i).toString())
-                }
-            } else if (from > lowerBound) {
-                do {
-                    categories.removeAt(0)
-                    lowerBound = LocalDate.parse(categories.first())
-                } while (lowerBound < from)
-            }
-            lowerBound = from
+            dateFrom =
+                if (dataUsage.isNotEmpty()) timestampToDate(dataUsage.first().timestamp)
+                else LocalDate.now()
+            dateTo =
+                if (type == DAILY) dateFrom.plusDays(numBars)
+                else dateFrom.plusMonths(numBars)
         }
-
-        if (to < upperBound) {
-            do {
-                categories.removeAt(categories.size - 1)
-                upperBound = LocalDate.parse(categories.last())
-            } while (to < upperBound)
-        } else if (to > upperBound) {
-            for (i in 1..upperBound.until(to, ChronoUnit.DAYS)) {
-                categories.add(upperBound.plusDays(i).toString())
-            }
-        }
-        upperBound = to
+        adjustDateRange(dateFrom, dateTo)
     }
 
-    private fun onHorizontalPan(delta: Int) {
-        // TODO: Handle per-month too
-        adjustCategories(lowerBound.plusDays(delta.toLong()), upperBound.plusDays(delta.toLong()))
-
-        uploadDataSeries.data.clear()
+    private fun plotDataUsage() {
         downloadDataSeries.data.clear()
+        uploadDataSeries.data.clear()
 
-        // TODO: Don't bother adding data outside the lower and upper bound range
-        for (usage in dataUsage) {
-            addDataUsage(usage)
+        if (dateRangeFrom <= timestampToDate(dataUsage.last().timestamp)
+                && dateRangeTo >= timestampToDate(dataUsage.first().timestamp)) {
+            for (usage in dataUsage) {
+                val date = timestampToDate(usage.timestamp)
+                if (date < dateRangeFrom) {
+                    continue
+                } else if (date > dateRangeTo) {
+                    break
+                }
+
+                val dateStr = dateToString(date)
+                downloadDataSeries.data.add(Data(dateStr, usage.downloadAmount))
+                uploadDataSeries.data.add(Data(dateStr, usage.uploadAmount))
+            }
         }
     }
+
+    private fun adjustDateRange(from: LocalDate, to: LocalDate) {
+        if (dates.isEmpty()) {
+            dates += dateToString(from)
+            dateRangeFrom = from
+            dateRangeTo = from
+        } else {
+            if (from < dateRangeFrom) {
+                val n = from.until(dateRangeFrom,
+                    if (type == DAILY) ChronoUnit.DAYS
+                    else ChronoUnit.MONTHS)
+                for (i in 0 until n) {
+                    dates.add(0, dateToString(
+                        if (type == DAILY) from.plusDays(i)
+                        else from.plusMonths(i)))
+                }
+            } else if (from > dateRangeFrom) {
+                do {
+                    dates.removeAt(0)
+                    dateRangeFrom = stringToDate(dates.first())
+                } while (dateRangeFrom < from)
+            }
+            dateRangeFrom = from
+        }
+
+        if (to < dateRangeTo) {
+            do {
+                dates.removeAt(dates.size - 1)
+                dateRangeTo = stringToDate(dates.last())
+            } while (to < dateRangeTo)
+        } else if (to > dateRangeTo) {
+            val n = dateRangeTo.until(to,
+                if (type == DAILY) ChronoUnit.DAYS
+                else ChronoUnit.MONTHS)
+            for (i in 1..n) {
+                dates.add(dateToString(
+                    if (type == DAILY) dateRangeTo.plusDays(i)
+                    else dateRangeTo.plusMonths(i)))
+            }
+        }
+        dateRangeTo = to
+    }
+
+    private fun onHorizontalPan(delta: Long) {
+        adjustDateRange(
+            if (type == DAILY) dateRangeFrom.plusDays(delta)
+            else dateRangeFrom.plusMonths(delta),
+            if (type == DAILY) dateRangeTo.plusDays(delta)
+            else dateRangeTo.plusMonths(delta))
+        plotDataUsage()
+    }
+
+    private fun dateToString(date: LocalDate) =
+        if (type == DAILY) date.toString()
+        else date.toString().substringBeforeLast("-")
+
+    private fun stringToDate(date: String) =
+        if (type == DAILY) LocalDate.parse(date)
+        else LocalDate.parse("$date-01")
 
 }
 
 private class DataUsageBarChartOverlay(
     private val chart: StackedBarChart<String, Number>,
-    private val onHorizontalPan: (delta: Int) -> Unit
+    private val onHorizontalPan: (delta: Long) -> Unit
 ): Region() {
 
     private val xAxis = chart.xAxis as CategoryAxis
@@ -199,8 +249,8 @@ private class DataUsageBarChartOverlay(
 
     private fun onMouseDragged(event: MouseEvent) {
         if (cursor == Cursor.CLOSED_HAND) {
-            val delta = ((mouseAchorX - event.x) / 30).toInt()
-            if (delta != 0) {
+            val delta = ((mouseAchorX - event.x) / 30).toLong()
+            if (delta != 0L) {
                 mouseAchorX = event.x
                 onHorizontalPan(delta)
             }
@@ -216,7 +266,7 @@ private class DataUsageBarChartOverlay(
     private fun getChartValue(x: Double, y: Double): Pair<String, Long>? {
         val date = xAxis.getValueForDisplay(xAxis.parentToLocal(x, y).x)
         val y = yAxis.getValueForDisplay(yAxis.parentToLocal(x, y).y - chart.padding.top).toLong()
-        return if (date != null && y > 0) Pair(date, y) else null
+        return if (date != null && y >= 0) Pair(date, y) else null
     }
 
     private fun showPopup(x: Double, y: Double) {
@@ -240,7 +290,8 @@ private class DataUsageBarChartOverlay(
                     break
                 }
             }
-            if (chartValue.second <= uploadAmount + downloadAmount) {
+            val dataAmount = uploadAmount + downloadAmount
+            if (dataAmount > 0L && chartValue.second <= dataAmount) {
                 dataUsagePopup = DataUsageBarChartPopup(chartValue.first, downloadAmount, uploadAmount)
                 dataUsagePopup!!.relocate(
                     if (x + 100 > width) width - 116 else x,
