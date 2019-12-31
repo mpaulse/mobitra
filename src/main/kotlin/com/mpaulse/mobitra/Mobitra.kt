@@ -39,6 +39,7 @@ import javafx.scene.control.MenuButton
 import javafx.scene.control.ProgressIndicator
 import javafx.scene.control.ToggleButton
 import javafx.scene.control.ToggleGroup
+import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Region
@@ -114,7 +115,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         mainWindow.width = if (appData.windowSize.first >= mainWindow.minWidth) appData.windowSize.first else mainWindow.minWidth
         mainWindow.minHeight = 480.0
         mainWindow.height = if (appData.windowSize.second >= mainWindow.minHeight) appData.windowSize.second else mainWindow.minHeight
-        //mainWindow?.icons?.add(Images.get("images/Mobitra.png"))
+        mainWindow.icons.add(Image("images/mobitra.png"))
 
         val pos = appData.windowPosition
         if (pos != null) {

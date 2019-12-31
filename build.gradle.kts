@@ -104,14 +104,13 @@ tasks {
             "--identifier",
             "com.mpaulse.mobitra.Mobitra",
             "--name",
-            "Mobitra",
+            "mobitra",
             "--version",
             project.version.toString(),
             "--description",
             "Mobitra - Telkom Mobile LTE Data Usage Tracker",
-            // TODO: icon
-            //"--icon",
-            //"src/main/resources/images/Mobitra.ico",
+            "--icon",
+            "src/main/resources/images/mobitra.ico",
             "--vendor",
             "Marlon Paulse",
             "--verbose")
