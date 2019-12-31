@@ -81,7 +81,7 @@ class DataUsageBarChart(
 
         chart.animated = false
         chart.categoryGap = 1.0
-        chart.data.addAll(uploadDataSeries, downloadDataSeries)
+        chart.data.addAll(downloadDataSeries, uploadDataSeries)
 
         val chartPane = StackPane()
         chartPane.children.addAll(chart, DataUsageBarChartOverlay(chart, ::onHorizontalPan))
@@ -89,12 +89,14 @@ class DataUsageBarChart(
 
         // Use our own title label instead of the chart's internal title, so that the y-axis
         // coordinates are not affected.
+        val title = Label("Data usage per " + (if (type == DAILY) "day" else "month"))
+        title.styleClass += "chart-pane-title"
         val titleBox = HBox()
         titleBox.alignment = CENTER
-        titleBox.children.add(
-            Label("Data usage per "
-            + (if (type == DAILY) "day" else "month")))
+        titleBox.children.add(title)
         top = titleBox
+
+        styleClass += "chart-pane"
     }
 
     private fun setInitialDateRange() {
@@ -212,8 +214,8 @@ private class DataUsageBarChartOverlay(
 
     private val xAxis = chart.xAxis as CategoryAxis
     private val yAxis = chart.yAxis as NumberAxis
-    private val uploadDataSeries = chart.data[0]
-    private val downloadDataSeries = chart.data[1]
+    private val downloadDataSeries = chart.data[0]
+    private val uploadDataSeries = chart.data[1]
     private var dataUsagePopup: DataUsageBarChartPopup? = null
     private var mouseAchorX = 0.0
 

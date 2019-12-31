@@ -34,7 +34,7 @@
             <ChoiceBox fx:id="activeProductsMenu" prefWidth="300.0" />
          </children>
          <BorderPane.margin>
-            <Insets bottom="10.0" />
+            <Insets bottom="20.0" top="10.0" />
          </BorderPane.margin>
       </HBox>
    </top>

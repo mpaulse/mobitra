@@ -35,9 +35,11 @@ import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
 import javafx.scene.control.ChoiceBox
+import javafx.scene.control.MenuButton
 import javafx.scene.control.ProgressIndicator
 import javafx.scene.control.ToggleButton
 import javafx.scene.control.ToggleGroup
+import javafx.scene.image.ImageView
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
@@ -72,6 +74,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     private lateinit var historyPane: BorderPane
     private lateinit var noDataPane: Region
 
+    @FXML private lateinit var menuBtn: MenuButton
     @FXML private lateinit var historyBtn: ToggleButton
     @FXML private lateinit var activeProductsBtn: ToggleButton
     @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
@@ -106,7 +109,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     private fun createMainWindow(stage: Stage) {
         mainWindow = stage
         mainWindow.scene = Scene(loadFXMLPane("MainWindow"))
-        //mainWindow?.scene?.stylesheets?.add("styles/Main.css")
+        mainWindow.scene.stylesheets.add("style.css")
         mainWindow.minWidth = 600.0
         mainWindow.width = if (appData.windowSize.first >= mainWindow.minWidth) appData.windowSize.first else mainWindow.minWidth
         mainWindow.minHeight = 480.0
@@ -158,7 +161,14 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     private fun initControls() {
+        menuBtn.graphic = ImageView("images/menu.png")
+
         val toggleGroup = ToggleGroup()
+        toggleGroup.selectedToggleProperty().addListener { _, prevSelected, currSelected ->
+            if (currSelected == null) {
+                prevSelected.isSelected = true // Prevent no toggle in the group being selected.
+            }
+        }
         activeProductsBtn.toggleGroup = toggleGroup
         historyBtn.toggleGroup = toggleGroup
         activeProductsBtn.selectedProperty().set(true)

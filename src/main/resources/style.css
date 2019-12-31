@@ -1,0 +1,133 @@
+/*
+ * Copyright (c) 2019 Marlon Paulse
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+.root {
+    -fx-base: white;
+    -fx-background: -fx-base;
+    -fx-control-inner-background: #f0f3f5;
+    -fx-accent: #1da1f2;
+    -fx-focus-color: -fx-accent;
+    -fx-text-base-color: black;
+    -fx-text-background-color: -fx-text-base-color;
+    -fx-text-inner-color: -fx-text-base-color;
+    -fx-selection-bar-text: -fx-text-base-color;
+    -fx-text-fill: -fx-text-base-color;
+    -fx-font-size: 1em;
+}
+
+#topBar {
+    -fx-background-color: -fx-control-inner-background;
+}
+
+.toggle-button {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-border-color: -fx-control-inner-background;
+    -fx-cursor: hand;
+    -fx-font-size: 1.2em;
+}
+
+.toggle-button:hover {
+    -fx-text-fill: -fx-focus-color;
+}
+
+.toggle-button:selected {
+    -fx-background-color: -fx-background;
+    -fx-border-color: -fx-background;
+    -fx-text-fill: -fx-accent;
+    -fx-font-weight: bold;
+}
+
+.menu-button {
+    -fx-background-color: -fx-background;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+}
+
+.menu-button > .arrow-button {
+    -fx-padding: 0;
+}
+
+.menu-button > .arrow-button > .arrow {
+    -fx-padding: 0;
+}
+
+.menu-item:focused {
+    -fx-background-color: #1da1f222;
+    -fx-cursor: hand;
+}
+
+.choice-box {
+    -fx-background-color: -fx-background;
+    -fx-border-color: #12577b;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+}
+
+.context-menu {
+    -fx-background-color: -fx-background;
+    -fx-border-color: #e6e9eb;
+    -fx-border-radius: 2;
+}
+
+.chart-pane {
+    -fx-padding: 10px 0 10px 0;
+}
+
+.chart-pane-title {
+    -fx-font-weight: bold;
+}
+
+.default-color0.chart-series-area-line {
+    -fx-stroke: -fx-accent;
+}
+
+.default-color0.chart-series-area-fill {
+    -fx-fill: #1da1f222;
+}
+
+.default-color1.chart-series-area-line {
+    -fx-stroke: #12577b;
+}
+
+.default-color1.chart-series-area-fill {
+    -fx-fill: transparent;
+}
+
+.series0.chart-bar {
+    -fx-bar-fill: #12577b;
+}
+
+.series1.chart-bar {
+    -fx-bar-fill: -fx-accent;
+}
+
+.axis {
+    -fx-tick-label-font-size: 1em;
+}
+
+.axis > Text {
+    -fx-text-alignment: center;
+}
+
+.progress-indicator {
+    -fx-progress-color: -fx-accent;
+}

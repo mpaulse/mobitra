@@ -116,10 +116,14 @@ class CumulativeDataUsagePerDayChart(
 
         // Use our own title label instead of the chart's internal title, so that the y-axis
         // coordinates are not affected.
+        val title = Label("Cumulative data usage per day")
+        title.styleClass += "chart-pane-title"
         val titleBox = HBox()
         titleBox.alignment = CENTER
-        titleBox.children.add(Label("Cumulative data usage per day"))
+        titleBox.children.add(title)
         top = titleBox
+
+        styleClass += "chart-pane"
     }
 
     private fun plotDataUsage(dataUsage: MobileDataUsage) {
