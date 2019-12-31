@@ -40,7 +40,6 @@
 
 .toggle-button {
     -fx-background-color: -fx-control-inner-background;
-    -fx-border-color: -fx-control-inner-background;
     -fx-cursor: hand;
     -fx-font-size: 1.2em;
 }
