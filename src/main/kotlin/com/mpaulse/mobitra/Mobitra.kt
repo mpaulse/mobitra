@@ -35,12 +35,19 @@ import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
 import javafx.scene.control.ChoiceBox
+import javafx.scene.control.ProgressIndicator
 import javafx.scene.control.ToggleButton
 import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
 import javafx.stage.Stage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -51,12 +58,13 @@ const val APP_NAME = "Mobitra"
 const val VERSION = "0.1"
 private val homePath = Path.of(System.getProperty("user.home"), ".Mobitra")
 
-class MobitraApplication: Application() {
+class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     private val appData = ApplicationData(homePath)
     private val productDB = MobileDataProductDB(homePath)
     private val activeProducts = mutableMapOf<UUID, MobileDataProduct>()
     private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
+    private var loadHistory = true
 
     private lateinit var mainWindow: Stage
     @FXML private lateinit var mainWindowPane: BorderPane
@@ -67,6 +75,7 @@ class MobitraApplication: Application() {
     @FXML private lateinit var historyBtn: ToggleButton
     @FXML private lateinit var activeProductsBtn: ToggleButton
     @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
+    private val loadingSpinner = ProgressIndicator(-1.0)
 
     override fun start(stage: Stage) {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
@@ -176,69 +185,98 @@ class MobitraApplication: Application() {
 
     @FXML
     fun onViewHistory(event: ActionEvent) {
-        // TODO: Show a spinner and load in background to prevent UI lock-up for large data sets.
-        // TODO: Implement paged loading for better memory efficiency?
-        val dataUsagePerMonth = productDB.getAllProductDataUsagePerMonth()
-        val dataUsagePerDay = productDB.getAllProductDataUsagePerDay()
-        if (dataUsagePerMonth.isNotEmpty()) {
-            val charts = VBox()
-            charts.spacing = 25.0
-            charts.children.addAll(
-                DataUsageBarChart(dataUsagePerMonth, DataUsageBarChartType.MONTHLY),
-                DataUsageBarChart(dataUsagePerDay, DataUsageBarChartType.DAILY))
-            historyPane.center = charts
-        } else {
-            historyPane.center = noDataPane
+        if (loadHistory) {
+            historyPane.center = loadingSpinner
+
+            launch {
+                // TODO: Implement paged loading for better memory efficiency?
+                val dataUsagePerMonth = withContext(Dispatchers.IO) {
+                    productDB.getAllProductDataUsagePerMonth()
+                }
+                yield()
+                val dataUsagePerDay = withContext(Dispatchers.IO) {
+                    productDB.getAllProductDataUsagePerDay()
+                }
+                yield()
+                if (dataUsagePerMonth.isNotEmpty()) {
+                    val charts = VBox()
+                    charts.spacing = 25.0
+                    withContext(Dispatchers.IO) {
+                        charts.children.addAll(
+                            DataUsageBarChart(dataUsagePerMonth, DataUsageBarChartType.MONTHLY),
+                            DataUsageBarChart(dataUsagePerDay, DataUsageBarChartType.DAILY))
+                    }
+                    yield()
+                    historyPane.center = charts
+                    loadHistory = false
+                } else {
+                    historyPane.center = noDataPane
+                }
+            }
         }
+
         mainWindowPane.center = historyPane
         event.consume()
     }
 
     fun onActiveProductSelected(event: ActionEvent? = null) {
-        var product: MobileDataProduct? = null
-        var dataUsage: List<MobileDataUsage>? = null
+        activeProductsPane.center = loadingSpinner
 
-        if (activeProducts.isNotEmpty()) {
-            val productId = activeProductsMenu.selectionModel.selectedItem.productId
-            if (productId != null) {
-                product = activeProducts[productId]
-                if (product != null) {
-                    dataUsage = productDB.getProductDataUsagePerDay(product)
-                }
-            } else {
-                var totalAmount = 0L
-                var usedAmount = 0L
-                var activationDate: LocalDate? = null
-                var expiryDate: LocalDate? = null
-                for (p in activeProducts.values) {
-                    totalAmount += p.totalAmount
-                    usedAmount += p.usedAmount
-                    if (activationDate == null || activationDate > p.activationDate) {
-                        activationDate = p.activationDate
+        launch {
+            var product: MobileDataProduct? = null
+            var dataUsage: List<MobileDataUsage>? = null
+
+            if (activeProducts.isNotEmpty()) {
+                val productId = activeProductsMenu.selectionModel.selectedItem.productId
+                if (productId != null) {
+                    product = activeProducts[productId]
+                    if (product != null) {
+                        dataUsage = withContext(Dispatchers.IO) {
+                            productDB.getProductDataUsagePerDay(product!!)
+                        }
+                        yield()
                     }
-                    if (expiryDate == null || expiryDate < p.expiryDate) {
-                        expiryDate = p.expiryDate
+                } else {
+                    var totalAmount = 0L
+                    var usedAmount = 0L
+                    var activationDate: LocalDate? = null
+                    var expiryDate: LocalDate? = null
+                    for (p in activeProducts.values) {
+                        totalAmount += p.totalAmount
+                        usedAmount += p.usedAmount
+                        if (activationDate == null || activationDate > p.activationDate) {
+                            activationDate = p.activationDate
+                        }
+                        if (expiryDate == null || expiryDate < p.expiryDate) {
+                            expiryDate = p.expiryDate
+                        }
                     }
+                    product = MobileDataProduct(
+                        UUID.randomUUID(),
+                        "All",
+                        totalAmount,
+                        usedAmount,
+                        activationDate as LocalDate,
+                        expiryDate as LocalDate)
+                    dataUsage = withContext(Dispatchers.IO) {
+                        productDB.getActiveProductDataUsagePerDay()
+                    }
+                    yield()
                 }
-                product = MobileDataProduct(
-                    UUID.randomUUID(),
-                    "All",
-                    totalAmount,
-                    usedAmount,
-                    activationDate as LocalDate,
-                    expiryDate as LocalDate)
-                dataUsage = productDB.getActiveProductDataUsagePerDay()
             }
-        }
 
-        if (product != null && dataUsage != null) {
-            val charts = VBox()
-            charts.children.addAll(
-                CumulativeDataUsagePerDayChart(dataUsage, product),
-                DataUsageBarChart(dataUsage))
-            activeProductsPane.center = charts
-        } else {
-            activeProductsPane.center = noDataPane
+            if (product != null && dataUsage != null) {
+                val charts = VBox()
+                withContext(Dispatchers.IO) {
+                    charts.children.addAll(
+                        CumulativeDataUsagePerDayChart(dataUsage, product),
+                        DataUsageBarChart(dataUsage))
+                }
+                yield()
+                activeProductsPane.center = charts
+            } else {
+                activeProductsPane.center = noDataPane
+            }
         }
 
         event?.consume()
