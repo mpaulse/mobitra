@@ -127,6 +127,10 @@
     -fx-bar-fill: -fx-accent;
 }
 
+.series2.chart-bar {
+    -fx-bar-fill: #57b657;
+}
+
 .axis {
     -fx-tick-label-font-size: 1em;
 }

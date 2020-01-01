@@ -86,22 +86,8 @@ class CumulativeDataUsagePerDayChart(
 
         yAxis.tickLabelFormatter = DataAmountStringFormatter
 
-        if (usageData.isNotEmpty()) {
-            // TODO: Move to MobileDataProductDB
-            // Account for data usage at the beginning of the product period that was not tracked
-            var usedAmountTracked = 0L
-            for (usage in usageData) {
-                usedAmountTracked += usage.totalAmount
-            }
-            if (usedAmountTracked < product.usedAmount) {
-                plotDataUsage(MobileDataUsage(
-                    usageData.first().timestamp,
-                    product.usedAmount - usedAmountTracked))
-            }
-
-            for (usage in usageData) {
-                plotDataUsage(usage)
-            }
+        for (usage in usageData) {
+            plotDataUsage(usage)
         }
 
         // An upper bound line to express the product total amount.
@@ -168,6 +154,11 @@ private class CumulativeDataUsagePerDayChartOverlay(
                 "${DataAmountStringFormatter.toString(product.usedAmount)} used"
                     + " (${DataAmountStringFormatter.toString(product.remainingAmount)} remaining)")
             setLabelDataPoint(usedAmountLabel, dataSeries.last())
+
+            // Prevent the used amount label touching the upper bound line
+            if (usedAmountLabel.layoutY <= totalAmountLabel.layoutY + 8) {
+                usedAmountLabel.translateY = 8 - (totalAmountLabel.layoutY - usedAmountLabel.layoutY)
+            }
 
             children.clear()
             children.addAll(totalAmountLabel, usedAmountLabel)

@@ -67,6 +67,7 @@ class DataUsageBarChart(
     private val chart = StackedBarChart<String, Number>(xAxis, yAxis)
     private val downloadDataSeries = Series<String, Number>()
     private val uploadDataSeries = Series<String, Number>()
+    private val uncategorisedDataSeries = Series<String, Number>()
 
     init {
         setInitialDateRange()
@@ -78,10 +79,11 @@ class DataUsageBarChart(
 
         downloadDataSeries.name = "Download"
         uploadDataSeries.name = "Upload"
+        uncategorisedDataSeries.name = "Uncategorised"
 
         chart.animated = false
         chart.categoryGap = 1.0
-        chart.data.addAll(downloadDataSeries, uploadDataSeries)
+        chart.data.addAll(downloadDataSeries, uploadDataSeries, uncategorisedDataSeries)
 
         val chartPane = StackPane()
         chartPane.children.addAll(chart, DataUsageBarChartOverlay(chart, ::onHorizontalPan))
@@ -128,6 +130,7 @@ class DataUsageBarChart(
     private fun plotDataUsage() {
         downloadDataSeries.data.clear()
         uploadDataSeries.data.clear()
+        uncategorisedDataSeries.data.clear()
 
         if (dateRangeFrom <= timestampToDate(dataUsage.last().timestamp)
                 && dateRangeTo >= timestampToDate(dataUsage.first().timestamp)) {
@@ -140,9 +143,16 @@ class DataUsageBarChart(
                 }
 
                 val dateStr = dateToString(date)
-                downloadDataSeries.data.add(Data(dateStr, usage.downloadAmount))
-                uploadDataSeries.data.add(Data(dateStr, usage.uploadAmount))
+                plotDataUsage(dateStr, usage.downloadAmount, downloadDataSeries)
+                plotDataUsage(dateStr, usage.uploadAmount, uploadDataSeries)
+                plotDataUsage(dateStr, usage.uncategorisedAmount, uncategorisedDataSeries)
             }
+        }
+    }
+
+    private fun plotDataUsage(date: String, amount: Long, series: Series<String, Number>) {
+        if (amount > 0) {
+            series.data.add(Data(date, amount))
         }
     }
 
@@ -216,6 +226,7 @@ private class DataUsageBarChartOverlay(
     private val yAxis = chart.yAxis as NumberAxis
     private val downloadDataSeries = chart.data[0]
     private val uploadDataSeries = chart.data[1]
+    private val uncategorisedDataSeries = chart.data[2]
     private var dataUsagePopup: DataUsageBarChartPopup? = null
     private var mouseAchorX = 0.0
 
@@ -276,23 +287,13 @@ private class DataUsageBarChartOverlay(
         if (chartValue != null) {
             cursor = Cursor.MOVE
 
-            var uploadAmount = 0L
-            var downloadAmount = 0L
-            for (point in uploadDataSeries.data) {
-                if (chartValue.first == point.xValue) {
-                    uploadAmount = point.yValue.toLong()
-                    break
-                }
-            }
-            for (point in downloadDataSeries.data) {
-                if (chartValue.first == point.xValue) {
-                    downloadAmount = point.yValue.toLong()
-                    break
-                }
-            }
-            val dataAmount = uploadAmount + downloadAmount
+            val downloadAmount = getAmountAtDate(chartValue.first, downloadDataSeries)
+            val uploadAmount = getAmountAtDate(chartValue.first, uploadDataSeries)
+            val uncategorisedAmount = getAmountAtDate(chartValue.first, uncategorisedDataSeries)
+
+            val dataAmount = downloadAmount + uploadAmount + uncategorisedAmount
             if (dataAmount > 0L && chartValue.second <= dataAmount) {
-                dataUsagePopup = DataUsageBarChartPopup(chartValue.first, downloadAmount, uploadAmount)
+                dataUsagePopup = DataUsageBarChartPopup(chartValue.first, downloadAmount, uploadAmount, uncategorisedAmount)
                 dataUsagePopup!!.relocate(
                     if (x + 100 > width) width - 116 else x,
                     y + 16)
@@ -301,6 +302,15 @@ private class DataUsageBarChartOverlay(
         } else {
             cursor = Cursor.DEFAULT
         }
+    }
+
+    private fun getAmountAtDate(date: String, series: Series<String, Number>): Long {
+        for (point in series.data) {
+            if (date == point.xValue) {
+                return point.yValue.toLong()
+            }
+        }
+        return 0L
     }
 
     private fun removePopup() {
@@ -315,7 +325,8 @@ private class DataUsageBarChartOverlay(
 private class DataUsageBarChartPopup(
     date: String,
     downloadAmount: Long,
-    uploadAmount: Long
+    uploadAmount: Long,
+    uncategorisedAmount: Long = 0
 ): StackPane() {
 
     init {
@@ -324,6 +335,12 @@ private class DataUsageBarChartPopup(
             Label("Date: $date"),
             Label("Download: ${DataAmountStringFormatter.toString(downloadAmount)}"),
             Label("Upload: ${DataAmountStringFormatter.toString(uploadAmount)}"))
+        if (uncategorisedAmount > 0) {
+            layout.children +=
+                Label("Uncategorised: ${DataAmountStringFormatter.toString(uncategorisedAmount)}")
+        }
+        layout.children +=
+            Label("Total: ${DataAmountStringFormatter.toString(downloadAmount + uploadAmount + uncategorisedAmount)}")
         children += layout
 
         styleClass += "chart-pane-popup"

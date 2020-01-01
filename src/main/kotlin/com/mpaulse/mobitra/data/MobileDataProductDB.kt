@@ -210,6 +210,10 @@ class MobileDataProductDB(
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
     ): List<MobileDataUsage> {
         val dataUsage = LinkedList<MobileDataUsage>()
+        var dataUsageTotal = 0L
+        var productUsageTotal = 0L
+        var productUpdateTimestamp: Instant = Instant.now()
+
         try {
             conn.prepareStatement(
                     """
@@ -222,12 +226,30 @@ class MobileDataProductDB(
                     stmt.setObject(1, product.id)
                 }
                 stmt.executeQuery().use { rs ->
-                    readDataUsage(rs, dataUsage, timestampsEqual)
+                    dataUsageTotal = readDataUsage(rs, dataUsage, timestampsEqual)
+                }
+            }
+            conn.prepareStatement(
+                    """
+                        SELECT SUM(used_amount), MAX(update_timestamp)
+                        FROM mobile_data_products
+                        """.trimIndent()
+                        + (if (product != null) " WHERE id = ?" else "")).use { stmt ->
+                if (product != null) {
+                    stmt.setObject(1, product.id)
+                }
+                stmt.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        productUsageTotal = rs.getLong(1)
+                        productUpdateTimestamp = rs.getTimestamp(2).toInstant()
+                    }
                 }
             }
         } catch (e: SQLException) {
             throw MobileDataProductDBException("Failed to retrieve data usage", e)
         }
+
+        adjustDataUsageIfTotalsMismatch(dataUsage, dataUsageTotal, productUsageTotal, productUpdateTimestamp)
         return dataUsage
     }
 
@@ -244,6 +266,10 @@ class MobileDataProductDB(
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
     ): List<MobileDataUsage> {
         val dataUsage = LinkedList<MobileDataUsage>()
+        var dataUsageTotal = 0L
+        var productUsageTotal = 0L
+        var productUpdateTimestamp: Instant = Instant.now()
+
         try {
             conn.prepareStatement(
                     """
@@ -254,13 +280,45 @@ class MobileDataProductDB(
                     ORDER BY timestamp ASC
                     """.trimIndent()).use { stmt ->
                 stmt.executeQuery().use { rs ->
-                    readDataUsage(rs, dataUsage, timestampsEqual)
+                    dataUsageTotal = readDataUsage(rs, dataUsage, timestampsEqual)
+                }
+            }
+            conn.createStatement().use { stmt ->
+                stmt.executeQuery(
+                        """
+                        SELECT SUM(used_amount), MAX(update_timestamp)
+                        FROM mobile_data_products
+                        WHERE expiry_date > NOW()
+                        """.trimIndent()).use { rs ->
+                    if (rs.next()) {
+                        productUsageTotal = rs.getLong(1)
+                        productUpdateTimestamp = rs.getTimestamp(2).toInstant()
+                    }
                 }
             }
         } catch (e: SQLException) {
             throw MobileDataProductDBException("Failed to retrieve data usage", e)
         }
+
+        adjustDataUsageIfTotalsMismatch(dataUsage, dataUsageTotal, productUsageTotal, productUpdateTimestamp)
         return dataUsage
+    }
+
+    private fun adjustDataUsageIfTotalsMismatch(
+        dataUsage: MutableList<MobileDataUsage>,
+        dataUsageTotal: Long,
+        productUsageTotal: Long,
+        productUpdateTimestamp: Instant
+    ) {
+        if (dataUsageTotal < productUsageTotal) {
+            val first = if (dataUsage.isNotEmpty()) dataUsage.removeAt(0) else null
+            dataUsage.add(0,
+                MobileDataUsage(
+                    first?.timestamp ?: productUpdateTimestamp,
+                    first?.downloadAmount ?: 0,
+                    first?.uploadAmount ?: 0,
+                    productUsageTotal - dataUsageTotal))
+        }
     }
 
     fun getActiveProductDataUsagePerDay() =
@@ -270,9 +328,10 @@ class MobileDataProductDB(
         rs: ResultSet,
         dataUsage: MutableList<MobileDataUsage>,
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)?
-    ) {
+    ): Long {
         var downloadAmount = 0L
         var uploadAmount = 0L
+        var usedAmount = 0L
         var timestamp: Instant? = null
 
         while (rs.next()) {
@@ -284,17 +343,21 @@ class MobileDataProductDB(
             } else if (timestamp == null || timestampsEqual(timestamp, t)) {
                 downloadAmount += d
                 uploadAmount += u
+                usedAmount += d + u
                 timestamp = t
             } else {
                 dataUsage += MobileDataUsage(timestamp, downloadAmount, uploadAmount)
                 downloadAmount = d
                 uploadAmount = u
+                usedAmount += d + u
                 timestamp = t
             }
         }
         if (timestamp != null) {
             dataUsage += MobileDataUsage(timestamp, downloadAmount, uploadAmount)
         }
+
+        return usedAmount
     }
 
     fun clearAllData() {
