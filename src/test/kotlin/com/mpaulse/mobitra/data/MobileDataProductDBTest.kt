@@ -65,6 +65,24 @@ class MobileDataProductDBTest {
     }
 
     @Test
+    fun `storeProduct - update`() {
+        val product = MobileDataProduct(
+            UUID.randomUUID(),
+            "Test storeProduct and getProduct",
+            7832478178423,
+            32895894578,
+            LocalDate.now(),
+            LocalDate.now().plusDays(1))
+        productDB.storeProduct(product)
+
+        product.usedAmount = 887326786432
+        productDB.storeProduct(product)
+
+        val product2 = productDB.getProduct(product.id)
+        assertEquals(product, product2)
+    }
+
+    @Test
     fun `getAllProducts - available`() {
         val productList = mutableListOf<MobileDataProduct>()
         for (i in 0..9) {

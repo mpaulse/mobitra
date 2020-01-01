@@ -77,7 +77,11 @@ fun generateProductData(
             timestamp)
 
         timestamp = timestamp.plus(1, ChronoUnit.HOURS)
+        product.usedAmount += (downloadAmount + uploadAmount)
     }
+
+    productDB.storeProduct(product)
+    println("Updated product: $product")
 }
 
 fun main() {

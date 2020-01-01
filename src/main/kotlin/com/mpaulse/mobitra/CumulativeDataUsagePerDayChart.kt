@@ -87,6 +87,7 @@ class CumulativeDataUsagePerDayChart(
         yAxis.tickLabelFormatter = DataAmountStringFormatter
 
         if (usageData.isNotEmpty()) {
+            // TODO: Move to MobileDataProductDB
             // Account for data usage at the beginning of the product period that was not tracked
             var usedAmountTracked = 0L
             for (usage in usageData) {
@@ -106,7 +107,7 @@ class CumulativeDataUsagePerDayChart(
         // An upper bound line to express the product total amount.
         val upperBoundSeries = Series<Number, Number>()
         upperBoundSeries.data.add(Data(0, product.totalAmount))
-        upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate, product), product.totalAmount))
+        upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate.minusDays(4), product), product.totalAmount))
 
         chart.data.addAll(dataSeries, upperBoundSeries)
 
@@ -127,7 +128,7 @@ class CumulativeDataUsagePerDayChart(
     }
 
     private fun plotDataUsage(dataUsage: MobileDataUsage) {
-        usedAmount += dataUsage.downloadAmount + dataUsage.uploadAmount
+        usedAmount += dataUsage.totalAmount
         dataSeries.data.add(Data(
             timestampToXValue(dataUsage.timestamp, product),
             usedAmount))
@@ -143,6 +144,7 @@ private class CumulativeDataUsagePerDayChartOverlay(
     private val xAxis = chart.xAxis as NumberAxis
     private val yAxis = chart.yAxis as NumberAxis
     private val dataSeries = chart.data[0].data
+    private val upperBoundSeries = chart.data[1].data
     private var dataUsagePopup: CumulativeDataUsagePerDayPopup? = null
 
     init {
@@ -160,20 +162,22 @@ private class CumulativeDataUsagePerDayChartOverlay(
     private fun addChartLabels() {
         Platform.runLater {
             val totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.totalAmount)} total")
-            setAmountLabelPosition(totalAmountLabel, product.totalAmount)
+            setLabelDataPoint(totalAmountLabel,upperBoundSeries.last())
 
-            val usedAmountLabel = Label("${DataAmountStringFormatter.toString(product.usedAmount)} used")
-            setAmountLabelPosition(usedAmountLabel, product.usedAmount)
+            val usedAmountLabel = Label(
+                "${DataAmountStringFormatter.toString(product.usedAmount)} used"
+                    + " (${DataAmountStringFormatter.toString(product.remainingAmount)} remaining)")
+            setLabelDataPoint(usedAmountLabel, dataSeries.last())
 
             children.clear()
             children.addAll(totalAmountLabel, usedAmountLabel)
         }
     }
 
-    private fun setAmountLabelPosition(label: Label, amount: Long) {
+    private fun setLabelDataPoint(label: Label, dataPoint: Data<Number, Number>) {
         label.relocate(
-            xAxis.localToParent(Point2D(xAxis.getDisplayPosition(dateToXValue(LocalDate.now(), product)), 0.0)).x,
-            yAxis.localToParent(Point2D(0.0, yAxis.getDisplayPosition(amount))).y + chart.padding.top)
+            xAxis.localToParent(Point2D(xAxis.getDisplayPosition(dataPoint.xValue.toLong() + 1), 0.0)).x,
+            yAxis.localToParent(Point2D(0.0, yAxis.getDisplayPosition(dataPoint.yValue))).y - 3)
     }
 
     private fun onMouseMoved(event: MouseEvent) {

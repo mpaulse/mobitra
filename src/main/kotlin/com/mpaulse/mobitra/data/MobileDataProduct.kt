@@ -30,10 +30,15 @@ data class MobileDataProduct(
     val id: UUID,
     val name: String,
     val totalAmount: Long,
-    val usedAmount: Long,
+    var usedAmount: Long,
     val activationDate: LocalDate,
     val expiryDate: LocalDate
-)
+) {
+
+    val remainingAmount: Long
+        get() = totalAmount - usedAmount
+
+}
 
 data class MobileDataUsage(
     val timestamp: Instant,

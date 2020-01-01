@@ -98,6 +98,7 @@ class MobileDataProductDB(
                     stmt.setDate(4, Date.valueOf(product.activationDate))
                     stmt.setDate(5, Date.valueOf(product.expiryDate))
                     stmt.setObject(6, product.id)
+                    stmt.executeUpdate()
                 }
             }
 
@@ -286,9 +287,9 @@ class MobileDataProductDB(
                 timestamp = t
             } else {
                 dataUsage += MobileDataUsage(timestamp, downloadAmount, uploadAmount)
-                downloadAmount = 0
-                uploadAmount = 0
-                timestamp = null
+                downloadAmount = d
+                uploadAmount = u
+                timestamp = t
             }
         }
         if (timestamp != null) {
