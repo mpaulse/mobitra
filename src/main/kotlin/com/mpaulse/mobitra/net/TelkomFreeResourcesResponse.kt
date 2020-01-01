@@ -33,6 +33,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.UUID
 
+private const val TWENTY_GB = 21_474_836_480
+
 @JsonDeserialize(using = TelkomFreeResourcesDeserializer::class)
 data class TelkomFreeResourcesResponse(
     val resultCode: Int,
@@ -77,7 +79,8 @@ data class TelkomFreeResource(
                     TelkomFreeResourceType.LTE_ONCE_OFF_NIGHT_SURFER_DATA.string
                         -> return expiryDate.minusDays(30)
                     TelkomFreeResourceType.LTE_ONCE_OFF_ANYTIME_DATA.string
-                        -> return expiryDate.minusDays(60)
+                        -> return if (totalAmount < TWENTY_GB) expiryDate.minusDays(30)
+                                  else expiryDate.minusDays(60)
                 }
             }
             return null

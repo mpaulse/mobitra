@@ -79,12 +79,33 @@ class TelkomFreeResourceTest {
     }
 
     @Test
-    fun `activationDate - anytime data`() {
+    fun `activationDate - anytime data less than 20GB`() {
         val resource = TelkomFreeResource(
             "5127",
             "LTE",
             "GPRS",
-            21343254,
+            21_474_836_479,
+            23432432,
+            LocalDate.of(2019, Month.DECEMBER, 31))
+        assertEquals(LocalDate.of(2019, Month.DECEMBER, 1), resource.activationDate)
+    }
+
+    @Test
+    fun `activationDate - anytime data greater than or equal to 20GB`() {
+        var resource = TelkomFreeResource(
+            "5127",
+            "LTE",
+            "GPRS",
+            21_474_836_480,
+            23432432,
+            LocalDate.of(2019, Month.DECEMBER, 31))
+        assertEquals(LocalDate.of(2019, Month.NOVEMBER, 1), resource.activationDate)
+
+        resource = TelkomFreeResource(
+            "5127",
+            "LTE",
+            "GPRS",
+            21_474_836_481,
             23432432,
             LocalDate.of(2019, Month.DECEMBER, 31))
         assertEquals(LocalDate.of(2019, Month.NOVEMBER, 1), resource.activationDate)

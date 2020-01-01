@@ -1,13 +1,6 @@
 Development Notes
 ===
 
-- JavaFX with AWT System Tray integration:
-https://gist.github.com/jewelsea/e231e89e8d36ef4e5d8a
-- Instead of per day measurements, track per time period t{N-1} to tN,
-where tN is the last sample time.
-- Plot charts per time ranges.
-
-
 ## Huawei LTE Router API
 
 GET http://192.168.1.254/api/monitoring/month_statistics
