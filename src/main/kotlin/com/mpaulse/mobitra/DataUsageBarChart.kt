@@ -326,7 +326,7 @@ private class DataUsageBarChartPopup(
     date: String,
     downloadAmount: Long,
     uploadAmount: Long
-): Region() {
+): StackPane() {
 
     init {
         val layout = VBox()
@@ -335,6 +335,8 @@ private class DataUsageBarChartPopup(
             Label("Download: ${DataAmountStringFormatter.toString(downloadAmount)}"),
             Label("Upload: ${DataAmountStringFormatter.toString(uploadAmount)}"))
         children += layout
+
+        styleClass += "chart-pane-popup"
     }
 
 }

@@ -95,6 +95,14 @@
     -fx-font-weight: bold;
 }
 
+.chart-pane-popup {
+    -fx-background-color: -fx-background;
+    -fx-background-radius: 5;
+    -fx-border-color: #12577b;
+    -fx-border-radius: 5;
+    -fx-padding: 5px;
+}
+
 .default-color0.chart-series-area-line {
     -fx-stroke: -fx-accent;
 }

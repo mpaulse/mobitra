@@ -223,7 +223,7 @@ private class CumulativeDataUsagePerDayPopup(
     date: LocalDate,
     totalAmount: Long,
     usedAmount: Long
-): Region() {
+): StackPane() {
 
     init {
         val layout = VBox()
@@ -232,6 +232,8 @@ private class CumulativeDataUsagePerDayPopup(
             Label("Data used: ${DataAmountStringFormatter.toString(usedAmount)}"),
             Label("Data remaining: ${DataAmountStringFormatter.toString(totalAmount - usedAmount)}"))
         children += layout
+
+        styleClass += "chart-pane-popup"
     }
 
 }
