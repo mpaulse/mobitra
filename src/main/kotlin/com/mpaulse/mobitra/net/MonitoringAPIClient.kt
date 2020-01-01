@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PRO
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.mpaulse.mobitra.APP_NAME
-import com.mpaulse.mobitra.VERSION
+import com.mpaulse.mobitra.APP_VERSION
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
@@ -41,7 +41,7 @@ import java.time.Duration
 import java.util.UUID
 import javax.net.ssl.SSLContext
 
-private const val HTTP_USER_AGENT = "$APP_NAME/$VERSION"
+private const val HTTP_USER_AGENT = "$APP_NAME/$APP_VERSION"
 private const val HTTP_TIMEOUT_MILLIS = 15000L
 private const val TELKOM_ONNET_BASE_PATH = "/onnet/public/api"
 

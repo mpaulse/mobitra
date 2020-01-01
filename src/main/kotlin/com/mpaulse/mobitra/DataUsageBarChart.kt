@@ -220,21 +220,11 @@ private class DataUsageBarChartOverlay(
     private var mouseAchorX = 0.0
 
     init {
-        setOnMouseMoved {
-            onMouseMoved(it)
-        }
-        setOnMouseExited {
-            onMouseExited(it)
-        }
-        setOnMousePressed {
-            onMousePressed(it)
-        }
-        setOnMouseDragged {
-            onMouseDragged(it)
-        }
-        setOnMouseReleased {
-            onMouseReleased(it)
-        }
+        setOnMouseMoved(::onMouseMoved)
+        setOnMouseExited(::onMouseExited)
+        setOnMousePressed(::onMousePressed)
+        setOnMouseDragged(::onMouseDragged)
+        setOnMouseReleased(::onMouseReleased)
     }
 
     private fun onMouseMoved(event: MouseEvent) {

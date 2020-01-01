@@ -36,6 +36,7 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
 import javafx.scene.control.ChoiceBox
 import javafx.scene.control.MenuButton
+import javafx.scene.control.MenuItem
 import javafx.scene.control.ProgressIndicator
 import javafx.scene.control.ToggleButton
 import javafx.scene.control.ToggleGroup
@@ -52,13 +53,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.slf4j.LoggerFactory
+import java.awt.Font as AWTFont
+import java.awt.Image as AWTImage
+import java.awt.MenuItem as AWTMenuItem
+import java.awt.PopupMenu
+import java.awt.SystemTray
+import java.awt.Toolkit
+import java.awt.TrayIcon
+import java.awt.event.ActionEvent as AWTActionEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
 import java.util.UUID
 
 const val APP_NAME = "Mobitra"
-const val VERSION = "0.1"
+const val APP_VERSION = "0.1"
+private const val APP_ICON = "/images/mobitra.png"
+
 private val homePath = Path.of(System.getProperty("user.home"), ".Mobitra")
 
 class MobitraApplication: Application(), CoroutineScope by MainScope() {
@@ -73,9 +84,10 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     @FXML private lateinit var mainWindowPane: BorderPane
     private lateinit var activeProductsPane: BorderPane
     private lateinit var historyPane: BorderPane
-    private lateinit var noDataPane: Region
+    private val noDataPane: Region = loadFXMLPane("NoDataPane")
 
     @FXML private lateinit var menuBtn: MenuButton
+    @FXML private lateinit var hideMenuItem: MenuItem
     @FXML private lateinit var historyBtn: ToggleButton
     @FXML private lateinit var activeProductsBtn: ToggleButton
     @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
@@ -92,12 +104,12 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         createMainWindow(stage)
-        noDataPane = loadFXMLPane("NoDataPane")
+        createSystemTrayIcon()
         createActiveProductsPane()
         createHistoryPane()
         initControls()
         onViewActiveProducts()
-        mainWindow.show()
+        onOpenMainWindow()
     }
 
     override fun stop() {
@@ -115,7 +127,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         mainWindow.width = if (appData.windowSize.first >= mainWindow.minWidth) appData.windowSize.first else mainWindow.minWidth
         mainWindow.minHeight = 480.0
         mainWindow.height = if (appData.windowSize.second >= mainWindow.minHeight) appData.windowSize.second else mainWindow.minHeight
-        mainWindow.icons.add(Image("images/mobitra.png"))
+        mainWindow.icons.add(Image(APP_ICON))
 
         val pos = appData.windowPosition
         if (pos != null) {
@@ -126,6 +138,38 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         mainWindow.title = APP_NAME
+    }
+
+    private fun createSystemTrayIcon() {
+        if (!SystemTray.isSupported()) {
+            return
+        }
+
+        val sysTray = SystemTray.getSystemTray()
+        val sysTrayMenu = PopupMenu()
+        val sysTrayIcon = TrayIcon(
+            Toolkit.getDefaultToolkit().getImage(javaClass.getResource(APP_ICON)).getScaledInstance(16, 16, AWTImage.SCALE_DEFAULT),
+            APP_NAME,
+            sysTrayMenu)
+
+        val openMenuItem = AWTMenuItem("Open $APP_NAME")
+        openMenuItem.font = AWTFont.decode(null).deriveFont(AWTFont.BOLD)
+        openMenuItem.addActionListener(::onOpenMainWindow)
+
+        val exitMenuItem = AWTMenuItem("Exit")
+        exitMenuItem.addActionListener {
+            onExit()
+            sysTray.remove(sysTrayIcon)
+        }
+
+        sysTrayMenu.add(openMenuItem)
+        sysTrayMenu.addSeparator()
+        sysTrayMenu.add(exitMenuItem)
+
+        sysTrayIcon.addActionListener(::onOpenMainWindow)
+
+        sysTray.add(sysTrayIcon)
+        Platform.setImplicitExit(false)
     }
 
     private fun createActiveProductsPane() {
@@ -163,6 +207,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     private fun initControls() {
         menuBtn.graphic = ImageView("images/menu.png")
+        hideMenuItem.isDisable = !SystemTray.isSupported()
 
         val toggleGroup = ToggleGroup()
         toggleGroup.selectedToggleProperty().addListener { _, prevSelected, currSelected ->
@@ -183,6 +228,24 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
         loader.location = javaClass.getResource("/fxml/$pane.fxml")
         return loader.load<T>()
+    }
+
+    @FXML
+    fun onHideMainWindow(event: ActionEvent) {
+        mainWindow.hide()
+        event.consume()
+    }
+
+    private fun onOpenMainWindow(event: AWTActionEvent? = null) {
+        val action = {
+            mainWindow.show()
+            mainWindow.toFront()
+        }
+        if (event != null) {
+            Platform.runLater(action)
+        } else {
+            action()
+        }
     }
 
     @FXML
@@ -294,9 +357,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     @FXML
-    fun onExit(event: ActionEvent) {
+    fun onExit(event: ActionEvent? = null) {
         Platform.exit()
-        event.consume()
+        event?.consume()
     }
 
 }

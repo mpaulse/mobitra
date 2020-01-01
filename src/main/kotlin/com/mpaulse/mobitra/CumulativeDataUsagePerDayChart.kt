@@ -153,12 +153,8 @@ private class CumulativeDataUsagePerDayChartOverlay(
             addChartLabels()
         }
 
-        setOnMouseMoved {
-            onMouseMoved(it)
-        }
-        setOnMouseExited {
-            onMouseExited(it)
-        }
+        setOnMouseMoved(::onMouseMoved)
+        setOnMouseExited(::onMouseExited)
     }
 
     private fun addChartLabels() {

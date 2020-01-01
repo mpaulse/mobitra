@@ -38,7 +38,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.verify
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import com.mpaulse.mobitra.APP_NAME
-import com.mpaulse.mobitra.VERSION
+import com.mpaulse.mobitra.APP_VERSION
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -129,7 +129,7 @@ class MonitoringAPIClientTest {
 
         verify(getRequestedFor(
             urlEqualTo("/api/monitoring/traffic-statistics"))
-            .withHeader("User-Agent", equalTo("$APP_NAME/$VERSION")))
+            .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION")))
     }
 
     @Test
@@ -378,14 +378,14 @@ class MonitoringAPIClientTest {
 
         verify(getRequestedFor(
             urlEqualTo("/onnet/public/api/checkOnnet"))
-            .withHeader("User-Agent", equalTo("$APP_NAME/$VERSION")))
+            .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION")))
         verify(postRequestedFor(
             urlEqualTo("/onnet/public/api/createOnnetSession"))
-            .withHeader("User-Agent", equalTo("$APP_NAME/$VERSION"))
+            .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION"))
             .withRequestBody(equalTo("sid%3D$sessionToken")))
         verify(postRequestedFor(
             urlEqualTo("/onnet/public/api/getFreeResources"))
-            .withHeader("User-Agent", equalTo("$APP_NAME/$VERSION"))
+            .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION"))
             .withRequestBody(equalTo("msisdn%3D$msisdn")))
     }
 
