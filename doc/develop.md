@@ -1,7 +1,18 @@
 Development Notes
 ===
 
-## Huawei LTE Router API
+## TODO:
+
+- Settings screen:
+  - Huawei IP address.
+  - Launch at Windows start-up option.
+  - Test Connection button.
+- About screen.
+- Launch at Windows start-up, if configured.
+- Integrate UI with networking back-end, with a timer to periodically collect and reconcile data from Huawei and Telkom.
+- Prevent multiple instances of application.
+
+## Huawei LTE Router API:
 
 GET http://192.168.1.254/api/monitoring/month_statistics
 
@@ -38,7 +49,7 @@ month stats
 ```
 
 
-## Telkom API
+## Telkom API:
 
 POST http://onnet.telkom.co.za/onnet/public/api/checkOnnet
 

@@ -8,14 +8,38 @@ reports and charts (e.g. total data downloaded and uploaded on a daily basis) th
 official Telkom site and mobile app, where only the total data usage and balances
 are reported. This gives better insight into one's prepaid LTE data usage patterns.
 
-## Requirements and Planned Features:
+## Features:
 
-- Dock to system tray at Windows start-up.
-- System tray tool tip shows the current monthly download and upload stats.
-- On the main application screen, show the:
-    - Monthly download and upload stats
-    - Current download and upload stats (refreshes automatically)
-    - Bar chart of monthly download and upload stats for finer-grained time periods.
-    - Cummulative line chart of download and upload stats with an upper limit line representing the data cap
-    - Show the prepaid bundle expiry date
-    - Separate charts per prepaid bundle (normal bundle data allocation vs. night-time surfer data allocation)
+- Tracks Telkom Mobile prepaid LTE data usage.
+- Runs in the background.
+- Data usage reported per product (prepaid bundle), e.g. Anytime data usage vs. Night
+  Surfer data usage.
+- Shows the daily/monthly download and upload amounts.
+- Cumulative line chart of the daily usage per product or for all active products.
+- Bar chart of the daily usage per product or for all active products.
+- Historic daily and monthly bar charts.
+
+## Download:
+
+Not yet released.
+
+## Installation and Setup:
+
+- Extract the release ZIP file into a directory of your choice.
+- Execute mobitra.exe.
+- On the Settings screen, specify the Huawei router IP address and any other
+  relevant configuration.
+
+## Screenshots:
+
+Daily data usage for all active products:
+
+![Active products screenshot](doc/ScreenshotActiveProducts.png)
+
+Historic daily and monthly data usage:
+
+![History data usage screenshot](doc/ScreenshotHistory.png)
+
+## Development:
+
+[Development notes](doc/develop.md)
