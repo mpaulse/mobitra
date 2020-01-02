@@ -1,5 +1,5 @@
-Mobitra - Telkom Mobile LTE Data Usage Tracker
-==============================================
+Mobitra - Telkom Mobile Prepaid LTE Data Usage Tracker
+======================================================
 [![Build Status](https://dev.azure.com/mpaulse/mobitra/_apis/build/status/mpaulse.mobitra?branchName=master)](https://dev.azure.com/mpaulse/mobitra/_build/latest?definitionId=1&branchName=master)
 
 Mobitra is a Windows desktop application that tracks Telkom Mobile prepaid LTE data usage
