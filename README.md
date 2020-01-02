@@ -42,4 +42,4 @@ Historic daily and monthly data usage:
 
 ## Development:
 
-[Development notes](doc/develop.md)
+See the [development notes](doc/develop.md).
