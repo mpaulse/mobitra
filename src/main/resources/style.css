@@ -38,21 +38,9 @@
     -fx-background-color: -fx-control-inner-background;
 }
 
-.toggle-button {
-    -fx-background-color: -fx-control-inner-background;
-    -fx-cursor: hand;
-    -fx-font-size: 1.2em;
-}
-
-.toggle-button:hover {
-    -fx-text-fill: -fx-focus-color;
-}
-
-.toggle-button:selected {
+#topBar .button {
     -fx-background-color: -fx-background;
-    -fx-border-color: -fx-background;
-    -fx-text-fill: -fx-accent;
-    -fx-font-weight: bold;
+    -fx-cursor: hand;
 }
 
 .menu-button {
@@ -76,6 +64,23 @@
 .menu-item:focused {
     -fx-background-color: #1da1f222;
     -fx-cursor: hand;
+}
+
+.toggle-button {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-cursor: hand;
+    -fx-font-size: 1.2em;
+}
+
+.toggle-button:hover {
+    -fx-text-fill: -fx-focus-color;
+}
+
+.toggle-button:selected {
+    -fx-background-color: -fx-background;
+    -fx-border-color: -fx-background;
+    -fx-text-fill: -fx-accent;
+    -fx-font-weight: bold;
 }
 
 .choice-box {

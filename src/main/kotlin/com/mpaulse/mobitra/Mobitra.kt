@@ -36,6 +36,7 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.ChoiceBox
+import javafx.scene.control.Label
 import javafx.scene.control.MenuButton
 import javafx.scene.control.MenuItem
 import javafx.scene.control.ProgressIndicator
@@ -43,6 +44,8 @@ import javafx.scene.control.ToggleButton
 import javafx.scene.control.ToggleGroup
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
+import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Region
@@ -381,6 +384,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     fun onSettings(event: ActionEvent? = null) {
         val action = {
             activateSubViewButtons(settingsBtn)
+            mainWindowPane.center = Label("Settings")
         }
         if (event != null) {
             action()
@@ -393,6 +397,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     @FXML
     fun onAbout(event: ActionEvent) {
         activateSubViewButtons(aboutBtn)
+        mainWindowPane.center = Label("About")
         event.consume()
     }
 
@@ -408,13 +413,21 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     @FXML
-    fun onBack(event: ActionEvent) {
+    fun onBack(event: ActionEvent? = null) {
         backBtn.isVisible = false
         menuBtn.isVisible = true
         toggleBtnBox.children.clear()
         toggleBtnBox.children.addAll(activeProductsBtn, historyBtn)
         toggleBtnToFireOnBack?.fire()
         toggleBtnToFireOnBack = null
+        event?.consume()
+    }
+
+    @FXML
+    fun onKeyPressed(event: KeyEvent) {
+        if (toggleBtnToFireOnBack != null && event.code == KeyCode.ESCAPE) {
+            onBack()
+        }
         event.consume()
     }
 
