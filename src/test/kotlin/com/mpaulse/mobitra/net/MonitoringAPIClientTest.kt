@@ -351,6 +351,7 @@ class MonitoringAPIClientTest {
             val resources = client.getTelkomFreeResources()
             assertEquals(3, resources.size, "Incorrect no. resources")
 
+            assertEquals(msisdn, resources[0].msisdn, "Incorrect MSISDN")
             assertEquals("5036", resources[0].type, "Incorrect type")
             assertEquals("Campaign Welcome Bonus Messaging", resources[0].name, "Incorrect name")
             assertEquals("SMS/MMS", resources[0].service, "Incorrect service")
@@ -359,6 +360,7 @@ class MonitoringAPIClientTest {
             assertEquals(LocalDate.of(2019, 11, 4), resources[0].expiryDate, "Incorrect expiry date")
             assertFalse(resources[0].isMobileData, "Should not be mobile data")
 
+            assertEquals(msisdn, resources[1].msisdn, "Incorrect MSISDN")
             assertEquals("5125", resources[1].type, "Incorrect type")
             assertEquals("Once-off LTE/LTE-A Night Surfer Data", resources[1].name, "Incorrect name")
             assertEquals("GPRS", resources[1].service, "Incorrect service")
@@ -367,6 +369,7 @@ class MonitoringAPIClientTest {
             assertEquals(LocalDate.of(2019, 11, 28), resources[1].expiryDate, "Incorrect expiry date")
             assertTrue(resources[1].isMobileData, "Should be mobile data")
 
+            assertEquals(msisdn, resources[2].msisdn, "Incorrect MSISDN")
             assertEquals("5127", resources[2].type, "Incorrect type")
             assertEquals("Once-off LTE/LTE-A Anytime Data", resources[2].name, "Incorrect name")
             assertEquals("GPRS", resources[2].service, "Incorrect service")

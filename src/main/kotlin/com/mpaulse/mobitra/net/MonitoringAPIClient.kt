@@ -103,6 +103,7 @@ class MonitoringAPIClient(
             val r2 = merged[r.id]
             if (r2 != null) {
                merged[r.id] = TelkomFreeResource(
+                   r.msisdn,
                    r.type,
                    r.name,
                    r.service,
@@ -144,11 +145,14 @@ class MonitoringAPIClient(
 
     private suspend fun getTelkomFreeResources(msisdn: String): TelkomFreeResourcesResponse = withContext(Dispatchers.IO) {
         try {
-            jsonMapper.readValue(
-                doUrlEncodedHttpPost(
-                    "https://$telkomOnnetHttpsHost:$httpsPort$TELKOM_ONNET_BASE_PATH/getFreeResources",
-                    mapOf("msisdn" to msisdn)),
-                TelkomFreeResourcesResponse::class.java)
+            val rsp = doUrlEncodedHttpPost(
+                "https://$telkomOnnetHttpsHost:$httpsPort$TELKOM_ONNET_BASE_PATH/getFreeResources",
+                mapOf("msisdn" to msisdn))
+            jsonMapper
+                .reader()
+                .forType(TelkomFreeResourcesResponse::class.java)
+                .withAttribute("msisdn", msisdn)
+                .readValue<TelkomFreeResourcesResponse>(rsp)
         } catch (e: MonitoringAPIException) {
             throw e
         } catch (e: Exception) {

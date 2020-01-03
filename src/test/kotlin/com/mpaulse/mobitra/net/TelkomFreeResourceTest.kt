@@ -34,6 +34,7 @@ class TelkomFreeResourceTest {
     @Test
     fun `isMobileData - true`() {
         val resource = TelkomFreeResource(
+            "0123456789",
             "5125",
             "LTE",
             "GPRS",
@@ -47,6 +48,7 @@ class TelkomFreeResourceTest {
     fun `isMobileData - false`() {
         for (type in setOf("5124", "5749", "5135", "5136", "5149", "5177")) {
             val resource = TelkomFreeResource(
+                "0123456789",
                 type,
                 "LTE",
                 "GPRS",
@@ -57,6 +59,7 @@ class TelkomFreeResourceTest {
         }
 
         val resource = TelkomFreeResource(
+            "0123456789",
             "5036",
             "SMS",
             "SMS",
@@ -69,6 +72,7 @@ class TelkomFreeResourceTest {
     @Test
     fun `activationDate - night surfer data`() {
         val resource = TelkomFreeResource(
+            "0123456789",
             "5125",
             "LTE",
             "GPRS",
@@ -81,6 +85,7 @@ class TelkomFreeResourceTest {
     @Test
     fun `activationDate - anytime data less than 20GB`() {
         val resource = TelkomFreeResource(
+            "0123456789",
             "5127",
             "LTE",
             "GPRS",
@@ -93,6 +98,7 @@ class TelkomFreeResourceTest {
     @Test
     fun `activationDate - anytime data greater than or equal to 20GB`() {
         var resource = TelkomFreeResource(
+            "0123456789",
             "5127",
             "LTE",
             "GPRS",
@@ -102,6 +108,7 @@ class TelkomFreeResourceTest {
         assertEquals(LocalDate.of(2019, Month.NOVEMBER, 1), resource.activationDate)
 
         resource = TelkomFreeResource(
+            "0123456789",
             "5127",
             "LTE",
             "GPRS",

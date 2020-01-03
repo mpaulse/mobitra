@@ -62,6 +62,7 @@ data class TelkomFreeResourcesResponse(
 }
 
 data class TelkomFreeResource(
+    val msisdn: String,
     val type: String,
     val name: String,
     val service: String,
@@ -88,6 +89,7 @@ data class TelkomFreeResource(
 
     init {
         val digest = MessageDigest.getInstance("MD5")
+        digest.update(msisdn.toByteArray())
         digest.update(type.toByteArray())
         digest.update(service.toByteArray())
         digest.update(expiryDate.toString().toByteArray())
@@ -110,6 +112,9 @@ private class TelkomFreeResourcesDeserializer
     : StdDeserializer<TelkomFreeResourcesResponse>(TelkomFreeResourcesResponse::class.java) {
 
     override fun deserialize(parser: JsonParser, context: DeserializationContext): TelkomFreeResourcesResponse {
+        val msisdn = context.getAttribute("msisdn") as? String
+            ?: throw MonitoringAPIException("MSISN not set")
+
         val root = parser.readValueAsTree<JsonNode>()
         if (!root.isObject) {
             throw MonitoringAPIException("Expected a root JSON object, but got ${root.nodeType}")
@@ -120,10 +125,10 @@ private class TelkomFreeResourcesDeserializer
                 ?: throw MonitoringAPIException("Missing resultCode"),
             root["resultMessageCode"]?.textValue()
                 ?: throw MonitoringAPIException("Missing resultMessageCode"),
-            deserializeFreeResources(root["payload"]))
+            deserializeFreeResources(root["payload"], msisdn))
     }
 
-    private fun deserializeFreeResources(payload: JsonNode?): Array<TelkomFreeResource> {
+    private fun deserializeFreeResources(payload: JsonNode?, msisdn: String): Array<TelkomFreeResource> {
         val freeResources = mutableListOf<TelkomFreeResource>()
         if (payload != null && payload.isArray) {
             for (element in payload.elements()) {
@@ -132,6 +137,7 @@ private class TelkomFreeResourcesDeserializer
                     continue
                 }
                 freeResources += TelkomFreeResource(
+                    msisdn,
                     resource["type"]?.asText()
                         ?: throw MonitoringAPIException("Missing subscriberFreeResource type"),
                     resource["typeName"]?.asText()
