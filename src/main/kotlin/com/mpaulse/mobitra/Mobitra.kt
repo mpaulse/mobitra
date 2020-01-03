@@ -48,7 +48,7 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
-import javafx.scene.layout.Region
+import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import javafx.stage.Stage
 import kotlinx.coroutines.CoroutineScope
@@ -77,6 +77,16 @@ private const val APP_ICON = "/images/mobitra.png"
 
 private val homePath = Path.of(System.getProperty("user.home"), ".Mobitra")
 
+fun <T> loadFXMLPane(pane: String, controller: Any): T {
+    val loader = FXMLLoader()
+    loader.setController(controller)
+    loader.setControllerFactory {
+        controller // Needed for imported/nested FXML files
+    }
+    loader.location = controller.javaClass.getResource("/fxml/$pane.fxml")
+    return loader.load<T>()
+}
+
 class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     private val appData = ApplicationData(homePath)
@@ -90,7 +100,8 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     @FXML private lateinit var toggleBtnBox: HBox
     private lateinit var activeProductsPane: BorderPane
     private lateinit var historyPane: BorderPane
-    private val noDataPane: Region = loadFXMLPane("NoDataPane")
+    private val noDataPane: Pane = loadFXMLPane("NoDataPane", this)
+    private val aboutPane = AboutScreen(hostServices)
 
     @FXML private lateinit var menuBtn: MenuButton
     @FXML private lateinit var hideMenuItem: MenuItem
@@ -135,7 +146,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     private fun createMainWindow(stage: Stage) {
         mainWindow = stage
-        mainWindow.scene = Scene(loadFXMLPane("MainWindow"))
+        mainWindow.scene = Scene(loadFXMLPane("MainWindow", this))
         mainWindow.scene.stylesheets.add("style.css")
         mainWindow.minWidth = 600.0
         mainWindow.width = if (appData.windowSize.first >= mainWindow.minWidth) appData.windowSize.first else mainWindow.minWidth
@@ -190,7 +201,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     private fun createActiveProductsPane() {
-        activeProductsPane = loadFXMLPane("ActiveProductsPane")
+        activeProductsPane = loadFXMLPane("ActiveProductsPane", this)
         refreshActiveProductsMenu()
         activeProductsMenu.setOnAction {
             onActiveProductSelected(it)
@@ -240,16 +251,6 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         aboutBtn.toggleGroup = toggleGroup
 
         activeProductsBtn.fire()
-    }
-
-    private fun <T> loadFXMLPane(pane: String): T {
-        val loader = FXMLLoader()
-        loader.setController(this)
-        loader.setControllerFactory {
-            this // Needed for imported/nested FXML files
-        }
-        loader.location = javaClass.getResource("/fxml/$pane.fxml")
-        return loader.load<T>()
     }
 
     @FXML
@@ -401,7 +402,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     @FXML
     fun onAbout(event: ActionEvent) {
         activateSubViewButtons(aboutBtn)
-        mainWindowPane.center = Label("About")
+        mainWindowPane.center = aboutPane
         event.consume()
     }
 

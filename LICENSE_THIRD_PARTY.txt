@@ -1,0 +1,10 @@
+This application includes the following software.
+License terms are available at their respective links.
+
+- HSQLDB: http://hsqldb.org/web/hsqlLicense.html
+- Jackson: https://github.com/FasterXML/jackson-core/blob/master/LICENSE
+- Kotlin: https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt
+- Logback: http://logback.qos.ch/license.html
+- OpenJDK: https://openjdk.java.net/legal/gplv2+ce.html
+- OpenJFX: https://github.com/openjdk/jfx/blob/master/LICENSE
+- SLF4J: http://www.slf4j.org/license.html
