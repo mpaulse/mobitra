@@ -41,6 +41,15 @@
 #topBar .button {
     -fx-background-color: -fx-background;
     -fx-cursor: hand;
+    -fx-font-size: 1.2em;
+}
+
+#topBar .button:hover {
+    -fx-text-fill: -fx-focus-color;
+}
+
+#topBar .button:pressed {
+    -fx-background-color: -fx-control-inner-background;
 }
 
 .menu-button {

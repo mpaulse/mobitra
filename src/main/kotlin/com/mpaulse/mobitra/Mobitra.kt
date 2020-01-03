@@ -58,18 +58,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.slf4j.LoggerFactory
-import java.awt.Font as AWTFont
-import java.awt.Image as AWTImage
-import java.awt.MenuItem as AWTMenuItem
 import java.awt.PopupMenu
 import java.awt.SystemTray
 import java.awt.Toolkit
 import java.awt.TrayIcon
-import java.awt.event.ActionEvent as AWTActionEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
 import java.util.UUID
+import java.awt.Font as AWTFont
+import java.awt.Image as AWTImage
+import java.awt.MenuItem as AWTMenuItem
+import java.awt.event.ActionEvent as AWTActionEvent
 
 const val APP_NAME = "Mobitra"
 const val APP_VERSION = "0.1"
@@ -226,15 +226,19 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         menuBtn.graphic = ImageView("images/menu.png")
         hideMenuItem.isDisable = !SystemTray.isSupported()
 
+        backBtn.graphic = ImageView("images/back.png")
+
         toggleGroup.selectedToggleProperty().addListener { _, prevSelected, currSelected ->
             if (currSelected == null) {
                 prevSelected.isSelected = true // Prevent no toggle in the group being selected.
             }
         }
+
         activeProductsBtn.toggleGroup = toggleGroup
         historyBtn.toggleGroup = toggleGroup
         settingsBtn.toggleGroup = toggleGroup
         aboutBtn.toggleGroup = toggleGroup
+
         activeProductsBtn.fire()
     }
 
