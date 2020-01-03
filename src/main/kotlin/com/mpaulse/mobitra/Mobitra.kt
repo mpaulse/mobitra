@@ -34,6 +34,7 @@ import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
+import javafx.scene.control.Button
 import javafx.scene.control.ChoiceBox
 import javafx.scene.control.MenuButton
 import javafx.scene.control.MenuItem
@@ -43,6 +44,7 @@ import javafx.scene.control.ToggleGroup
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.BorderPane
+import javafx.scene.layout.HBox
 import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
 import javafx.stage.Stage
@@ -82,15 +84,24 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     private lateinit var mainWindow: Stage
     @FXML private lateinit var mainWindowPane: BorderPane
+    @FXML private lateinit var toggleBtnBox: HBox
     private lateinit var activeProductsPane: BorderPane
     private lateinit var historyPane: BorderPane
     private val noDataPane: Region = loadFXMLPane("NoDataPane")
 
     @FXML private lateinit var menuBtn: MenuButton
     @FXML private lateinit var hideMenuItem: MenuItem
+
+    private val toggleGroup = ToggleGroup()
+    private var toggleBtnToFireOnBack: ToggleButton? = null
     @FXML private lateinit var historyBtn: ToggleButton
     @FXML private lateinit var activeProductsBtn: ToggleButton
+    private val settingsBtn = ToggleButton("Settings")
+    private val aboutBtn = ToggleButton("About")
+    @FXML private lateinit var backBtn: Button
+
     @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
+
     private var sysTrayIcon: TrayIcon? = null
     private val loadingSpinner = ProgressIndicator(-1.0)
 
@@ -109,7 +120,6 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         createActiveProductsPane()
         createHistoryPane()
         initControls()
-        onViewActiveProducts()
         onOpenMainWindow()
     }
 
@@ -157,12 +167,16 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         openMenuItem.font = AWTFont.decode(null).deriveFont(AWTFont.BOLD)
         openMenuItem.addActionListener(::onOpenMainWindow)
 
+        val settingsMenuItem = AWTMenuItem("Settings")
+        settingsMenuItem.addActionListener(::onSettingsFromSystemTray)
+
         val exitMenuItem = AWTMenuItem("Exit")
         exitMenuItem.addActionListener {
             onExit()
         }
 
         sysTrayMenu.add(openMenuItem)
+        sysTrayMenu.add(settingsMenuItem)
         sysTrayMenu.addSeparator()
         sysTrayMenu.add(exitMenuItem)
 
@@ -209,7 +223,6 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         menuBtn.graphic = ImageView("images/menu.png")
         hideMenuItem.isDisable = !SystemTray.isSupported()
 
-        val toggleGroup = ToggleGroup()
         toggleGroup.selectedToggleProperty().addListener { _, prevSelected, currSelected ->
             if (currSelected == null) {
                 prevSelected.isSelected = true // Prevent no toggle in the group being selected.
@@ -217,7 +230,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
         activeProductsBtn.toggleGroup = toggleGroup
         historyBtn.toggleGroup = toggleGroup
-        activeProductsBtn.selectedProperty().set(true)
+        settingsBtn.toggleGroup = toggleGroup
+        aboutBtn.toggleGroup = toggleGroup
+        activeProductsBtn.fire()
     }
 
     private fun <T> loadFXMLPane(pane: String): T {
@@ -249,12 +264,12 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     @FXML
-    fun onViewActiveProducts(event: ActionEvent? = null) {
+    fun onViewActiveProducts(event: ActionEvent) {
         mainWindowPane.center = activeProductsPane
         if (activeProducts.isEmpty()) {
             activeProductsPane.center = noDataPane
         }
-        event?.consume()
+        event.consume()
     }
 
     @FXML
@@ -355,6 +370,52 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         event?.consume()
+    }
+
+    fun onSettingsFromSystemTray(event: AWTActionEvent) {
+        onOpenMainWindow(event)
+        onSettings()
+    }
+
+    @FXML
+    fun onSettings(event: ActionEvent? = null) {
+        val action = {
+            activateSubViewButtons(settingsBtn)
+        }
+        if (event != null) {
+            action()
+            event.consume()
+        } else {
+            Platform.runLater(action)
+        }
+    }
+
+    @FXML
+    fun onAbout(event: ActionEvent) {
+        activateSubViewButtons(aboutBtn)
+        event.consume()
+    }
+
+    private fun activateSubViewButtons(activeToggleBtn: ToggleButton) {
+        backBtn.isVisible = true
+        menuBtn.isVisible = false
+        toggleBtnBox.children.clear()
+        toggleBtnBox.children += activeToggleBtn
+        if (toggleBtnToFireOnBack == null) {
+            toggleBtnToFireOnBack = toggleGroup.selectedToggle as ToggleButton
+        }
+        activeToggleBtn.fire()
+    }
+
+    @FXML
+    fun onBack(event: ActionEvent) {
+        backBtn.isVisible = false
+        menuBtn.isVisible = true
+        toggleBtnBox.children.clear()
+        toggleBtnBox.children.addAll(activeProductsBtn, historyBtn)
+        toggleBtnToFireOnBack?.fire()
+        toggleBtnToFireOnBack = null
+        event.consume()
     }
 
     @FXML

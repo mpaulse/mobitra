@@ -30,7 +30,7 @@
    <top>
       <BorderPane id="topBar" BorderPane.alignment="CENTER">
          <center>
-            <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+            <HBox fx:id="toggleBtnBox" alignment="CENTER" BorderPane.alignment="CENTER">
                <children>
                   <ToggleButton fx:id="activeProductsBtn" mnemonicParsing="false" onAction="#onViewActiveProducts" text="Active Products" />
                   <ToggleButton fx:id="historyBtn" mnemonicParsing="false" onAction="#onViewHistory" text="History" />
@@ -40,9 +40,10 @@
          <right>
             <MenuButton fx:id="menuBtn" alignment="CENTER" contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" mnemonicParsing="false" popupSide="LEFT" BorderPane.alignment="CENTER">
               <items>
-                <MenuItem mnemonicParsing="false" text="About..." />
+                  <MenuItem mnemonicParsing="false" onAction="#onSettings" text="Settings..." />
+                <MenuItem mnemonicParsing="false" onAction="#onAbout" text="About..." />
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="hideMenuItem" mnemonicParsing="false" onAction="#onHideMainWindow" text="Hide" />
+                  <MenuItem fx:id="hideMenuItem" mnemonicParsing="false" onAction="#onHideMainWindow" text="Hide in background" />
                 <MenuItem mnemonicParsing="false" onAction="#onExit" text="Exit" />
               </items>
             </MenuButton>
@@ -50,6 +51,9 @@
          <BorderPane.margin>
             <Insets bottom="10.0" />
          </BorderPane.margin>
+         <left>
+            <Button fx:id="backBtn" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#onBack" visible="false" BorderPane.alignment="CENTER" />
+         </left>
       </BorderPane>
    </top>
 </BorderPane>
