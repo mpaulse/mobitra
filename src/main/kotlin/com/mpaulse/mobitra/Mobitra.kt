@@ -190,7 +190,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         activeProductsMenu.items.add(allProductsItem)
 
         for ((productId, product) in activeProducts) {
-            val item = ActiveProductMenuItem(product.name, productId)
+            val item = ActiveProductMenuItem("${product.msisdn} - ${product.name}", productId)
             activeProductsMenu.items.add(item)
             if (productId == selectedItem?.productId) {
                 selectedItem = item

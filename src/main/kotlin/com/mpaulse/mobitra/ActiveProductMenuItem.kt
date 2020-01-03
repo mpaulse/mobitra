@@ -25,10 +25,10 @@ package com.mpaulse.mobitra
 import java.util.UUID
 
 data class ActiveProductMenuItem(
-    val name: String,
+    val displayName: String,
     val productId: UUID?
 ) {
 
-    override fun toString() = name
+    override fun toString() = displayName
 
 }
