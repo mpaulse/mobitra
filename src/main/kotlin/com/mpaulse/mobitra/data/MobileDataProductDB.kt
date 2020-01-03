@@ -69,15 +69,16 @@ class MobileDataProductDB(
                 conn.prepareStatement(
                         """
                         INSERT INTO mobile_data_products (
-                            id, name, total_amount, used_amount, activation_date, expiry_date, update_timestamp
-                        ) VALUES (?, ?, ?, ?, ?, ?, NOW())
+                            id, msisdn, name, total_amount, used_amount, activation_date, expiry_date, update_timestamp
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
                         """.trimIndent()).use { stmt ->
                     stmt.setObject(1, product.id)
-                    stmt.setString(2, product.name)
-                    stmt.setLong(3, product.totalAmount)
-                    stmt.setLong(4, product.usedAmount)
-                    stmt.setDate(5, Date.valueOf(product.activationDate))
-                    stmt.setDate(6, Date.valueOf(product.expiryDate))
+                    stmt.setString(2, product.msisdn)
+                    stmt.setString(3, product.name)
+                    stmt.setLong(4, product.totalAmount)
+                    stmt.setLong(5, product.usedAmount)
+                    stmt.setDate(6, Date.valueOf(product.activationDate))
+                    stmt.setDate(7, Date.valueOf(product.expiryDate))
                     stmt.executeUpdate()
                 }
             } else {
@@ -88,7 +89,6 @@ class MobileDataProductDB(
                             total_amount = ?,
                             used_amount = ?,
                             activation_date = ?,
-                            expiry_date = ?,
                             update_timestamp = NOW()
                             WHERE id = ?
                         """.trimIndent()).use { stmt ->
@@ -96,8 +96,7 @@ class MobileDataProductDB(
                     stmt.setLong(2, product.totalAmount)
                     stmt.setLong(3, product.usedAmount)
                     stmt.setDate(4, Date.valueOf(product.activationDate))
-                    stmt.setDate(5, Date.valueOf(product.expiryDate))
-                    stmt.setObject(6, product.id)
+                    stmt.setObject(5, product.id)
                     stmt.executeUpdate()
                 }
             }
@@ -123,7 +122,7 @@ class MobileDataProductDB(
         try {
             conn.prepareStatement(
                     """
-                    SELECT name, total_amount, used_amount, activation_date, expiry_date
+                    SELECT msisdn, name, total_amount, used_amount, activation_date, expiry_date
                     FROM mobile_data_products
                     WHERE id = ?
                     """.trimIndent()).use { stmt ->
@@ -133,10 +132,11 @@ class MobileDataProductDB(
                         return MobileDataProduct(
                             id,
                             rs.getString(1),
-                            rs.getLong(2),
+                            rs.getString(2),
                             rs.getLong(3),
-                            rs.getDate(4).toLocalDate(),
-                            rs.getDate(5).toLocalDate())
+                            rs.getLong(4),
+                            rs.getDate(5).toLocalDate(),
+                            rs.getDate(6).toLocalDate())
                     }
                 }
             }
@@ -160,7 +160,7 @@ class MobileDataProductDB(
             conn.createStatement().use { stmt ->
                 stmt.executeQuery(
                         """
-                        SELECT id, name, total_amount, used_amount, activation_date, expiry_date
+                        SELECT id, msisdn, name, total_amount, used_amount, activation_date, expiry_date
                         FROM mobile_data_products
                         """.trimIndent()
                         + if (activeOnly) " WHERE expiry_date > NOW()" else "").use { rs ->
@@ -168,10 +168,11 @@ class MobileDataProductDB(
                         products += MobileDataProduct(
                             rs.getObject(1, UUID::class.java),
                             rs.getString(2),
-                            rs.getLong(3),
+                            rs.getString(3),
                             rs.getLong(4),
-                            rs.getDate(5).toLocalDate(),
-                            rs.getDate(6).toLocalDate())
+                            rs.getLong(5),
+                            rs.getDate(6).toLocalDate(),
+                            rs.getDate(7).toLocalDate())
                     }
                 }
             }
@@ -386,6 +387,7 @@ class MobileDataProductDB(
                 """
                 CREATE TABLE IF NOT EXISTS mobile_data_products (
                     id UUID NOT NULL PRIMARY KEY,
+                    msisdn VARCHAR(15) NOT NULL,
                     name VARCHAR(255) NOT NULL,
                     total_amount BIGINT NOT NULL,
                     used_amount BIGINT NOT NULL,

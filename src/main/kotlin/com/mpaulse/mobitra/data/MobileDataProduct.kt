@@ -28,6 +28,7 @@ import java.util.UUID
 
 data class MobileDataProduct(
     val id: UUID,
+    val msisdn: String,
     val name: String,
     val totalAmount: Long,
     var usedAmount: Long,

@@ -91,6 +91,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     @FXML private lateinit var historyBtn: ToggleButton
     @FXML private lateinit var activeProductsBtn: ToggleButton
     @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
+    private var sysTrayIcon: TrayIcon? = null
     private val loadingSpinner = ProgressIndicator(-1.0)
 
     override fun start(stage: Stage) {
@@ -147,7 +148,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
         val sysTray = SystemTray.getSystemTray()
         val sysTrayMenu = PopupMenu()
-        val sysTrayIcon = TrayIcon(
+        sysTrayIcon = TrayIcon(
             Toolkit.getDefaultToolkit().getImage(javaClass.getResource(APP_ICON)).getScaledInstance(16, 16, AWTImage.SCALE_DEFAULT),
             APP_NAME,
             sysTrayMenu)
@@ -159,14 +160,13 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         val exitMenuItem = AWTMenuItem("Exit")
         exitMenuItem.addActionListener {
             onExit()
-            sysTray.remove(sysTrayIcon)
         }
 
         sysTrayMenu.add(openMenuItem)
         sysTrayMenu.addSeparator()
         sysTrayMenu.add(exitMenuItem)
 
-        sysTrayIcon.addActionListener(::onOpenMainWindow)
+        sysTrayIcon?.addActionListener(::onOpenMainWindow)
 
         sysTray.add(sysTrayIcon)
         Platform.setImplicitExit(false)
@@ -328,6 +328,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                     product = MobileDataProduct(
                         UUID.randomUUID(),
                         "All",
+                        "All",
                         totalAmount,
                         usedAmount,
                         activationDate as LocalDate,
@@ -358,6 +359,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     @FXML
     fun onExit(event: ActionEvent? = null) {
+        if (sysTrayIcon != null) {
+            SystemTray.getSystemTray().remove(sysTrayIcon)
+        }
         Platform.exit()
         event?.consume()
     }

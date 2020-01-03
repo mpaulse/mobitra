@@ -3,7 +3,6 @@ Development Notes
 
 ## TODO:
 
-- Include msisdn in product ID generation and store with product.
 - Settings screen:
   - Huawei IP address.
   - Launch at Windows start-up option.

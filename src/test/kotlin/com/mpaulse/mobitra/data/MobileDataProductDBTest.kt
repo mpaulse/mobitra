@@ -54,6 +54,7 @@ class MobileDataProductDBTest {
     fun `storeProduct and getProduct`() {
         val product = MobileDataProduct(
             UUID.randomUUID(),
+            "0123456789",
             "Test storeProduct and getProduct",
             7832478178423,
             32895894578,
@@ -68,6 +69,7 @@ class MobileDataProductDBTest {
     fun `storeProduct - update`() {
         val product = MobileDataProduct(
             UUID.randomUUID(),
+            "0123456789",
             "Test storeProduct and getProduct",
             7832478178423,
             32895894578,
@@ -88,6 +90,7 @@ class MobileDataProductDBTest {
         for (i in 0..9) {
             val product = MobileDataProduct(
                 UUID.randomUUID(),
+                "0123456789",
                 "Test getProduct $i",
                 i.toLong(),
                 i.toLong(),
@@ -116,6 +119,7 @@ class MobileDataProductDBTest {
         for (i in 0..9) {
             val product = MobileDataProduct(
                 UUID.randomUUID(),
+                "0123456789",
                 "Test getProduct $i",
                 i.toLong(),
                 i.toLong(),
@@ -126,6 +130,7 @@ class MobileDataProductDBTest {
         for (i in 10..12) {
             val product = MobileDataProduct(
                 UUID.randomUUID(),
+                "0123456789",
                 "Test getProduct $i",
                 i.toLong(),
                 i.toLong(),
@@ -146,6 +151,7 @@ class MobileDataProductDBTest {
     fun `addDataUsage and getDataUsage for product`() {
         val product = MobileDataProduct(
             UUID.randomUUID(),
+            "0123456789",
             "Test addDataUsage and getDataUsage",
             7832478178423,
             32895894578,
@@ -180,6 +186,7 @@ class MobileDataProductDBTest {
         for (i in 0..4) {
             val product = MobileDataProduct(
                 UUID.randomUUID(),
+                "0123456789",
                 "Test getDataUsage - expired",
                 7832478178423,
                 32895894578,
@@ -192,6 +199,7 @@ class MobileDataProductDBTest {
         for (i in 0..1) {
             val product = MobileDataProduct(
                 UUID.randomUUID(),
+                "0123456789",
                 "Test getDataUsage - active",
                 7832478178423,
                 32895894578,
