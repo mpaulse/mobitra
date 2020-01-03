@@ -69,6 +69,10 @@
     -fx-padding: 0;
 }
 
+.menu-button:pressed {
+    -fx-background-color: -fx-control-inner-background;
+}
+
 .menu-item:focused {
     -fx-background-color: #1da1f222;
     -fx-cursor: hand;
