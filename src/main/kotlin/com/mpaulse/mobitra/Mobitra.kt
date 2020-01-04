@@ -420,6 +420,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
         screen.toggleButton.fire()
         mainWindowPane.center = screen
+        screen.onShow()
     }
 
     @FXML

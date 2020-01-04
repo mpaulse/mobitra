@@ -26,7 +26,7 @@
   ~ SOFTWARE.
   -->
 
-<VBox id="settingsPane" alignment="TOP_CENTER" maxWidth="800.0" prefWidth="600.0" spacing="10.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1">
+<VBox id="settings-pane" alignment="TOP_CENTER" maxWidth="800.0" prefWidth="600.0" spacing="10.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <BorderPane styleClass="separator" />
         <BorderPane>
@@ -39,7 +39,7 @@
         </BorderPane>
         <BorderPane>
             <left>
-                <Label fx:id="testConnErrorLabel" styleClass="errorText" BorderPane.alignment="CENTER" />
+                <Label id="test-conn-label" fx:id="testConnLabel" graphicTextGap="10.0" BorderPane.alignment="CENTER" />
             </left>
             <right>
                 <Button fx:id="testConnBtn" contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" onAction="#onTestConnection" text="Test connection" BorderPane.alignment="CENTER" />

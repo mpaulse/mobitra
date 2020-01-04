@@ -40,7 +40,7 @@
                   <Image url="@../images/mobitra.png" />
                </image>
             </ImageView>
-            <Text id="aboutAppName" fx:id="appNameText" strokeType="OUTSIDE" strokeWidth="0.0" text="Mobitra" />
+            <Text id="about-app-name" fx:id="appNameText" strokeType="OUTSIDE" strokeWidth="0.0" text="Mobitra" />
          </children>
       </HBox>
       <Text fx:id="versionText" strokeType="OUTSIDE" strokeWidth="0.0" text="Version">
@@ -52,7 +52,7 @@
          <VBox.margin>
             <Insets bottom="30.0" />
          </VBox.margin></Text>
-      <TabPane id="aboutLicenseTabs" tabClosingPolicy="UNAVAILABLE">
+      <TabPane tabClosingPolicy="UNAVAILABLE">
         <tabs>
           <Tab text="License">
                <content>

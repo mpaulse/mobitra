@@ -28,18 +28,28 @@ import javafx.fxml.FXML
 import javafx.scene.control.Button
 import javafx.scene.control.CheckBox
 import javafx.scene.control.Label
+import javafx.scene.control.ProgressIndicator
 import javafx.scene.control.TextField
 import javafx.scene.control.ToggleButton
+import javafx.scene.image.ImageView
 import javafx.scene.layout.Pane
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class SettingsScreen(
     private val appData: ApplicationData
-): SecondaryScreen() {
+): SecondaryScreen(), CoroutineScope by MainScope() {
 
     @FXML private lateinit var routerIPAddressField: TextField
     @FXML private lateinit var testConnBtn: Button
-    @FXML private lateinit var testConnErrorLabel: Label
+    @FXML private lateinit var testConnLabel: Label
     @FXML private lateinit var autoStartCheckBox: CheckBox
+
+    private val testConnProgressSpinner = ProgressIndicator(-1.0)
+    private val greenTickIcon = ImageView("/images/green-tick.png")
+    private val redCrossIcon = ImageView("/images/red-cross.png")
 
     override val toggleButton = ToggleButton("Settings")
     override val backButtonText = "Save"
@@ -47,8 +57,23 @@ class SettingsScreen(
     init {
         center = loadFXMLPane<Pane>("SettingsPane", this)
 
+        testConnProgressSpinner.prefWidth = 16.0
+        testConnProgressSpinner.prefHeight = 16.0
+
+        greenTickIcon.fitWidth = 16.0
+        greenTickIcon.fitHeight = 16.0
+
+        redCrossIcon.fitWidth = 16.0
+        redCrossIcon.fitHeight = 16.0
+
         routerIPAddressField.text = appData.routerIPAddress
         autoStartCheckBox.isSelected = appData.autoStart
+    }
+
+    override fun onShow() {
+        testConnLabel.graphic = null
+        testConnLabel.text = null
+        testConnLabel.styleClass.clear()
     }
 
     override fun onBack(): Boolean {
@@ -61,8 +86,32 @@ class SettingsScreen(
         return true
     }
 
+    private var b = false
+
     @FXML
     fun onTestConnection(event: ActionEvent) {
+        testConnLabel.graphic = testConnProgressSpinner
+        testConnLabel.text = "Testing connection..."
+        testConnLabel.styleClass.clear()
+        testConnBtn.isDisable = true
+
+        launch {
+            delay(3000)
+
+            if (b) {
+                testConnLabel.graphic = greenTickIcon
+                testConnLabel.text = "Connection successful"
+                testConnLabel.styleClass.setAll("test-conn-success")
+            } else {
+                testConnLabel.graphic = redCrossIcon
+                testConnLabel.text = "Connection failed"
+                testConnLabel.styleClass.setAll("test-conn-failure")
+            }
+            b = !b
+
+            testConnBtn.isDisable = false
+        }
+
         event.consume()
     }
 

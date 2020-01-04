@@ -43,21 +43,21 @@
     -fx-selection-bar-text: -fx-text-base-color;
 }
 
-#topBar {
+#top-bar {
     -fx-background-color: -fx-control-inner-background;
 }
 
-#topBar .button {
+#top-bar .button {
     -fx-background-color: -fx-background;
     -fx-cursor: hand;
     -fx-font-size: 1.2em;
 }
 
-#topBar .button:hover {
+#top-bar .button:hover {
     -fx-text-fill: -fx-focus-color;
 }
 
-#topBar .button:pressed {
+#top-bar .button:pressed {
     -fx-background-color: -fx-control-inner-background;
 }
 
@@ -200,23 +200,35 @@
     -fx-text-fill: primary-color;
 }
 
-#settingsPane > .separator {
+#settings-pane > .separator {
     -fx-max-height: 1px;
     -fx-min-height: 1px;
     -fx-background-color: -fx-control-inner-background;
 }
 
-#settingsPane > .button {
+#settings-pane > .button {
     -fx-border-radius: 5;
     -fx-background-radius: 5;
     -fx-font-size: 1.2em;
 }
 
-#settingsPane > .label {
+#settings-pane > .label {
     -fx-font-size: 1.2em;
 }
 
-#aboutAppName {
+#test-conn-label {
+    -fx-text-fill: primary-color;
+}
+
+#test-conn-label.test-conn-success {
+    -fx-text-fill: green;
+}
+
+#test-conn-label.test-conn-failure {
+    -fx-text-fill: red;
+}
+
+#about-app-name {
     -fx-font-size: 1.5em;
     -fx-font-weight: bold;
 }

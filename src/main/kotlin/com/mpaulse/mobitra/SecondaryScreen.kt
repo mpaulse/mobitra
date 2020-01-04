@@ -27,11 +27,10 @@ import javafx.scene.layout.BorderPane
 
 abstract class SecondaryScreen: BorderPane() {
 
-    open val backButtonText: String
-        get() = "Back"
-
+    open val backButtonText: String get() = "Back"
     abstract val toggleButton: ToggleButton
 
+    open fun onShow() = Unit
     open fun onBack(): Boolean = true
 
 }
