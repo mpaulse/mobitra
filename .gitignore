@@ -3,5 +3,6 @@
 .openjfx
 .Mobitra
 build
-src/test/data/db.*
+src/generated
 src/main/resources/LICENSE*.txt
+src/test/data/db.*

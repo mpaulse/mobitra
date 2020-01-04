@@ -71,16 +71,11 @@ import java.awt.Image as AWTImage
 import java.awt.MenuItem as AWTMenuItem
 import java.awt.event.ActionEvent as AWTActionEvent
 
-const val APP_NAME = "Mobitra"
-const val APP_VERSION = "0.1"
-private const val APP_ICON = "/images/mobitra.png"
-
-private val homePath = Path.of(System.getProperty("user.home"), ".Mobitra")
-
 fun <T> loadFXMLPane(pane: String, controller: Any): T {
     val loader = FXMLLoader()
     loader.setController(controller)
     loader.setControllerFactory {
+        APP_NAME
         controller // Needed for imported/nested FXML files
     }
     loader.location = controller.javaClass.getResource("/fxml/$pane.fxml")
@@ -89,8 +84,8 @@ fun <T> loadFXMLPane(pane: String, controller: Any): T {
 
 class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
-    private val appData = ApplicationData(homePath)
-    private val productDB = MobileDataProductDB(homePath)
+    private val appData = ApplicationData(APP_HOME_PATH)
+    private val productDB = MobileDataProductDB(APP_HOME_PATH)
     private val activeProducts = mutableMapOf<UUID, MobileDataProduct>()
     private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
     private var loadHistory = true
@@ -448,8 +443,8 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 }
 
 fun main(args: Array<String>) {
-    if (!Files.exists(homePath)) {
-        Files.createDirectories(homePath)
+    if (!Files.exists(APP_HOME_PATH)) {
+        Files.createDirectories(APP_HOME_PATH)
     }
 
     Application.launch(MobitraApplication::class.java, *args)

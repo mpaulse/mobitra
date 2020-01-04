@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
@@ -29,12 +30,28 @@
 
 <VBox xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <Text id="aboutAppName" fx:id="appNameText" strokeType="OUTSIDE" strokeWidth="0.0" text="Mobitra" />
-      <Text id="aboutVersion" fx:id="versionText" strokeType="OUTSIDE" strokeWidth="0.0" text="Version">
+      <HBox spacing="10.0">
          <VBox.margin>
-            <Insets bottom="30.0" />
+            <Insets bottom="10.0" />
+         </VBox.margin>
+         <children>
+            <ImageView fitHeight="24.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../images/mobitra.png" />
+               </image>
+            </ImageView>
+            <Text id="aboutAppName" fx:id="appNameText" strokeType="OUTSIDE" strokeWidth="0.0" text="Mobitra" />
+         </children>
+      </HBox>
+      <Text fx:id="versionText" strokeType="OUTSIDE" strokeWidth="0.0" text="Version">
+         <VBox.margin>
+            <Insets bottom="10.0" />
          </VBox.margin>
       </Text>
+      <Text fx:id="buildText" strokeType="OUTSIDE" strokeWidth="0.0" text="Build">
+         <VBox.margin>
+            <Insets bottom="30.0" />
+         </VBox.margin></Text>
       <TabPane id="aboutLicenseTabs" tabClosingPolicy="UNAVAILABLE">
         <tabs>
           <Tab text="License">

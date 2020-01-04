@@ -1,4 +1,8 @@
+import java.io.ByteArrayOutputStream
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import org.gradle.internal.jvm.Jvm
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 version = "0.1"
@@ -38,10 +42,18 @@ application {
     mainClassName = "com.mpaulse.mobitra.Mobitra"
 }
 
+configure<SourceSetContainer> {
+    getByName("main") {
+        withConvention(KotlinSourceSet::class) {
+            kotlin.srcDirs("src/generated/kotlin")
+        }
+    }
+}
+
 tasks {
 
     withType<KotlinCompile> {
-        dependsOn("copyLicenses")
+        dependsOn("generateAppInfo", "copyLicenses")
         kotlinOptions {
             jvmTarget = "11"
         }
@@ -57,6 +69,28 @@ tasks {
                 "Main-Class" to "com.mpaulse.mobitra.Mobitra")
         }
         exclude("images\\*.xcf")
+    }
+
+    register<Copy>("generateAppInfo") {
+        outputs.upToDateWhen {
+            false // Force regeneration. Never skip task.
+        }
+
+        val date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+        val commitCount = ByteArrayOutputStream().use { output ->
+            exec {
+                commandLine("git", "rev-list", "HEAD", "--count")
+                standardOutput = output
+            }
+            output.toString().trim()
+        }
+
+        from("src/main/kotlin/com/mpaulse/mobitra/AppInfo.kt.template")
+        into("src/generated/kotlin/com/mpaulse/mobitra")
+        rename(".kt.template", ".kt")
+        expand(mutableMapOf(
+            "version" to version,
+            "build" to "$date.$commitCount"))
     }
 
     register<Copy>("copyLicenses") {
@@ -89,7 +123,7 @@ tasks {
 
     register<Exec>("packageRelease") {
         dependsOn("copyJpackager", "copyLibs", "copyModules")
-        commandLine = listOf(
+        commandLine(
             "${Jvm.current().javaHome}/bin/java",
             "--module-path",
             "tools/jpackager",
@@ -126,7 +160,7 @@ tasks {
 
     register<Delete>("release") {
         dependsOn("packageRelease")
-        delete = setOf("release/Mobitra/Mobitra.ico")
+        delete = setOf("release/Mobitra/mobitra.ico")
     }
 
     clean {

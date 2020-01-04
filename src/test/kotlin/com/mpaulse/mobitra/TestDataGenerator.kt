@@ -32,7 +32,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlin.random.Random
 
-val productDB = MobileDataProductDB(Path.of(System.getProperty("user.home"), ".Mobitra"))
+val productDB = MobileDataProductDB(APP_HOME_PATH)
 
 fun generateProductData(
     productName: String,
