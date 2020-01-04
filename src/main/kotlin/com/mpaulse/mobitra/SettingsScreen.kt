@@ -25,26 +25,40 @@ package com.mpaulse.mobitra
 import com.mpaulse.mobitra.data.ApplicationData
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
-import javafx.geometry.Pos.TOP_CENTER
 import javafx.scene.control.Button
 import javafx.scene.control.CheckBox
 import javafx.scene.control.Label
 import javafx.scene.control.TextField
+import javafx.scene.control.ToggleButton
 import javafx.scene.layout.Pane
-import javafx.scene.layout.StackPane
 
 class SettingsScreen(
     private val appData: ApplicationData
-): StackPane() {
+): SecondaryScreen() {
 
-    @FXML private lateinit var routerIpAddressField: TextField
+    @FXML private lateinit var routerIPAddressField: TextField
     @FXML private lateinit var testConnBtn: Button
     @FXML private lateinit var testConnErrorLabel: Label
     @FXML private lateinit var autoStartCheckBox: CheckBox
 
+    override val toggleButton = ToggleButton("Settings")
+    override val backButtonText = "Save"
+
     init {
-        children += loadFXMLPane<Pane>("SettingsPane", this)
-        alignment = TOP_CENTER
+        center = loadFXMLPane<Pane>("SettingsPane", this)
+
+        routerIPAddressField.text = appData.routerIPAddress
+        autoStartCheckBox.isSelected = appData.autoStart
+    }
+
+    override fun onBack(): Boolean {
+        appData.routerIPAddress = routerIPAddressField.text?.trim()?.let {
+            if (it.isEmpty()) null
+            else it
+        }
+        appData.autoStart = autoStartCheckBox.isSelected
+        appData.save()
+        return true
     }
 
     @FXML

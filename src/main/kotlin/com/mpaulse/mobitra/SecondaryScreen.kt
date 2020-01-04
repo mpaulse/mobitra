@@ -22,36 +22,16 @@
 
 package com.mpaulse.mobitra
 
-import javafx.fxml.FXML
 import javafx.scene.control.ToggleButton
-import javafx.scene.layout.Pane
-import javafx.scene.text.Text
-import java.io.InputStreamReader
+import javafx.scene.layout.BorderPane
 
-class AboutScreen: SecondaryScreen() {
+abstract class SecondaryScreen: BorderPane() {
 
-    @FXML private lateinit var appNameText: Text
-    @FXML private lateinit var versionText: Text
-    @FXML private lateinit var buildText: Text
-    @FXML private lateinit var licenseText: Text
-    @FXML private lateinit var thirdPartyLicenseText: Text
+    open val backButtonText: String
+        get() = "Back"
 
-    override val toggleButton = ToggleButton("About")
+    abstract val toggleButton: ToggleButton
 
-    init {
-        center = loadFXMLPane<Pane>("AboutPane", this)
-
-        appNameText.text = APP_NAME
-        versionText.text = "Version $APP_VERSION"
-        buildText.text = "Build $APP_BUILD"
-
-        InputStreamReader(javaClass.getResourceAsStream("/LICENSE.txt")).use {
-            licenseText.text = it.readText()
-        }
-
-        InputStreamReader(javaClass.getResourceAsStream("/LICENSE_THIRD_PARTY.txt")).use {
-            thirdPartyLicenseText.text = it.readText()
-        }
-    }
+    open fun onBack(): Boolean = true
 
 }

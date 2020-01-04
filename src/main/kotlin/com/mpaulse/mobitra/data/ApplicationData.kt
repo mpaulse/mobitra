@@ -39,6 +39,9 @@ class ApplicationData(
     var windowSize = 800.0 to 600.0
     var windowPosition: Pair<Double, Double>? = null
 
+    var routerIPAddress: String? = null
+    var autoStart = true
+
     init {
         if (Files.exists(dataFilePath)) {
             try {
@@ -57,6 +60,9 @@ class ApplicationData(
                 if (windowPosX != null && windowPosY != null) {
                     windowPosition = windowPosX to windowPosY
                 }
+
+                routerIPAddress = data["routerIPAddress"] as? String
+                autoStart = data["autoStart"] as? Boolean ?: true
             } catch (e: Throwable) {
                 logger.error("Error loading application data", e)
             }
@@ -69,7 +75,9 @@ class ApplicationData(
                 "windowWidth" to windowSize.first,
                 "windowHeight" to windowSize.second,
                 "windowPosX" to windowPosition?.first as Double,
-                "windowPosY" to windowPosition?.second as Double)
+                "windowPosY" to windowPosition?.second as Double,
+                "routerIPAddress" to routerIPAddress,
+                "autoStart" to autoStart)
             Files.writeString(dataFilePath, jsonHandler.writeValueAsString(data))
         } catch (e: Throwable) {
             logger.error("Error saving application data", e)

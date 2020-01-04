@@ -4,9 +4,7 @@ Development Notes
 ## TODO:
 
 - Settings screen:
-  - Huawei IP address.
-  - Launch at Windows start-up option.
-  - Test Connection button.
+  - Test connection.
 - Launch at Windows start-up, if configured.
 - Integrate UI with networking back-end, with a timer to periodically collect and reconcile data from Huawei and Telkom.
 - Prevent multiple instances of application.

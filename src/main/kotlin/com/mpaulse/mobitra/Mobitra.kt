@@ -104,8 +104,6 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     private var toggleBtnToFireOnBack: ToggleButton? = null
     @FXML private lateinit var historyBtn: ToggleButton
     @FXML private lateinit var activeProductsBtn: ToggleButton
-    private val settingsBtn = ToggleButton("Settings")
-    private val aboutBtn = ToggleButton("About")
     @FXML private lateinit var backBtn: Button
 
     @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
@@ -128,6 +126,11 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         createActiveProductsPane()
         createHistoryPane()
         initControls()
+
+        if (appData.routerIPAddress == null) {
+            showSecondaryScreen(settingsScreen)
+        }
+
         onOpenMainWindow()
     }
 
@@ -247,11 +250,11 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         historyBtn.toggleGroup = toggleGroup
         historyBtn.isFocusTraversable = false
 
-        settingsBtn.toggleGroup = toggleGroup
-        settingsBtn.isFocusTraversable = false
+        settingsScreen.toggleButton.toggleGroup = toggleGroup
+        settingsScreen.toggleButton.isFocusTraversable = false
 
-        aboutBtn.toggleGroup = toggleGroup
-        aboutBtn.isFocusTraversable = false
+        aboutScreen.toggleButton.toggleGroup = toggleGroup
+        aboutScreen.toggleButton.isFocusTraversable = false
 
         activeProductsBtn.fire()
     }
@@ -383,51 +386,53 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         event?.consume()
     }
 
-    fun onSettingsFromSystemTray(event: AWTActionEvent) {
+    private fun onSettingsFromSystemTray(event: AWTActionEvent) {
         onOpenMainWindow(event)
         onSettings()
     }
 
     @FXML
     fun onSettings(event: ActionEvent? = null) {
-        val action = {
-            activateSubViewButtons(settingsBtn)
-            mainWindowPane.center = settingsScreen
-        }
         if (event != null) {
-            action()
+            showSecondaryScreen(settingsScreen)
             event.consume()
         } else {
-            Platform.runLater(action)
+            Platform.runLater {
+                showSecondaryScreen(settingsScreen)
+            }
         }
     }
 
     @FXML
     fun onAbout(event: ActionEvent) {
-        activateSubViewButtons(aboutBtn)
-        mainWindowPane.center = aboutScreen
+        showSecondaryScreen(aboutScreen)
         event.consume()
     }
 
-    private fun activateSubViewButtons(activeToggleBtn: ToggleButton) {
+    private fun showSecondaryScreen(screen: SecondaryScreen) {
+        backBtn.text = screen.backButtonText
         backBtn.isVisible = true
         menuBtn.isVisible = false
         toggleBtnBox.children.clear()
-        toggleBtnBox.children += activeToggleBtn
+        toggleBtnBox.children += screen.toggleButton
         if (toggleBtnToFireOnBack == null) {
             toggleBtnToFireOnBack = toggleGroup.selectedToggle as ToggleButton
         }
-        activeToggleBtn.fire()
+        screen.toggleButton.fire()
+        mainWindowPane.center = screen
     }
 
     @FXML
     fun onBack(event: ActionEvent? = null) {
-        backBtn.isVisible = false
-        menuBtn.isVisible = true
-        toggleBtnBox.children.clear()
-        toggleBtnBox.children.addAll(activeProductsBtn, historyBtn)
-        toggleBtnToFireOnBack?.fire()
-        toggleBtnToFireOnBack = null
+        val screen = mainWindowPane.center
+        if (screen is SecondaryScreen && screen.onBack()) {
+            backBtn.isVisible = false
+            menuBtn.isVisible = true
+            toggleBtnBox.children.clear()
+            toggleBtnBox.children.addAll(activeProductsBtn, historyBtn)
+            toggleBtnToFireOnBack?.fire()
+            toggleBtnToFireOnBack = null
+        }
         event?.consume()
     }
 
