@@ -117,7 +117,7 @@ class MonitoringAPIClient(
         return merged.values.toTypedArray()
     }
 
-    private suspend fun checkTelkomOnnet(): TelkomCheckOnnetResponse = withContext(Dispatchers.IO) {
+    suspend fun checkTelkomOnnet(): TelkomCheckOnnetResponse = withContext(Dispatchers.IO) {
         try {
             jsonMapper.readValue(
                 doHttpGet("http://$telkomOnnetHttpHost:$httpPort$TELKOM_ONNET_BASE_PATH/checkOnnet"),

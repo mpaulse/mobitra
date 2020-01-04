@@ -23,6 +23,8 @@
 package com.mpaulse.mobitra
 
 import com.mpaulse.mobitra.data.ApplicationData
+import com.mpaulse.mobitra.net.MonitoringAPIClient
+import com.mpaulse.mobitra.net.MonitoringAPIException
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.scene.control.Button
@@ -35,8 +37,8 @@ import javafx.scene.image.ImageView
 import javafx.scene.layout.Pane
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 
 class SettingsScreen(
     private val appData: ApplicationData
@@ -47,12 +49,20 @@ class SettingsScreen(
     @FXML private lateinit var testConnLabel: Label
     @FXML private lateinit var autoStartCheckBox: CheckBox
 
+    private val routerIPAddress: String? get() =
+        routerIPAddressField.text?.trim()?.let {
+            if (it.isEmpty()) null
+            else it
+        }
+
     private val testConnProgressSpinner = ProgressIndicator(-1.0)
     private val greenTickIcon = ImageView("/images/green-tick.png")
     private val redCrossIcon = ImageView("/images/red-cross.png")
 
     override val toggleButton = ToggleButton("Settings")
     override val backButtonText = "Save"
+
+    private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
 
     init {
         center = loadFXMLPane<Pane>("SettingsPane", this)
@@ -71,48 +81,69 @@ class SettingsScreen(
     }
 
     override fun onShow() {
-        testConnLabel.graphic = null
-        testConnLabel.text = null
-        testConnLabel.styleClass.clear()
+        if (!testConnBtn.isDisable) {
+            testConnLabel.graphic = null
+            testConnLabel.text = null
+            testConnLabel.styleClass.clear()
+        }
     }
 
     override fun onBack(): Boolean {
-        appData.routerIPAddress = routerIPAddressField.text?.trim()?.let {
-            if (it.isEmpty()) null
-            else it
-        }
+        appData.routerIPAddress = routerIPAddress
         appData.autoStart = autoStartCheckBox.isSelected
         appData.save()
         return true
     }
 
-    private var b = false
-
     @FXML
     fun onTestConnection(event: ActionEvent) {
-        testConnLabel.graphic = testConnProgressSpinner
-        testConnLabel.text = "Testing connection..."
-        testConnLabel.styleClass.clear()
-        testConnBtn.isDisable = true
+        val routerIPAddress = routerIPAddress
+        if (routerIPAddress != null) {
+            val monitoringAPI = MonitoringAPIClient(routerIPAddress)
 
-        launch {
-            delay(3000)
+            testConnLabel.graphic = testConnProgressSpinner
+            testConnLabel.text = "Testing connection..."
+            testConnLabel.styleClass.clear()
+            testConnBtn.isDisable = true
 
-            if (b) {
-                testConnLabel.graphic = greenTickIcon
-                testConnLabel.text = "Connection successful"
-                testConnLabel.styleClass.setAll("test-conn-success")
-            } else {
-                testConnLabel.graphic = redCrossIcon
-                testConnLabel.text = "Connection failed"
-                testConnLabel.styleClass.setAll("test-conn-failure")
+            launch {
+                try {
+                    try {
+                        monitoringAPI.getHuaweiTrafficStatistics()
+                    } catch (e: MonitoringAPIException) {
+                        logger.error("Connection test to Huawei LTE router was unsuccessful", e)
+                        throw ConnectionTestException("Huawei router")
+                    }
+
+                    try {
+                        val rsp = monitoringAPI.checkTelkomOnnet()
+                        if (rsp.resultCode != 0 || rsp.sessionToken == null) {
+                            logger.error("Connection test to Telkom was unsuccessful:\n$rsp")
+                            throw ConnectionTestException("Telkom")
+                        }
+                    } catch (e: MonitoringAPIException) {
+                        logger.error("Connection test to Telkom was unsuccessful", e)
+                        throw ConnectionTestException("Telkom")
+                    }
+
+                    testConnLabel.graphic = greenTickIcon
+                    testConnLabel.text = "Connection successful."
+                    testConnLabel.styleClass.setAll("test-conn-success")
+                } catch (e: ConnectionTestException) {
+                    testConnLabel.graphic = redCrossIcon
+                    testConnLabel.text = "Connecting to ${e.failedEntity} failed."
+                    testConnLabel.styleClass.setAll("test-conn-failure")
+                } finally {
+                    testConnBtn.isDisable = false
+                }
             }
-            b = !b
-
-            testConnBtn.isDisable = false
         }
 
         event.consume()
     }
 
 }
+
+private class ConnectionTestException(
+    val failedEntity: String
+): Exception()
