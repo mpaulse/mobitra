@@ -41,6 +41,7 @@ application {
 tasks {
 
     withType<KotlinCompile> {
+        dependsOn("copyLicenses")
         kotlinOptions {
             jvmTarget = "11"
         }
@@ -56,6 +57,13 @@ tasks {
                 "Main-Class" to "com.mpaulse.mobitra.Mobitra")
         }
         exclude("images\\*.xcf")
+    }
+
+    register<Copy>("copyLicenses") {
+        from(".") {
+            include("LICENSE*.txt")
+        }
+        into("src/main/resources")
     }
 
     register<Copy>("copyJpackager") {

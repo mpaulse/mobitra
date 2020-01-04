@@ -101,7 +101,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     private lateinit var activeProductsPane: BorderPane
     private lateinit var historyPane: BorderPane
     private val noDataPane: Pane = loadFXMLPane("NoDataPane", this)
-    private val aboutPane = AboutScreen(hostServices)
+    private val aboutPane = AboutScreen()
 
     @FXML private lateinit var menuBtn: MenuButton
     @FXML private lateinit var hideMenuItem: MenuItem

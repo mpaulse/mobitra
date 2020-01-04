@@ -4,3 +4,4 @@
 .Mobitra
 build
 src/test/data/db.*
+src/main/resources/LICENSE*.txt
