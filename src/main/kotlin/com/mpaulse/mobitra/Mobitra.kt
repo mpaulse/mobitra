@@ -36,7 +36,6 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.ChoiceBox
-import javafx.scene.control.Label
 import javafx.scene.control.MenuButton
 import javafx.scene.control.MenuItem
 import javafx.scene.control.ProgressIndicator
@@ -63,7 +62,6 @@ import java.awt.SystemTray
 import java.awt.Toolkit
 import java.awt.TrayIcon
 import java.nio.file.Files
-import java.nio.file.Path
 import java.time.LocalDate
 import java.util.UUID
 import java.awt.Font as AWTFont
@@ -93,10 +91,11 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     private lateinit var mainWindow: Stage
     @FXML private lateinit var mainWindowPane: BorderPane
     @FXML private lateinit var toggleBtnBox: HBox
-    private lateinit var activeProductsPane: BorderPane
-    private lateinit var historyPane: BorderPane
+    private lateinit var activeProductsScreen: BorderPane
+    private lateinit var historyScreen: BorderPane
     private val noDataPane: Pane = loadFXMLPane("NoDataPane", this)
-    private val aboutPane = AboutScreen()
+    private val settingsScreen = SettingsScreen(appData)
+    private val aboutScreen = AboutScreen()
 
     @FXML private lateinit var menuBtn: MenuButton
     @FXML private lateinit var hideMenuItem: MenuItem
@@ -145,7 +144,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         mainWindow.scene.stylesheets.add("style.css")
         mainWindow.minWidth = 600.0
         mainWindow.width = if (appData.windowSize.first >= mainWindow.minWidth) appData.windowSize.first else mainWindow.minWidth
-        mainWindow.minHeight = 480.0
+        mainWindow.minHeight = 520.0
         mainWindow.height = if (appData.windowSize.second >= mainWindow.minHeight) appData.windowSize.second else mainWindow.minHeight
         mainWindow.icons.add(Image(APP_ICON))
 
@@ -196,7 +195,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     private fun createActiveProductsPane() {
-        activeProductsPane = loadFXMLPane("ActiveProductsPane", this)
+        activeProductsScreen = loadFXMLPane("ActiveProductsPane", this)
         refreshActiveProductsMenu()
         activeProductsMenu.setOnAction {
             onActiveProductSelected(it)
@@ -224,15 +223,17 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     private fun createHistoryPane() {
-        historyPane = BorderPane()
-        historyPane.center = noDataPane
+        historyScreen = BorderPane()
+        historyScreen.center = noDataPane
     }
 
     private fun initControls() {
         menuBtn.graphic = ImageView("images/menu.png")
+        menuBtn.isFocusTraversable = false
         hideMenuItem.isDisable = !SystemTray.isSupported()
 
         backBtn.graphic = ImageView("images/back.png")
+        backBtn.isFocusTraversable = false
 
         toggleGroup.selectedToggleProperty().addListener { _, prevSelected, currSelected ->
             if (currSelected == null) {
@@ -241,9 +242,16 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         activeProductsBtn.toggleGroup = toggleGroup
+        activeProductsBtn.isFocusTraversable = false
+
         historyBtn.toggleGroup = toggleGroup
+        historyBtn.isFocusTraversable = false
+
         settingsBtn.toggleGroup = toggleGroup
+        settingsBtn.isFocusTraversable = false
+
         aboutBtn.toggleGroup = toggleGroup
+        aboutBtn.isFocusTraversable = false
 
         activeProductsBtn.fire()
     }
@@ -268,9 +276,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     @FXML
     fun onViewActiveProducts(event: ActionEvent) {
-        mainWindowPane.center = activeProductsPane
+        mainWindowPane.center = activeProductsScreen
         if (activeProducts.isEmpty()) {
-            activeProductsPane.center = noDataPane
+            activeProductsScreen.center = noDataPane
         }
         event.consume()
     }
@@ -278,7 +286,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     @FXML
     fun onViewHistory(event: ActionEvent) {
         if (loadHistory) {
-            historyPane.center = loadingSpinner
+            historyScreen.center = loadingSpinner
 
             launch {
                 // TODO: Implement paged loading for better memory efficiency?
@@ -299,20 +307,20 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                             DataUsageBarChart(dataUsagePerDay, DataUsageBarChartType.DAILY))
                     }
                     yield()
-                    historyPane.center = charts
+                    historyScreen.center = charts
                     loadHistory = false
                 } else {
-                    historyPane.center = noDataPane
+                    historyScreen.center = noDataPane
                 }
             }
         }
 
-        mainWindowPane.center = historyPane
+        mainWindowPane.center = historyScreen
         event.consume()
     }
 
     fun onActiveProductSelected(event: ActionEvent? = null) {
-        activeProductsPane.center = loadingSpinner
+        activeProductsScreen.center = loadingSpinner
 
         launch {
             var product: MobileDataProduct? = null
@@ -366,9 +374,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                         DataUsageBarChart(dataUsage))
                 }
                 yield()
-                activeProductsPane.center = charts
+                activeProductsScreen.center = charts
             } else {
-                activeProductsPane.center = noDataPane
+                activeProductsScreen.center = noDataPane
             }
         }
 
@@ -384,7 +392,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     fun onSettings(event: ActionEvent? = null) {
         val action = {
             activateSubViewButtons(settingsBtn)
-            mainWindowPane.center = Label("Settings")
+            mainWindowPane.center = settingsScreen
         }
         if (event != null) {
             action()
@@ -397,7 +405,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     @FXML
     fun onAbout(event: ActionEvent) {
         activateSubViewButtons(aboutBtn)
-        mainWindowPane.center = aboutPane
+        mainWindowPane.center = aboutScreen
         event.consume()
     }
 

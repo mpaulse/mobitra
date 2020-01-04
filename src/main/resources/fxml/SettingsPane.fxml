@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -28,9 +26,37 @@
   ~ SOFTWARE.
   -->
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="fxml.SettingsPane"
-            prefHeight="400.0" prefWidth="600.0">
-
-</AnchorPane>
+<VBox id="settingsPane" alignment="TOP_CENTER" maxWidth="800.0" prefWidth="600.0" spacing="10.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <BorderPane styleClass="separator" />
+        <BorderPane>
+            <left>
+                <Label focusTraversable="false" text="Huawei LTE router IP address" BorderPane.alignment="CENTER" />
+            </left>
+            <right>
+                <TextField fx:id="routerIPAddressField" alignment="CENTER_RIGHT" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" promptText="e.g. 192.168.8.1" BorderPane.alignment="CENTER" />
+            </right>
+        </BorderPane>
+        <BorderPane>
+            <left>
+                <Label fx:id="testConnErrorLabel" styleClass="errorText" BorderPane.alignment="CENTER" />
+            </left>
+            <right>
+                <Button fx:id="testConnBtn" contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" onAction="#onTestConnection" text="Test connection" BorderPane.alignment="CENTER" />
+            </right>
+        </BorderPane>
+        <BorderPane styleClass="separator" />
+        <BorderPane>
+            <left>
+                <Label focusTraversable="false" text="Start automatically when Windows starts" BorderPane.alignment="CENTER" />
+            </left>
+            <right>
+                <CheckBox fx:id="autoStartCheckBox" mnemonicParsing="false" BorderPane.alignment="CENTER" />
+            </right>
+        </BorderPane>
+        <BorderPane styleClass="separator" />
+    </children>
+    <padding>
+        <Insets bottom="60.0" left="60.0" right="60.0" top="60.0" />
+    </padding>
+</VBox>

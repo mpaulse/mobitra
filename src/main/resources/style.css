@@ -22,16 +22,25 @@
 
 .root {
     -fx-base: white;
+
     -fx-background: -fx-base;
     -fx-control-inner-background: #f0f3f5;
-    -fx-accent: #1da1f2;
-    -fx-focus-color: -fx-accent;
+
+    primary-color: #1da1f2;
+    primary-color-light: #1da1f222;
+    secondary-color: #12577b;
+    tertiary-color: #57b657;
+
+    -fx-accent: primary-color;
+    -fx-focus-color: primary-color;
+
     -fx-text-base-color: black;
     -fx-text-background-color: -fx-text-base-color;
     -fx-text-inner-color: -fx-text-base-color;
-    -fx-selection-bar-text: -fx-text-base-color;
     -fx-text-fill: -fx-text-base-color;
     -fx-font-size: 1em;
+
+    -fx-selection-bar-text: -fx-text-base-color;
 }
 
 #topBar {
@@ -71,7 +80,7 @@
 }
 
 .menu-item:focused {
-    -fx-background-color: #1da1f222;
+    -fx-background-color: primary-color-light;
     -fx-cursor: hand;
 }
 
@@ -88,13 +97,13 @@
 .toggle-button:selected {
     -fx-background-color: -fx-background;
     -fx-border-color: -fx-background;
-    -fx-text-fill: -fx-accent;
+    -fx-text-fill: primary-color;
     -fx-font-weight: bold;
 }
 
 .choice-box {
     -fx-background-color: -fx-background;
-    -fx-border-color: #12577b;
+    -fx-border-color: secondary-color;
     -fx-border-radius: 10;
     -fx-cursor: hand;
 }
@@ -116,21 +125,21 @@
 .chart-pane-popup {
     -fx-background-color: -fx-background;
     -fx-background-radius: 5;
-    -fx-border-color: #12577b;
+    -fx-border-color: secondary-color;
     -fx-border-radius: 5;
     -fx-padding: 5px;
 }
 
 .default-color0.chart-series-area-line {
-    -fx-stroke: -fx-accent;
+    -fx-stroke: primary-color;
 }
 
 .default-color0.chart-series-area-fill {
-    -fx-fill: #1da1f222;
+    -fx-fill: primary-color-light;
 }
 
 .default-color1.chart-series-area-line {
-    -fx-stroke: #12577b;
+    -fx-stroke: secondary-color;
 }
 
 .default-color1.chart-series-area-fill {
@@ -138,15 +147,15 @@
 }
 
 .series0.chart-bar {
-    -fx-bar-fill: #12577b;
+    -fx-bar-fill: secondary-color;
 }
 
 .series1.chart-bar {
-    -fx-bar-fill: -fx-accent;
+    -fx-bar-fill: primary-color;
 }
 
 .series2.chart-bar {
-    -fx-bar-fill: #57b657;
+    -fx-bar-fill: tertiary-color;
 }
 
 .axis {
@@ -158,7 +167,53 @@
 }
 
 .progress-indicator {
-    -fx-progress-color: -fx-accent;
+    -fx-progress-color: primary-color;
+}
+
+.text-field {
+    -fx-background-color: -fx-background;
+    -fx-border-color: secondary-color;
+    -fx-border-radius: 10;
+}
+
+.text-field:focused {
+    -fx-border-color: primary-color;
+}
+
+.check-box > .box {
+    -fx-border-color: secondary-color;
+    -fx-border-radius: 5;
+    -fx-background-color: -fx-background;
+    -fx-background-radius: 5;
+}
+
+.check-box:focused > .box {
+    -fx-border-color: primary-color;
+}
+
+.check-box:hover {
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-cursor: hand;
+    -fx-text-fill: primary-color;
+}
+
+#settingsPane > .separator {
+    -fx-max-height: 1px;
+    -fx-min-height: 1px;
+    -fx-background-color: -fx-control-inner-background;
+}
+
+#settingsPane > .button {
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-font-size: 1.2em;
+}
+
+#settingsPane > .label {
+    -fx-font-size: 1.2em;
 }
 
 #aboutAppName {
@@ -179,7 +234,7 @@
 }
 
 .tab-pane > .tab-header-area > .headers-region > .tab:hover > .tab-container > .tab-label {
-    -fx-text-fill: -fx-accent;
+    -fx-text-fill: primary-color;
 }
 
 .tab-pane > .tab-header-area > .headers-region > .tab:selected {
@@ -188,7 +243,7 @@
 }
 
 .tab-pane > .tab-header-area > .headers-region > .tab:selected > .tab-container > .tab-label {
-    -fx-text-fill: -fx-accent;
+    -fx-text-fill: primary-color;
     -fx-font-weight: bold;
 }
 

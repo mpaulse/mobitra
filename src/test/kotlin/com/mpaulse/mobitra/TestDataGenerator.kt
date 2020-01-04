@@ -24,7 +24,6 @@ package com.mpaulse.mobitra
 
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
-import java.nio.file.Path
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId

@@ -1,4 +1,4 @@
-This product includes the following software.
+This product includes the following software:
 
 - HSQLDB (BSD-based License)
 - Jackson (Apache License 2.0)
