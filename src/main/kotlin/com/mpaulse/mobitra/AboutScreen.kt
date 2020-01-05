@@ -28,7 +28,9 @@ import javafx.scene.layout.Pane
 import javafx.scene.text.Text
 import java.io.InputStreamReader
 
-class AboutScreen: SecondaryScreen() {
+class AboutScreen(
+    app: MobitraApplication
+): SecondaryScreen(app) {
 
     @FXML private lateinit var appNameText: Text
     @FXML private lateinit var versionText: Text
@@ -39,7 +41,7 @@ class AboutScreen: SecondaryScreen() {
     override val toggleButton = ToggleButton("About")
 
     init {
-        center = loadFXMLPane<Pane>("AboutPane", this)
+        center = app.loadFXMLPane<Pane>("AboutPane", this)
 
         appNameText.text = APP_NAME
         versionText.text = "Version $APP_VERSION"

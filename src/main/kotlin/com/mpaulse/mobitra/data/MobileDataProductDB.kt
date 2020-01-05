@@ -34,6 +34,11 @@ import java.time.ZoneId
 import java.util.LinkedList
 import java.util.UUID
 
+private const val DB_NAME = "db"
+
+fun isMobileDataProductDBLocked(homePath: Path) =
+    homePath.resolve("$DB_NAME.lck").toFile().exists()
+
 class MobileDataProductDB(
     homePath: Path
 ) {
@@ -44,7 +49,7 @@ class MobileDataProductDB(
         try {
             Class.forName("org.hsqldb.jdbc.JDBCDriver")
             conn = DriverManager.getConnection(
-                "jdbc:hsqldb:file:${homePath.resolve("db").toAbsolutePath()}",
+                "jdbc:hsqldb:file:${homePath.resolve(DB_NAME).toAbsolutePath()}",
                 "mobitra",
                 "")
             createTables()

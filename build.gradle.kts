@@ -5,7 +5,7 @@ import org.gradle.internal.jvm.Jvm
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-version = "0.1"
+version = "0.2"
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.3.61"
@@ -166,7 +166,7 @@ tasks {
 
     register<Delete>("release") {
         dependsOn("packageRelease")
-        delete = setOf("build/release/Mobitra/mobitra.ico")
+        delete = setOf("build/release/Mobitra/Mobitra.ico")
     }
 
     clean {

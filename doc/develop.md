@@ -3,10 +3,17 @@ Development Notes
 
 ## TODO:
 
-- Launch at Windows start-up, if configured.
 - Integrate UI with networking back-end, with a timer to periodically collect and reconcile data from Huawei and Telkom.
-- Prevent multiple instances of application.
 - Historic data removal after retention period.
+- Add JavaToolInstaller and PublishBuildArtifacts to Azure Pipelines config to package and
+  publish release builds using the latest JDK on Windows.
+
+## Ideas:
+
+- Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.
+- Create a separate Windows service to do monitoring, so that no Windows login is required
+  (e.g. using [Procrun](http://commons.apache.org/proper/commons-daemon/procrun.html)).
+
 
 ## Huawei LTE Router API:
 

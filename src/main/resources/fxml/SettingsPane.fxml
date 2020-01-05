@@ -48,7 +48,7 @@
         <BorderPane styleClass="separator" />
         <BorderPane>
             <left>
-                <Label focusTraversable="false" text="Start automatically when Windows starts" BorderPane.alignment="CENTER" />
+                <Label focusTraversable="false" text="Start automatically when you log into Windows" BorderPane.alignment="CENTER" />
             </left>
             <right>
                 <CheckBox fx:id="autoStartCheckBox" mnemonicParsing="false" BorderPane.alignment="CENTER" />

@@ -28,6 +28,9 @@ import com.mpaulse.mobitra.data.ApplicationData
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
 import com.mpaulse.mobitra.data.MobileDataUsage
+import com.mpaulse.mobitra.data.isMobileDataProductDBLocked
+import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.WinReg
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.event.ActionEvent
@@ -62,30 +65,25 @@ import java.awt.SystemTray
 import java.awt.Toolkit
 import java.awt.TrayIcon
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.LocalDate
 import java.util.UUID
+import kotlin.concurrent.thread
 import java.awt.Font as AWTFont
 import java.awt.Image as AWTImage
 import java.awt.MenuItem as AWTMenuItem
 import java.awt.event.ActionEvent as AWTActionEvent
 
-fun <T> loadFXMLPane(pane: String, controller: Any): T {
-    val loader = FXMLLoader()
-    loader.setController(controller)
-    loader.setControllerFactory {
-        APP_NAME
-        controller // Needed for imported/nested FXML files
-    }
-    loader.location = controller.javaClass.getResource("/fxml/$pane.fxml")
-    return loader.load<T>()
-}
+private const val HIDE_IN_BACKGROUND_PARAMETER = "-b"
+private const val RUN_AT_WIN_LOGIN_REGISTRY_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
 
 class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
-    private val appData = ApplicationData(APP_HOME_PATH)
-    private val productDB = MobileDataProductDB(APP_HOME_PATH)
-    private val activeProducts = mutableMapOf<UUID, MobileDataProduct>()
+    val appData = ApplicationData(APP_HOME_PATH)
+    private lateinit var productDB: MobileDataProductDB
     private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
+    private val activeProducts = mutableMapOf<UUID, MobileDataProduct>()
     private var loadHistory = true
 
     private lateinit var mainWindow: Stage
@@ -94,20 +92,16 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     private lateinit var activeProductsScreen: BorderPane
     private lateinit var historyScreen: BorderPane
     private val noDataPane: Pane = loadFXMLPane("NoDataPane", this)
-    private val settingsScreen = SettingsScreen(appData)
-    private val aboutScreen = AboutScreen()
-
+    private val settingsScreen = SettingsScreen(this)
+    private val aboutScreen = AboutScreen(this)
     @FXML private lateinit var menuBtn: MenuButton
     @FXML private lateinit var hideMenuItem: MenuItem
-
     private val toggleGroup = ToggleGroup()
     private var toggleBtnToFireOnBack: ToggleButton? = null
     @FXML private lateinit var historyBtn: ToggleButton
     @FXML private lateinit var activeProductsBtn: ToggleButton
     @FXML private lateinit var backBtn: Button
-
     @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
-
     private var sysTrayIcon: TrayIcon? = null
     private val loadingSpinner = ProgressIndicator(-1.0)
 
@@ -115,6 +109,22 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
             logger.error("Application error", e)
         }
+
+        if (isMobileDataProductDBLocked(APP_HOME_PATH)) {
+            logger.warn("$APP_NAME already appears to be running. Exiting.")
+            Platform.runLater {
+                Platform.exit()
+            }
+            return
+        }
+
+        productDB = MobileDataProductDB(APP_HOME_PATH)
+
+        Runtime.getRuntime().addShutdownHook(thread(start = false) {
+            onJVMShutdown()
+        })
+
+        verifyAutoStartConfig()
 
         val products = productDB.getActiveProducts()
         for (product in products) {
@@ -126,15 +136,101 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         createActiveProductsPane()
         createHistoryPane()
         initControls()
-
-        if (appData.routerIPAddress == null) {
-            showSecondaryScreen(settingsScreen)
-        }
-
-        onOpenMainWindow()
+        startMainWindow()
     }
 
-    override fun stop() {
+    fun <T> loadFXMLPane(pane: String, controller: Any): T {
+        val loader = FXMLLoader()
+        loader.setController(controller)
+        loader.setControllerFactory {
+            APP_NAME
+            controller // Needed for imported/nested FXML files
+        }
+        loader.location = controller.javaClass.getResource("/fxml/$pane.fxml")
+        return loader.load<T>()
+    }
+
+    private fun startMainWindow() {
+        var showWindow = true
+        val showSettings = appData.routerIPAddress == null
+        if (!showSettings) {
+            for (param in parameters.unnamed) {
+                if (param == HIDE_IN_BACKGROUND_PARAMETER) {
+                    showWindow = false
+                    break
+                }
+            }
+        }
+        if (showWindow) {
+            if (showSettings) {
+                showSecondaryScreen(settingsScreen)
+            }
+            showMainWindow()
+        }
+    }
+
+    private fun showMainWindow() {
+        mainWindow.show()
+        mainWindow.toFront()
+    }
+
+    private fun verifyAutoStartConfig() {
+        if (appData.autoStart) {
+            val launcherPath = getLauncherPath()?.toString()
+            val expectedRegistryConfig = "$launcherPath $HIDE_IN_BACKGROUND_PARAMETER"
+
+            var registryConfig: String? = null
+            try {
+                registryConfig = Advapi32Util.registryGetStringValue(
+                    WinReg.HKEY_CURRENT_USER,
+                    RUN_AT_WIN_LOGIN_REGISTRY_KEY,
+                    APP_NAME)
+            } catch (e: Exception) {
+            }
+
+            if (expectedRegistryConfig != registryConfig) {
+                if (launcherPath == null) {
+                    disableAutoStart()
+                } else {
+                    enableAutoStart()
+                }
+            }
+        }
+    }
+
+    private fun getLauncherPath(): Path? {
+        // CWD is the "app" directory containing the JAR.
+        // The EXE launcher should be in the parent directory.
+        val path = Paths.get("..", "$APP_NAME.exe").toAbsolutePath().normalize()
+        return if (path.toFile().exists()) path else null
+    }
+
+    fun enableAutoStart() {
+        val launcherPath = getLauncherPath()
+        if (launcherPath != null) {
+            try {
+                Advapi32Util.registrySetStringValue(
+                    WinReg.HKEY_CURRENT_USER,
+                    RUN_AT_WIN_LOGIN_REGISTRY_KEY,
+                    APP_NAME,
+                    "$launcherPath $HIDE_IN_BACKGROUND_PARAMETER")
+            } catch (e: Exception) {
+                logger.error("Error enabling auto startup", e)
+            }
+        }
+    }
+
+    fun disableAutoStart() {
+        try {
+            Advapi32Util.registryDeleteValue(
+                WinReg.HKEY_CURRENT_USER,
+                RUN_AT_WIN_LOGIN_REGISTRY_KEY,
+                APP_NAME)
+        } catch (e: Exception) {
+        }
+    }
+
+    private fun onJVMShutdown() {
         productDB.close()
         appData.windowPosition = Pair(mainWindow.x, mainWindow.y)
         appData.windowSize = Pair(mainWindow.width, mainWindow.height)
@@ -176,7 +272,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
         val openMenuItem = AWTMenuItem("Open $APP_NAME")
         openMenuItem.font = AWTFont.decode(null).deriveFont(AWTFont.BOLD)
-        openMenuItem.addActionListener(::onOpenMainWindow)
+        openMenuItem.addActionListener(::onOpenMainWindowFromSystemTray)
 
         val settingsMenuItem = AWTMenuItem("Settings")
         settingsMenuItem.addActionListener(::onSettingsFromSystemTray)
@@ -191,7 +287,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         sysTrayMenu.addSeparator()
         sysTrayMenu.add(exitMenuItem)
 
-        sysTrayIcon?.addActionListener(::onOpenMainWindow)
+        sysTrayIcon?.addActionListener(::onOpenMainWindowFromSystemTray)
 
         sysTray.add(sysTrayIcon)
         Platform.setImplicitExit(false)
@@ -265,15 +361,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         event.consume()
     }
 
-    private fun onOpenMainWindow(event: AWTActionEvent? = null) {
-        val action = {
-            mainWindow.show()
-            mainWindow.toFront()
-        }
-        if (event != null) {
-            Platform.runLater(action)
-        } else {
-            action()
+    private fun onOpenMainWindowFromSystemTray(event: AWTActionEvent) {
+        Platform.runLater {
+            showMainWindow()
         }
     }
 
@@ -387,7 +477,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     private fun onSettingsFromSystemTray(event: AWTActionEvent) {
-        onOpenMainWindow(event)
+        onOpenMainWindowFromSystemTray(event)
         onSettings()
     }
 

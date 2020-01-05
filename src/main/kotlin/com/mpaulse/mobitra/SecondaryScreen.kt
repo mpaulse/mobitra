@@ -25,7 +25,9 @@ package com.mpaulse.mobitra
 import javafx.scene.control.ToggleButton
 import javafx.scene.layout.BorderPane
 
-abstract class SecondaryScreen: BorderPane() {
+abstract class SecondaryScreen(
+    protected val app: MobitraApplication
+): BorderPane() {
 
     open val backButtonText: String get() = "Back"
     abstract val toggleButton: ToggleButton

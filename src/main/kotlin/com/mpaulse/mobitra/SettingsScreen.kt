@@ -41,8 +41,8 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
 class SettingsScreen(
-    private val appData: ApplicationData
-): SecondaryScreen(), CoroutineScope by MainScope() {
+    app: MobitraApplication
+): SecondaryScreen(app), CoroutineScope by MainScope() {
 
     @FXML private lateinit var routerIPAddressField: TextField
     @FXML private lateinit var testConnBtn: Button
@@ -65,7 +65,7 @@ class SettingsScreen(
     private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
 
     init {
-        center = loadFXMLPane<Pane>("SettingsPane", this)
+        center = app.loadFXMLPane<Pane>("SettingsPane", this)
 
         testConnProgressSpinner.prefWidth = 16.0
         testConnProgressSpinner.prefHeight = 16.0
@@ -76,8 +76,8 @@ class SettingsScreen(
         redCrossIcon.fitWidth = 16.0
         redCrossIcon.fitHeight = 16.0
 
-        routerIPAddressField.text = appData.routerIPAddress
-        autoStartCheckBox.isSelected = appData.autoStart
+        routerIPAddressField.text = app.appData.routerIPAddress
+        autoStartCheckBox.isSelected = app.appData.autoStart
     }
 
     override fun onShow() {
@@ -89,9 +89,14 @@ class SettingsScreen(
     }
 
     override fun onBack(): Boolean {
-        appData.routerIPAddress = routerIPAddress
-        appData.autoStart = autoStartCheckBox.isSelected
-        appData.save()
+        app.appData.routerIPAddress = routerIPAddress
+        app.appData.autoStart = autoStartCheckBox.isSelected
+        app.appData.save()
+        if (app.appData.autoStart) {
+            app.enableAutoStart()
+        } else {
+            app.disableAutoStart()
+        }
         return true
     }
 
