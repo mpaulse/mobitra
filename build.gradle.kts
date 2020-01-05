@@ -27,6 +27,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("org.slf4j:log4j-over-slf4j:1.7.30")
     implementation("org.hsqldb:hsqldb:2.5.0")
+    implementation("net.java.dev.jna:jna-platform:5.5.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
@@ -142,31 +143,34 @@ tasks {
             "javafx.controls,javafx.fxml",
             "--strip-native-commands",
             "--output",
-            "release",
+            "build/release",
             "--identifier",
-            "com.mpaulse.mobitra.Mobitra",
+            "com.mpaulse.mobitra",
             "--name",
-            "mobitra",
+            "Mobitra",
             "--version",
             project.version.toString(),
             "--description",
-            "Mobitra - Telkom Mobile LTE Data Usage Tracker",
+            "Mobitra - Telkom Mobile Prepaid LTE Data Usage Tracker",
             "--icon",
             "src/main/resources/images/mobitra.ico",
             "--vendor",
             "Marlon Paulse",
+            "--copyright",
+            "Copyright (c) ${LocalDate.now().year} Marlon Paulse",
+            "--license-file",
+            "LICENSE.txt",
+            "--singleton",
             "--verbose")
     }
 
     register<Delete>("release") {
         dependsOn("packageRelease")
-        delete = setOf("release/Mobitra/mobitra.ico")
+        delete = setOf("build/release/Mobitra/mobitra.ico")
     }
 
     clean {
-        delete = setOf(
-            buildDir,
-            "release")
+        delete = setOf(buildDir)
     }
 
 }

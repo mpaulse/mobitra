@@ -2,6 +2,7 @@ This product includes the following software:
 
 - HSQLDB (BSD-based License)
 - Jackson (Apache License 2.0)
+- Java Native Access (Apache License 2.0)
 - Kotlin (Apache License 2.0)
 - Logback (Eclipse Public License 1.0)
 - OpenJDK (GNU General Public License 2.0 with Classpath Exception)
