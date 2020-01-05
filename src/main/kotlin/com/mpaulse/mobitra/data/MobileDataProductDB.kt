@@ -242,7 +242,10 @@ class MobileDataProductDB(
                 stmt.executeQuery().use { rs ->
                     if (rs.next()) {
                         productUsageTotal = rs.getLong(1)
-                        productUpdateTimestamp = rs.getTimestamp(2).toInstant()
+                        val ts = rs.getTimestamp(2)
+                        if (ts != null) {
+                            productUpdateTimestamp = ts.toInstant()
+                        }
                     }
                 }
             }
@@ -293,7 +296,10 @@ class MobileDataProductDB(
                         """.trimIndent()).use { rs ->
                     if (rs.next()) {
                         productUsageTotal = rs.getLong(1)
-                        productUpdateTimestamp = rs.getTimestamp(2).toInstant()
+                        val ts = rs.getTimestamp(2)
+                        if (ts != null) {
+                            productUpdateTimestamp = ts.toInstant()
+                        }
                     }
                 }
             }
