@@ -56,7 +56,7 @@ tasks {
     withType<KotlinCompile> {
         dependsOn("generateAppInfo", "copyLicenses")
         kotlinOptions {
-            jvmTarget = "11"
+            jvmTarget = "12"
         }
     }
 

@@ -276,8 +276,8 @@ private class DataUsageBarChartOverlay(
 
     private fun getChartValue(x: Double, y: Double): Pair<String, Long>? {
         val date = xAxis.getValueForDisplay(xAxis.parentToLocal(x, y).x)
-        val y = yAxis.getValueForDisplay(yAxis.parentToLocal(x, y).y - chart.padding.top).toLong()
-        return if (date != null && y >= 0) Pair(date, y) else null
+        val yValue = yAxis.getValueForDisplay(yAxis.parentToLocal(x, y).y - chart.padding.top).toLong()
+        return if (date != null && yValue >= 0) Pair(date, yValue) else null
     }
 
     private fun showPopup(x: Double, y: Double) {
