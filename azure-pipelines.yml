@@ -23,7 +23,7 @@ steps:
     scriptSource: 'inline'
     script: |
       from urllib.request import urlretrieve
-      urlretrieve("$(jdkDownloadUrl)", "$(jdkInstallPackage)")
+      urlretrieve("$(jdkDownloadUrl)", r"$(jdkInstallPackage)")
 - task: JavaToolInstaller@0
   displayName: Install JDK
   inputs:
