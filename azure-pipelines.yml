@@ -2,27 +2,30 @@ trigger:
 - master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 variables:
   jdkVersion: 13.0.1
   jdkVersionMajor: 13
-  jdkDownloadUrl: https://download.java.net/java/GA/jdk13.0.1/cec27d702aa74d5a8630c65ae61e4305/9/GPL/openjdk-13.0.1_linux-x64_bin.tar.gz
-  jdkInstallPackage: '$(Agent.TempDirectory)/jdk-$(jdkVersion).tar.gz'
+  jdkDownloadUrl: https://download.java.net/java/GA/jdk13.0.1/cec27d702aa74d5a8630c65ae61e4305/9/GPL/openjdk-13.0.1_windows-x64_bin.zip
+  jdkInstallPackage: '$(Agent.TempDirectory)/jdk-$(jdkVersion).zip'
 
 steps:
 - task: UsePythonVersion@0
+  displayName: Setup Python3
   inputs:
     versionSpec: '3.x'
     addToPath: true
     architecture: 'x64'
 - task: PythonScript@0
+  displayName: Download JDK
   inputs:
     scriptSource: 'inline'
     script: |
       from urllib.request import urlretrieve
       urlretrieve("$(jdkDownloadUrl)", "$(jdkInstallPackage)")
 - task: JavaToolInstaller@0
+  displayName: Install JDK
   inputs:
     versionSpec: $(jdkVersionMajor)
     jdkArchitectureOption: x64
@@ -31,6 +34,7 @@ steps:
     jdkDestinationDirectory: '$(Agent.TempDirectory)/jdk'
     cleanDestinationDirectory: true
 - task: Gradle@2
+  displayName: Build and Test
   inputs:
     gradleWrapperFile: 'gradlew'
     tasks: 'build test'
