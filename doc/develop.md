@@ -5,8 +5,7 @@ Development Notes
 
 - Integrate UI with networking back-end, with a timer to periodically collect and reconcile data from Huawei and Telkom.
 - Historic data removal after retention period.
-- Add JavaToolInstaller and PublishBuildArtifacts to Azure Pipelines config to package and
-  publish release builds using the latest JDK on Windows.
+- Publish releases from Azure to Github for tagged commits.
 
 ## Ideas:
 
