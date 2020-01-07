@@ -56,3 +56,12 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'Build Artifacts'
     publishLocation: 'Container'
+- task: GitHubRelease@1
+  inputs:
+    gitHubConnection: 'mobitra'
+    repositoryName: '$(Build.Repository.Name)'
+    action: 'create'
+    target: '$(Build.SourceVersion)'
+    tagSource: 'gitTag'
+    assets: '$(Build.ArtifactStagingDirectory)/Mobitra-*.zip*'
+    addChangeLog: false'
