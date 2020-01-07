@@ -64,4 +64,4 @@ steps:
     target: '$(Build.SourceVersion)'
     tagSource: 'gitTag'
     assets: '$(Build.ArtifactStagingDirectory)/Mobitra-*.zip*'
-    addChangeLog: false'
+    addChangeLog: false
