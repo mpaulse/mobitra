@@ -57,6 +57,7 @@ steps:
     ArtifactName: 'Build Artifacts'
     publishLocation: 'Container'
 - task: GitHubRelease@1
+  displayName: Publish GitHub Release
   inputs:
     gitHubConnection: 'mobitra'
     repositoryName: '$(Build.Repository.Name)'
