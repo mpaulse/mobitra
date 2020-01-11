@@ -24,6 +24,8 @@ package com.mpaulse.mobitra
 
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
+import com.mpaulse.mobitra.data.MobileDataProductType
+import com.mpaulse.mobitra.data.MobileDataUsage
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -35,6 +37,7 @@ val productDB = MobileDataProductDB(APP_HOME_PATH)
 
 fun generateProductData(
     productName: String,
+    type: MobileDataProductType,
     totalAmount: Long,
     activationDate: LocalDate,
     expiryDate: LocalDate
@@ -46,6 +49,7 @@ fun generateProductData(
         UUID.randomUUID(),
         "012345678912345",
         productName,
+        type,
         totalAmount,
         usedAmount,
         activationDate,
@@ -72,9 +76,10 @@ fun generateProductData(
 
         productDB.addDataUsage(
             product,
-            downloadAmount,
-            uploadAmount,
-            timestamp)
+            MobileDataUsage(
+                downloadAmount = downloadAmount,
+                uploadAmount = uploadAmount,
+                timestamp = timestamp))
 
         timestamp = timestamp.plus(1, ChronoUnit.HOURS)
         product.usedAmount += (downloadAmount + uploadAmount)
@@ -95,11 +100,13 @@ fun main() {
         val totalAmount = 225L * 1_073_741_824
         generateProductData(
             "Once-off LTE/LTE-A Anytime Data",
+            MobileDataProductType.ANYTIME,
             totalAmount,
             date,
             date.plusDays(60))
         generateProductData(
             "Once-off LTE/LTE-A Night Surfer Data",
+            MobileDataProductType.NIGHT_SURFER,
             totalAmount,
             date,
             date.plusDays(30))

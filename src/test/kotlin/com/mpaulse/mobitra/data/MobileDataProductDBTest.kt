@@ -23,15 +23,15 @@
 package com.mpaulse.mobitra.data
 
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import java.nio.file.Path
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.util.UUID
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 val TEST_DATA_PATH: Path = Path.of("src/test/data")
 
@@ -56,6 +56,7 @@ class MobileDataProductDBTest {
             UUID.randomUUID(),
             "0123456789",
             "Test storeProduct and getProduct",
+            MobileDataProductType.ANYTIME,
             7832478178423,
             32895894578,
             LocalDate.now(),
@@ -71,6 +72,7 @@ class MobileDataProductDBTest {
             UUID.randomUUID(),
             "0123456789",
             "Test storeProduct and getProduct",
+            MobileDataProductType.ANYTIME,
             7832478178423,
             32895894578,
             LocalDate.now(),
@@ -92,6 +94,7 @@ class MobileDataProductDBTest {
                 UUID.randomUUID(),
                 "0123456789",
                 "Test getProduct $i",
+                if (i % 2 == 0) MobileDataProductType.ANYTIME else MobileDataProductType.NIGHT_SURFER,
                 i.toLong(),
                 i.toLong(),
                 LocalDate.now(),
@@ -121,6 +124,7 @@ class MobileDataProductDBTest {
                 UUID.randomUUID(),
                 "0123456789",
                 "Test getProduct $i",
+                MobileDataProductType.ANYTIME,
                 i.toLong(),
                 i.toLong(),
                 LocalDate.now().minusDays(1),
@@ -132,6 +136,7 @@ class MobileDataProductDBTest {
                 UUID.randomUUID(),
                 "0123456789",
                 "Test getProduct $i",
+                MobileDataProductType.ANYTIME,
                 i.toLong(),
                 i.toLong(),
                 LocalDate.now(),
@@ -149,36 +154,49 @@ class MobileDataProductDBTest {
 
     @Test
     fun `addDataUsage and getDataUsage for product`() {
+        val usedAmount = 32895894578
         val product = MobileDataProduct(
             UUID.randomUUID(),
             "0123456789",
             "Test addDataUsage and getDataUsage",
+            MobileDataProductType.ANYTIME,
             7832478178423,
-            32895894578,
+            usedAmount,
             LocalDate.now(),
             LocalDate.now().plusDays(1))
         productDB.storeProduct(product)
 
-        productDB.addDataUsage(product)
-        productDB.addDataUsage(product, 1)
-        productDB.addDataUsage(product, uploadAmount = 2)
-        productDB.addDataUsage(product, 3, 4)
+        productDB.addDataUsage(product, MobileDataUsage())
+        productDB.addDataUsage(product, MobileDataUsage(downloadAmount = 1))
+        productDB.addDataUsage(product, MobileDataUsage(uploadAmount = 2))
+        productDB.addDataUsage(product, MobileDataUsage(downloadAmount = 3, uploadAmount = 4))
+        productDB.addDataUsage(product, MobileDataUsage(uncategorisedAmount = 5))
 
         val usage = productDB.getDataUsage(product)
 
-        assertEquals(4, usage.size, "Incorrect no. usage data")
+        assertAll(
+            { assertEquals(5, usage.size, "Incorrect no. usage data") },
 
-        assertEquals(0, usage[0].downloadAmount, "Incorrect download amount")
-        assertEquals(0, usage[0].uploadAmount, "Incorrect upload amount")
+            { assertEquals(0, usage[0].downloadAmount, "Incorrect download amount") },
+            { assertEquals(0, usage[0].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(usedAmount - (1 + 2 + 3 + 4 + 5), usage[0].uncategorisedAmount, "Incorrect uncategorised amount") }, // adjusted
 
-        assertEquals(1, usage[1].downloadAmount, "Incorrect download amount")
-        assertEquals(0, usage[1].uploadAmount, "Incorrect upload amount")
+            { assertEquals(1, usage[1].downloadAmount, "Incorrect download amount") },
+            { assertEquals(0, usage[1].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(0, usage[1].uncategorisedAmount, "Incorrect uncategorised amount") },
 
-        assertEquals(0, usage[2].downloadAmount, "Incorrect download amount")
-        assertEquals(2, usage[2].uploadAmount, "Incorrect upload amount")
+            { assertEquals(0, usage[2].downloadAmount, "Incorrect download amount") },
+            { assertEquals(2, usage[2].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(0, usage[2].uncategorisedAmount, "Incorrect uncategorised amount") },
 
-        assertEquals(3, usage[3].downloadAmount, "Incorrect download amount")
-        assertEquals(4, usage[3].uploadAmount, "Incorrect upload amount")
+            { assertEquals(3, usage[3].downloadAmount, "Incorrect download amount") },
+            { assertEquals(4, usage[3].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(0, usage[3].uncategorisedAmount, "Incorrect uncategorised amount") },
+
+            { assertEquals(0, usage[4].downloadAmount, "Incorrect download amount") },
+            { assertEquals(0, usage[4].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(5, usage[4].uncategorisedAmount, "Incorrect uncategorised amount") }
+        )
     }
 
     @Test
@@ -188,48 +206,59 @@ class MobileDataProductDBTest {
                 UUID.randomUUID(),
                 "0123456789",
                 "Test getDataUsage - expired",
+                MobileDataProductType.ANYTIME,
                 7832478178423,
                 32895894578,
                 LocalDate.now().minusDays(1),
                 LocalDate.now())
             productDB.storeProduct(product)
-            productDB.addDataUsage(product, 123, 567)
+            productDB.addDataUsage(product, MobileDataUsage(downloadAmount = 123, uploadAmount = 567))
         }
 
+        val usedAmount = 32895894578
         for (i in 0..1) {
             val product = MobileDataProduct(
                 UUID.randomUUID(),
                 "0123456789",
                 "Test getDataUsage - active",
+                MobileDataProductType.ANYTIME,
                 7832478178423,
-                32895894578,
+                usedAmount,
                 LocalDate.now(),
                 LocalDate.now().plusDays(1))
             productDB.storeProduct(product)
 
-            productDB.addDataUsage(product, 1)
-            productDB.addDataUsage(product, uploadAmount = 2, timestamp = Instant.now().plusSeconds(30))
-            productDB.addDataUsage(product, 3, 4, timestamp = Instant.now().plusSeconds(60))
+            productDB.addDataUsage(product, MobileDataUsage(downloadAmount = 1))
+            productDB.addDataUsage(product, MobileDataUsage(uploadAmount = 2, timestamp = Instant.now().plusSeconds(30)))
+            productDB.addDataUsage(product, MobileDataUsage(downloadAmount = 3, uploadAmount = 4, timestamp = Instant.now().plusSeconds(60)))
         }
 
         val usage = productDB.getActiveProductDataUsage()
 
-        assertEquals(6, usage.size, "Incorrect no. usage data")
+        assertAll(
+            { assertEquals(6, usage.size, "Incorrect no. usage data") },
 
-        assertEquals(1, usage[0].downloadAmount, "Incorrect download amount")
-        assertEquals(0, usage[0].uploadAmount, "Incorrect upload amount")
-        assertEquals(1, usage[1].downloadAmount, "Incorrect download amount")
-        assertEquals(0, usage[1].uploadAmount, "Incorrect upload amount")
+            { assertEquals(1, usage[0].downloadAmount, "Incorrect download amount") },
+            { assertEquals(0, usage[0].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(usedAmount * 2 - (1 + 2 + 3 + 4) * 2, usage[0].uncategorisedAmount, "Incorrect uncategorised amount") }, // adjusted
+            { assertEquals(1, usage[1].downloadAmount, "Incorrect download amount") },
+            { assertEquals(0, usage[1].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(0, usage[1].uncategorisedAmount, "Incorrect uncategorised amount") }, // adjusted
 
-        assertEquals(0, usage[2].downloadAmount, "Incorrect download amount")
-        assertEquals(2, usage[2].uploadAmount, "Incorrect upload amount")
-        assertEquals(0, usage[3].downloadAmount, "Incorrect download amount")
-        assertEquals(2, usage[3].uploadAmount, "Incorrect upload amount")
+            { assertEquals(0, usage[2].downloadAmount, "Incorrect download amount") },
+            { assertEquals(2, usage[2].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(0, usage[2].uncategorisedAmount, "Incorrect uncategorised amount") },
+            { assertEquals(0, usage[3].downloadAmount, "Incorrect download amount") },
+            { assertEquals(2, usage[3].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(0, usage[3].uncategorisedAmount, "Incorrect uncategorised amount") },
 
-        assertEquals(3, usage[4].downloadAmount, "Incorrect download amount")
-        assertEquals(4, usage[4].uploadAmount, "Incorrect upload amount")
-        assertEquals(3, usage[5].downloadAmount, "Incorrect download amount")
-        assertEquals(4, usage[5].uploadAmount, "Incorrect upload amount")
+            { assertEquals(3, usage[4].downloadAmount, "Incorrect download amount") },
+            { assertEquals(4, usage[4].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(0, usage[4].uncategorisedAmount, "Incorrect uncategorised amount") },
+            { assertEquals(3, usage[5].downloadAmount, "Incorrect download amount") },
+            { assertEquals(4, usage[5].uploadAmount, "Incorrect upload amount") },
+            { assertEquals(0, usage[5].uncategorisedAmount, "Incorrect uncategorised amount") }
+        )
     }
 
 }

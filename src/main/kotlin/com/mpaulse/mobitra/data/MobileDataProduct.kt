@@ -30,6 +30,7 @@ data class MobileDataProduct(
     val id: UUID,
     val msisdn: String,
     val name: String,
+    val type: MobileDataProductType,
     val totalAmount: Long,
     var usedAmount: Long,
     val activationDate: LocalDate,
@@ -41,8 +42,14 @@ data class MobileDataProduct(
 
 }
 
+enum class MobileDataProductType {
+    ANYTIME,
+    NIGHT_SURFER,
+    UNSPECIFIED
+}
+
 data class MobileDataUsage(
-    val timestamp: Instant,
+    val timestamp: Instant = Instant.now(),
     val downloadAmount: Long = 0,
     val uploadAmount: Long = 0,
     val uncategorisedAmount: Long = 0

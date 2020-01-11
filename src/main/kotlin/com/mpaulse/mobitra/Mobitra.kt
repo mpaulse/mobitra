@@ -27,6 +27,7 @@ package com.mpaulse.mobitra
 import com.mpaulse.mobitra.data.ApplicationData
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
+import com.mpaulse.mobitra.data.MobileDataProductType
 import com.mpaulse.mobitra.data.MobileDataUsage
 import com.mpaulse.mobitra.data.isMobileDataProductDBLocked
 import com.sun.jna.platform.win32.Advapi32Util
@@ -448,6 +449,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                         UUID.randomUUID(),
                         "All",
                         "All",
+                        MobileDataProductType.UNSPECIFIED,
                         totalAmount,
                         usedAmount,
                         activationDate as LocalDate,

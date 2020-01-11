@@ -74,16 +74,17 @@ class MobileDataProductDB(
                 conn.prepareStatement(
                         """
                         INSERT INTO mobile_data_products (
-                            id, msisdn, name, total_amount, used_amount, activation_date, expiry_date, update_timestamp
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+                            id, msisdn, name, type, total_amount, used_amount, activation_date, expiry_date, update_timestamp
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
                         """.trimIndent()).use { stmt ->
                     stmt.setObject(1, product.id)
                     stmt.setString(2, product.msisdn)
                     stmt.setString(3, product.name)
-                    stmt.setLong(4, product.totalAmount)
-                    stmt.setLong(5, product.usedAmount)
-                    stmt.setDate(6, Date.valueOf(product.activationDate))
-                    stmt.setDate(7, Date.valueOf(product.expiryDate))
+                    stmt.setInt(4, productTypeToInt(product.type))
+                    stmt.setLong(5, product.totalAmount)
+                    stmt.setLong(6, product.usedAmount)
+                    stmt.setDate(7, Date.valueOf(product.activationDate))
+                    stmt.setDate(8, Date.valueOf(product.expiryDate))
                     stmt.executeUpdate()
                 }
             } else {
@@ -127,7 +128,7 @@ class MobileDataProductDB(
         try {
             conn.prepareStatement(
                     """
-                    SELECT msisdn, name, total_amount, used_amount, activation_date, expiry_date
+                    SELECT msisdn, name, type, total_amount, used_amount, activation_date, expiry_date
                     FROM mobile_data_products
                     WHERE id = ?
                     """.trimIndent()).use { stmt ->
@@ -138,10 +139,11 @@ class MobileDataProductDB(
                             id,
                             rs.getString(1),
                             rs.getString(2),
-                            rs.getLong(3),
+                            intToProductType(rs.getInt(3)),
                             rs.getLong(4),
-                            rs.getDate(5).toLocalDate(),
-                            rs.getDate(6).toLocalDate())
+                            rs.getLong(5),
+                            rs.getDate(6).toLocalDate(),
+                            rs.getDate(7).toLocalDate())
                     }
                 }
             }
@@ -165,7 +167,7 @@ class MobileDataProductDB(
             conn.createStatement().use { stmt ->
                 stmt.executeQuery(
                         """
-                        SELECT id, msisdn, name, total_amount, used_amount, activation_date, expiry_date
+                        SELECT id, msisdn, name, type, total_amount, used_amount, activation_date, expiry_date
                         FROM mobile_data_products
                         """.trimIndent()
                         + if (activeOnly) " WHERE expiry_date > NOW()" else "").use { rs ->
@@ -174,10 +176,11 @@ class MobileDataProductDB(
                             rs.getObject(1, UUID::class.java),
                             rs.getString(2),
                             rs.getString(3),
-                            rs.getLong(4),
+                            intToProductType(rs.getInt(4)),
                             rs.getLong(5),
-                            rs.getDate(6).toLocalDate(),
-                            rs.getDate(7).toLocalDate())
+                            rs.getLong(6),
+                            rs.getDate(7).toLocalDate(),
+                            rs.getDate(8).toLocalDate())
                     }
                 }
             }
@@ -189,21 +192,20 @@ class MobileDataProductDB(
 
     fun addDataUsage(
         product: MobileDataProduct,
-        downloadAmount: Long = 0,
-        uploadAmount: Long = 0,
-        timestamp: Instant = Instant.now()
+        dataUsage: MobileDataUsage
     ) {
         try {
             conn.prepareStatement(
                     """
                     INSERT INTO mobile_data_usage (
-                        id, timestamp, download_amount, upload_amount
-                    ) VALUES (?, ?, ?, ?)
+                        id, timestamp, download_amount, upload_amount, uncategorised_amount
+                    ) VALUES (?, ?, ?, ?, ?)
                     """.trimIndent()).use { stmt ->
                 stmt.setObject(1, product.id)
-                stmt.setTimestamp(2, Timestamp.from(timestamp))
-                stmt.setLong(3, downloadAmount);
-                stmt.setLong(4, uploadAmount)
+                stmt.setTimestamp(2, Timestamp.from(dataUsage.timestamp))
+                stmt.setLong(3, dataUsage.downloadAmount);
+                stmt.setLong(4, dataUsage.uploadAmount)
+                stmt.setLong(5, dataUsage.uncategorisedAmount)
                 stmt.executeUpdate()
             }
         } catch (e: SQLException) {
@@ -223,7 +225,7 @@ class MobileDataProductDB(
         try {
             conn.prepareStatement(
                     """
-                    SELECT timestamp, download_amount, upload_amount
+                    SELECT timestamp, download_amount, upload_amount, uncategorised_amount
                     FROM mobile_data_usage
                     """.trimIndent()
                     + (if (product != null) " WHERE id = ?" else "")
@@ -282,7 +284,7 @@ class MobileDataProductDB(
         try {
             conn.prepareStatement(
                     """
-                    SELECT timestamp, download_amount, upload_amount
+                    SELECT timestamp, download_amount, upload_amount, uncategorised_amount
                     FROM mobile_data_usage u
                     INNER JOIN mobile_data_products p ON u.id = p.id 
                     WHERE expiry_date > NOW()
@@ -343,6 +345,7 @@ class MobileDataProductDB(
     ): Long {
         var downloadAmount = 0L
         var uploadAmount = 0L
+        var uncategorisedAmount = 0L
         var usedAmount = 0L
         var timestamp: Instant? = null
 
@@ -350,23 +353,27 @@ class MobileDataProductDB(
             val t = rs.getTimestamp(1).toInstant()
             val d = rs.getLong(2)
             val u = rs.getLong(3)
+            val x = rs.getLong(4)
             if (timestampsEqual == null) {
-                dataUsage += MobileDataUsage(t, d, u)
+                dataUsage += MobileDataUsage(t, d, u, x)
+                usedAmount += dataUsage.last().totalAmount
             } else if (timestamp == null || timestampsEqual(timestamp, t)) {
                 downloadAmount += d
                 uploadAmount += u
-                usedAmount += d + u
+                uncategorisedAmount += x
+                usedAmount += d + u + x
                 timestamp = t
             } else {
-                dataUsage += MobileDataUsage(timestamp, downloadAmount, uploadAmount)
+                dataUsage += MobileDataUsage(timestamp, downloadAmount, uploadAmount, uncategorisedAmount)
                 downloadAmount = d
                 uploadAmount = u
-                usedAmount += d + u
+                uncategorisedAmount = x
+                usedAmount += d + u + x
                 timestamp = t
             }
         }
         if (timestamp != null) {
-            dataUsage += MobileDataUsage(timestamp, downloadAmount, uploadAmount)
+            dataUsage += MobileDataUsage(timestamp, downloadAmount, uploadAmount, uncategorisedAmount)
         }
 
         return usedAmount
@@ -400,6 +407,7 @@ class MobileDataProductDB(
                     id UUID NOT NULL PRIMARY KEY,
                     msisdn VARCHAR(15) NOT NULL,
                     name VARCHAR(255) NOT NULL,
+                    type TINYINT NOT NULL,
                     total_amount BIGINT NOT NULL,
                     used_amount BIGINT NOT NULL,
                     activation_date DATE NULL,
@@ -417,7 +425,8 @@ class MobileDataProductDB(
                     id UUID NOT NULL FOREIGN KEY REFERENCES mobile_data_products(id) ON DELETE CASCADE ON UPDATE CASCADE,
                     timestamp TIMESTAMP NOT NULL,
                     download_amount BIGINT DEFAULT 0 NOT NULL,
-                    upload_amount BIGINT DEFAULT 0 NOT NULL
+                    upload_amount BIGINT DEFAULT 0 NOT NULL,
+                    uncategorised_amount BIGINT DEFAULT 0 NOT NULL
                 )
                 """.trimIndent())
             stmt.execute(
@@ -439,6 +448,20 @@ class MobileDataProductDB(
         val ld2 = t2.atZone(zone).toLocalDate()
         return ld1.year == ld2.year && ld1.month == ld2.month
     }
+
+    private fun intToProductType(type: Int) =
+        when (type) {
+            0 -> MobileDataProductType.ANYTIME
+            1 -> MobileDataProductType.NIGHT_SURFER
+            else -> throw MobileDataProductDBException("Invalid MobileDataProductType value: $type")
+        }
+
+    private fun productTypeToInt(type: MobileDataProductType) =
+        when (type) {
+            MobileDataProductType.ANYTIME -> 0
+            MobileDataProductType.NIGHT_SURFER -> 1
+            else -> throw MobileDataProductDBException("Invalid MobileDataProductType: $type")
+        }
 
 }
 
