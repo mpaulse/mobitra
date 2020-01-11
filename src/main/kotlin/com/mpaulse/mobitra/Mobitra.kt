@@ -79,6 +79,8 @@ import java.awt.event.ActionEvent as AWTActionEvent
 private const val HIDE_IN_BACKGROUND_PARAMETER = "-b"
 private const val RUN_AT_WIN_LOGIN_REGISTRY_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
 
+val devModeEnabled = System.getProperty("dev")?.toBoolean() ?: false
+
 class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     val appData = ApplicationData(APP_HOME_PATH)

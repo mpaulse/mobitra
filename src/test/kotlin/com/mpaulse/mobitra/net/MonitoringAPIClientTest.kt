@@ -76,9 +76,10 @@ class MonitoringAPIClientTest {
 
     private val client = MonitoringAPIClient(
         "localhost",
-        "localhost",
+        8080,
         "localhost",
         8080,
+        "localhost",
         8433,
         createMockSSLContext(),
         HTTP_TIMEOUT)
