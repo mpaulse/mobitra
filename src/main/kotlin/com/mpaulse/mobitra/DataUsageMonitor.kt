@@ -51,7 +51,8 @@ import java.util.UUID
 class DataUsageMonitor(
     routerIPAddress: String?,
     private val productDB: MobileDataProductDB,
-    private val onActiveProductsUpdate: () -> Unit
+    private val onActiveProductsUpdate: () -> Unit,
+    private val onDataTrafficUpdate: (Long, Long) -> Unit
 ): CoroutineScope by MainScope() {
 
     private var monitoringAPIClient: MonitoringAPIClient? = null
@@ -135,8 +136,9 @@ class DataUsageMonitor(
                         logger.debug("Active product: $activeProductInUse")
                     }
 
-                    // TODO: update graph, update tooltip with totals
-                    onActiveProductsUpdate()
+                    launch(Dispatchers.Main) {
+                        onActiveProductsUpdate()
+                    }
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) {
@@ -149,6 +151,8 @@ class DataUsageMonitor(
 
     private fun pollDataUsage() = flow {
         var lastTrafficStats: HuaweiTrafficStats? = null
+        var totalDownloadAmount = 0L
+        var totalUploadAmount = 0L
         var downloadAmount = 0L
         var uploadAmount = 0L
 
@@ -165,10 +169,12 @@ class DataUsageMonitor(
                     }
                     if (d >= 0 && u >= 0) {
                         downloadAmount += d
+                        totalDownloadAmount += d
                         uploadAmount += u
+                        totalUploadAmount += u
                     }
                     if (logger.isDebugEnabled) {
-                        logger.debug("Current totals: downloads = $downloadAmount B, uploads = $uploadAmount B")
+                        logger.debug("Tick: downloads = $downloadAmount B, uploads = $uploadAmount B")
                     }
 
                     // Emit event if:
@@ -182,6 +188,9 @@ class DataUsageMonitor(
                     }
 
                     lastTrafficStats = trafficStats
+                    launch(Dispatchers.Main) {
+                        onDataTrafficUpdate(totalDownloadAmount, totalUploadAmount)
+                    }
                 }
 
                 // Delay until just before the next hour mark, or within 5 seconds, whichever comes first.

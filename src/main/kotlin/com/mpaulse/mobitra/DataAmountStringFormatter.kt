@@ -40,9 +40,9 @@ object DataAmountStringFormatter: StringConverter<Number>() {
         if (d >= GB) {
             return "${decimalFormat.format(d / GB)} GB"
         } else if (d >= MB) {
-            return "${decimalFormat.format(d / GB)} MB"
+            return "${decimalFormat.format(d / MB)} MB"
         } else if (d >= KB) {
-            return "${decimalFormat.format(d / GB)} KB"
+            return "${decimalFormat.format(d / KB)} KB"
         }
         return "${d.toLong()} B"
     }

@@ -127,7 +127,11 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         productDB = MobileDataProductDB(APP_HOME_PATH)
-        dataUsageMonitor = DataUsageMonitor(appData.routerIPAddress, productDB, ::onActiveProductsUpdated)
+        dataUsageMonitor = DataUsageMonitor(
+            appData.routerIPAddress,
+            productDB,
+            ::onActiveProductsUpdate,
+            ::onDataTrafficUpdate)
 
         Runtime.getRuntime().addShutdownHook(thread(start = false) {
             onJVMShutdown()
@@ -143,7 +147,6 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         startMainWindow()
 
         // TODO: status bar showing current total download / upload
-        // TODO: current download / upload in tray icon tooltip
     }
 
     fun <T> loadFXMLPane(pane: String, controller: Any): T {
@@ -411,10 +414,18 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
     }
 
-    private fun onActiveProductsUpdated() {
-        Platform.runLater {
-            refreshActiveProductsMenu()
-        }
+    private fun onActiveProductsUpdate() {
+        refreshActiveProductsMenu()
+        // TODO: update graph
+    }
+
+    private fun onDataTrafficUpdate(totalDownloadAmount: Long, totalUploadAmount: Long) {
+        sysTrayIcon?.toolTip =
+            """
+            $APP_NAME
+            Download: ${DataAmountStringFormatter.toString(totalDownloadAmount)}
+            Upload: ${DataAmountStringFormatter.toString(totalUploadAmount)}
+            """.trimIndent()
     }
 
     @FXML
