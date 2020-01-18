@@ -185,6 +185,8 @@ class DataUsageMonitor(
                 }
 
                 // Delay until just before the next hour mark, or within 5 seconds, whichever comes first.
+                // TODO: need to emit on the hour mark
+                // TODO: t can be negative if we're within the last second of the hour
                 val now = LocalDateTime.now()
                 var t = now.until(now.truncatedTo(HOURS).plusHours(1).minusSeconds(1), MILLIS)
                 if (t > 5000) {

@@ -61,20 +61,26 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.slf4j.LoggerFactory
-import java.awt.PopupMenu
 import java.awt.SystemTray
 import java.awt.Toolkit
 import java.awt.TrayIcon
+import java.awt.event.MouseAdapter
+import java.awt.event.WindowEvent
+import java.awt.event.WindowFocusListener
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
 import java.util.UUID
+import javax.swing.JDialog
+import javax.swing.JMenuItem
+import javax.swing.JPopupMenu
+import javax.swing.UIManager
 import kotlin.concurrent.thread
 import java.awt.Font as AWTFont
 import java.awt.Image as AWTImage
-import java.awt.MenuItem as AWTMenuItem
 import java.awt.event.ActionEvent as AWTActionEvent
+import java.awt.event.MouseEvent as AWTMouseEvent
 
 private const val HIDE_IN_BACKGROUND_PARAMETER = "-b"
 private const val RUN_AT_WIN_LOGIN_REGISTRY_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
@@ -135,6 +141,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         createHistoryPane()
         initControls()
         startMainWindow()
+
+        // TODO: status bar showing current total download / upload
+        // TODO: current download / upload in tray icon tooltip
     }
 
     fun <T> loadFXMLPane(pane: String, controller: Any): T {
@@ -262,21 +271,41 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         val sysTray = SystemTray.getSystemTray()
-        val sysTrayMenu = PopupMenu()
         sysTrayIcon = TrayIcon(
             Toolkit.getDefaultToolkit().getImage(javaClass.getResource(APP_ICON)).getScaledInstance(16, 16, AWTImage.SCALE_DEFAULT),
             APP_NAME,
-            sysTrayMenu)
+            null)
 
-        val openMenuItem = AWTMenuItem("Open $APP_NAME")
+        // Use JPopupMenu instead of the AWT PopupMenu for a native system look and feel.
+        val sysTrayMenu = JPopupMenu()
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+
+        // A hack to allow the system tray popup menu to disappear when clicking outside it.
+        // Hiding the hidden invoker dialog window when it loses focus also hides the popup menu.
+        // This is only a problem when using JPopupMenu instead of the AWT PopupMenu for the system tray.
+        val sysTrayMenuInvoker = JDialog()
+        sysTrayMenuInvoker.isUndecorated = true
+        sysTrayMenuInvoker.addWindowFocusListener(object: WindowFocusListener {
+            override fun windowGainedFocus(e: WindowEvent?) = Unit
+            override fun windowLostFocus(e: WindowEvent?) {
+                sysTrayMenuInvoker.isVisible = false
+            }
+        })
+        sysTrayMenu.invoker = sysTrayMenuInvoker
+
+        val openMenuItem = JMenuItem("Open $APP_NAME")
         openMenuItem.font = AWTFont.decode(null).deriveFont(AWTFont.BOLD)
+        setupTrayMenuItemMouseListener(openMenuItem)
         openMenuItem.addActionListener(::onOpenMainWindowFromSystemTray)
 
-        val settingsMenuItem = AWTMenuItem("Settings")
+        val settingsMenuItem = JMenuItem("Settings")
+        setupTrayMenuItemMouseListener(settingsMenuItem)
         settingsMenuItem.addActionListener(::onSettingsFromSystemTray)
 
-        val exitMenuItem = AWTMenuItem("Exit")
+        val exitMenuItem = JMenuItem("Exit")
+        setupTrayMenuItemMouseListener(exitMenuItem)
         exitMenuItem.addActionListener {
+            sysTrayMenuInvoker.dispose()
             onExit()
         }
 
@@ -286,9 +315,26 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         sysTrayMenu.add(exitMenuItem)
 
         sysTrayIcon?.addActionListener(::onOpenMainWindowFromSystemTray)
+        sysTrayIcon?.addMouseListener(object: MouseAdapter() {
+            override fun mouseReleased(event: AWTMouseEvent) {
+                if (event.isPopupTrigger) {
+                    sysTrayMenu.setLocation(event.x, event.y)
+                    sysTrayMenuInvoker.isVisible = true
+                    sysTrayMenu.isVisible = true
+                }
+            }
+        })
 
         sysTray.add(sysTrayIcon)
         Platform.setImplicitExit(false)
+    }
+
+    private fun setupTrayMenuItemMouseListener(menuItem: JMenuItem) {
+        if (menuItem.mouseListeners.isNotEmpty()) {
+            val listener = menuItem.mouseListeners.first()
+            menuItem.removeMouseListener(listener)
+            menuItem.addMouseListener(LeftClickOnlyMouseListenerDelegate(listener))
+        }
     }
 
     private fun createActiveProductsPane() {
