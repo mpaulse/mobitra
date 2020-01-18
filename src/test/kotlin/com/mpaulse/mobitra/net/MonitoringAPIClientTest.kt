@@ -56,22 +56,6 @@ import kotlin.test.assertTrue
 
 private const val HTTP_TIMEOUT = 2000L
 
-private fun createMockSSLContext(): SSLContext {
-    val context = SSLContext.getInstance("TLS")
-    context.init(null, arrayOf(MockTrustManager()), null)
-    return context
-}
-
-private class MockTrustManager : X509ExtendedTrustManager() {
-    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
-    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
-    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) = Unit
-    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) = Unit
-    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) = Unit
-    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) = Unit
-    override fun getAcceptedIssuers() = emptyArray<X509Certificate>()
-}
-
 class MonitoringAPIClientTest {
 
     private val client = MonitoringAPIClient(
@@ -81,8 +65,8 @@ class MonitoringAPIClientTest {
         8080,
         "localhost",
         8433,
-        createMockSSLContext(),
-        HTTP_TIMEOUT)
+        HTTP_TIMEOUT,
+        false)
 
     private val wireMock = WireMockServer(
         options()
@@ -121,11 +105,11 @@ class MonitoringAPIClientTest {
 
         runBlocking {
             val stats = client.getHuaweiTrafficStatistics()
-            assertEquals(stats.sessionConnectionUptime, 254310, "Incorrect session connection uptime")
-            assertEquals(stats.sessionTotalBytesUploaded, 787033379, "Incorrect session total bytes uploaded")
-            assertEquals(stats.sessionTotalBytesDownloaded, 20707877903, "Incorrect session total bytes downloaded")
-            assertEquals(stats.totalBytesDownloaded, 31003595763, "Incorrect total bytes downloaded")
-            assertEquals(stats.totalBytesUploaded, 1140231732, "Incorrect total bytes uploaded")
+            assertEquals(stats.currentConnectTime, 254310, "Incorrect session connection uptime")
+            assertEquals(stats.currentUploadAmount, 787033379, "Incorrect session total bytes uploaded")
+            assertEquals(stats.currentDownloadAmount, 20707877903, "Incorrect session total bytes downloaded")
+            assertEquals(stats.totalDownloadAmount, 31003595763, "Incorrect total bytes downloaded")
+            assertEquals(stats.totalUploadAmount, 1140231732, "Incorrect total bytes uploaded")
         }
 
         verify(getRequestedFor(
@@ -149,11 +133,11 @@ class MonitoringAPIClientTest {
 
         runBlocking {
             val stats = client.getHuaweiTrafficStatistics()
-            assertEquals(stats.sessionConnectionUptime, 0, "Incorrect session connection uptime")
-            assertEquals(stats.sessionTotalBytesUploaded, 0, "Incorrect session total bytes uploaded")
-            assertEquals(stats.sessionTotalBytesDownloaded, 0, "Incorrect session total bytes downloaded")
-            assertEquals(stats.totalBytesDownloaded, 0, "Incorrect total bytes downloaded")
-            assertEquals(stats.totalBytesUploaded, 0, "Incorrect total bytes uploaded")
+            assertEquals(stats.currentConnectTime, 0, "Incorrect session connection uptime")
+            assertEquals(stats.currentUploadAmount, 0, "Incorrect session total bytes uploaded")
+            assertEquals(stats.currentDownloadAmount, 0, "Incorrect session total bytes downloaded")
+            assertEquals(stats.totalDownloadAmount, 0, "Incorrect total bytes downloaded")
+            assertEquals(stats.totalUploadAmount, 0, "Incorrect total bytes uploaded")
         }
     }
 

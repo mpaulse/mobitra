@@ -32,15 +32,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import java.io.InputStream
+import java.net.Socket
 import java.net.URI
 import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse.BodyHandlers
+import java.security.cert.X509Certificate
 import java.time.Duration
 import java.util.UUID
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLEngine
+import javax.net.ssl.X509ExtendedTrustManager
 
 private const val HTTP_USER_AGENT = "$APP_NAME/$APP_VERSION"
 private const val HTTP_TIMEOUT_MILLIS = 15000L
@@ -52,20 +56,32 @@ class MonitoringAPIException(
 ): Exception(message, cause)
 
 class MonitoringAPIClient(
-    private val huaweiHost: String,
+    var huaweiHost: String,
     private val huaweiPort: Int = 80,
     private val telkomOnnetHttpHost: String = if (!devModeEnabled) "onnet.telkom.co.za" else "localhost",
     private val telkomOnnetHttpPort: Int = if (!devModeEnabled) 80 else 8880,
     private val telkomOnnetHttpsHost: String = if (!devModeEnabled) "onnetsecure.telkom.co.za" else "localhost",
     private val telkomOnnetHttpsPort: Int = if (!devModeEnabled) 443 else 8843,
-    sslContext: SSLContext = SSLContext.getDefault(),
-    private val timeout: Long = HTTP_TIMEOUT_MILLIS
+    private val timeout: Long = HTTP_TIMEOUT_MILLIS,
+    validateSSLCert: Boolean = !devModeEnabled
 ) {
 
-    private val httpClient = HttpClient.newBuilder().sslContext(sslContext).build()
+    private val httpClient: HttpClient
 
     private val xmlMapper = XmlMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES)
     private val jsonMapper = jacksonObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES)
+
+    init {
+        val sslContext =
+            if (validateSSLCert) {
+                SSLContext.getDefault()
+            } else {
+                val context = SSLContext.getInstance("TLS")
+                context.init(null, arrayOf(NonValidatingTrustManager()), null)
+                context
+            }
+        httpClient = HttpClient.newBuilder().sslContext(sslContext).build()
+    }
 
     suspend fun getHuaweiTrafficStatistics(): HuaweiTrafficStats = withContext(Dispatchers.IO) {
         try {
@@ -206,4 +222,14 @@ class MonitoringAPIClient(
         return URLEncoder.encode(s.toString(), "utf8")
     }
 
+}
+
+private class NonValidatingTrustManager : X509ExtendedTrustManager() {
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) = Unit
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) = Unit
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) = Unit
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) = Unit
+    override fun getAcceptedIssuers() = emptyArray<X509Certificate>()
 }

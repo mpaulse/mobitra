@@ -29,21 +29,21 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
 data class HuaweiTrafficStats(
 
     @JsonProperty("CurrentConnectTime")
-    val sessionConnectionUptime: Long,
+    val currentConnectTime: Long,
 
     @JsonProperty("CurrentUpload")
-    val sessionTotalBytesUploaded: Long,
+    val currentUploadAmount: Long,
 
     @JsonProperty("CurrentDownload")
-    val sessionTotalBytesDownloaded: Long,
+    val currentDownloadAmount: Long,
 
     @JsonProperty("TotalConnectTime")
-    val totalConnectionUptime: Long,
+    val totalConnectTime: Long,
 
     @JsonProperty("TotalUpload")
-    val totalBytesUploaded: Long,
+    val totalUploadAmount: Long,
 
     @JsonProperty("TotalDownload")
-    val totalBytesDownloaded: Long
+    val totalDownloadAmount: Long
 
 )

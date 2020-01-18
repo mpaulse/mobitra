@@ -85,8 +85,8 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     val appData = ApplicationData(APP_HOME_PATH)
     private lateinit var productDB: MobileDataProductDB
+    private lateinit var dataUsageMonitor: DataUsageMonitor
     private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
-    private val activeProducts = mutableMapOf<UUID, MobileDataProduct>()
     private var loadHistory = true
 
     private lateinit var mainWindow: Stage
@@ -112,7 +112,6 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
             logger.error("Application error", e)
         }
-
         if (isMobileDataProductDBLocked(APP_HOME_PATH)) {
             logger.warn("$APP_NAME already appears to be running. Exiting.")
             Platform.runLater {
@@ -122,18 +121,14 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         productDB = MobileDataProductDB(APP_HOME_PATH)
+        dataUsageMonitor = DataUsageMonitor(appData.routerIPAddress, productDB, ::onActiveProductsUpdated)
 
         Runtime.getRuntime().addShutdownHook(thread(start = false) {
             onJVMShutdown()
         })
 
+        dataUsageMonitor.start()
         verifyAutoStartConfig()
-
-        val products = productDB.getActiveProducts()
-        for (product in products) {
-            activeProducts[product.id] = product
-        }
-
         createMainWindow(stage)
         createSystemTrayIcon()
         createActiveProductsPane()
@@ -208,7 +203,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         return if (path.toFile().exists()) path else null
     }
 
-    fun enableAutoStart() {
+    private fun enableAutoStart() {
         val launcherPath = getLauncherPath()
         if (launcherPath != null) {
             try {
@@ -223,7 +218,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
     }
 
-    fun disableAutoStart() {
+    private fun disableAutoStart() {
         try {
             Advapi32Util.registryDeleteValue(
                 WinReg.HKEY_CURRENT_USER,
@@ -313,7 +308,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         val allProductsItem = ActiveProductMenuItem("All", null)
         activeProductsMenu.items.add(allProductsItem)
 
-        for ((productId, product) in activeProducts) {
+        for ((productId, product) in dataUsageMonitor.activeProducts) {
             val item = ActiveProductMenuItem("${product.msisdn} - ${product.name}", productId)
             activeProductsMenu.items.add(item)
             if (productId == selectedItem?.productId) {
@@ -370,10 +365,16 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
     }
 
+    private fun onActiveProductsUpdated() {
+        Platform.runLater {
+            refreshActiveProductsMenu()
+        }
+    }
+
     @FXML
     fun onViewActiveProducts(event: ActionEvent) {
         mainWindowPane.center = activeProductsScreen
-        if (activeProducts.isEmpty()) {
+        if (dataUsageMonitor.activeProducts.isEmpty()) {
             activeProductsScreen.center = noDataPane
         }
         event.consume()
@@ -422,10 +423,10 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
             var product: MobileDataProduct? = null
             var dataUsage: List<MobileDataUsage>? = null
 
-            if (activeProducts.isNotEmpty()) {
+            if (dataUsageMonitor.activeProducts.isNotEmpty()) {
                 val productId = activeProductsMenu.selectionModel.selectedItem.productId
                 if (productId != null) {
-                    product = activeProducts[productId]
+                    product = dataUsageMonitor.activeProducts[productId]
                     if (product != null) {
                         dataUsage = withContext(Dispatchers.IO) {
                             productDB.getProductDataUsagePerDay(product!!)
@@ -437,7 +438,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                     var usedAmount = 0L
                     var activationDate: LocalDate? = null
                     var expiryDate: LocalDate? = null
-                    for (p in activeProducts.values) {
+                    for (p in dataUsageMonitor.activeProducts.values) {
                         totalAmount += p.totalAmount
                         usedAmount += p.usedAmount
                         if (activationDate == null || activationDate > p.activationDate) {
@@ -494,6 +495,16 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
             Platform.runLater {
                 showSecondaryScreen(settingsScreen)
             }
+        }
+    }
+
+    fun onExitSettings() {
+        dataUsageMonitor.routerIPAddress = appData.routerIPAddress
+        appData.save()
+        if (appData.autoStart) {
+            enableAutoStart()
+        } else {
+            disableAutoStart()
         }
     }
 

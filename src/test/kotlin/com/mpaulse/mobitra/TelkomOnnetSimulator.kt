@@ -128,7 +128,7 @@ private fun simulateGoodHost() {
                                 "totalAmount": "64183731327",
                                 "totalAmountAndMeasure": "61210 MB",
                                 "usedAmount": "{{nightSurferUsedAmount}}",
-                                "usedAmountAndMeasure": "{{nightSurferUsedAmountFormatted)}",
+                                "usedAmountAndMeasure": "{{nightSurferUsedAmountFormatted}}",
                                 "measure": "Bytes",
                                 "startBillCycle": "{{now offset='20 days' format='EEE MMM dd yyyy'}}",
                                 "endBillCycle": "00:00:00 {{now offset='20 days' format='EEE MMM dd yyyy'}}",
@@ -185,10 +185,10 @@ fun main(args: Array<String>) {
                 ResponseTemplateTransformer(
                     true,
                     mapOf(
-                        "anytimeUsedAmount" to Helper { _: String, _ -> "$anytimeUsedAmount" },
-                        "anytimeUsedAmountFormatted" to Helper { _: String, _ -> DataAmountStringFormatter.toString(anytimeUsedAmount) },
-                        "nightSurferUsedAmount" to Helper { _: String, _ -> "$nightSurferUsedAmount" },
-                        "nightSurferUsedAmountFormatted" to Helper { _: String, _ -> DataAmountStringFormatter.toString(nightSurferUsedAmount) }))))
+                        "anytimeUsedAmount" to Helper { _: Any, _ -> "$anytimeUsedAmount" },
+                        "anytimeUsedAmountFormatted" to Helper { _: Any, _ -> DataAmountStringFormatter.toString(anytimeUsedAmount) },
+                        "nightSurferUsedAmount" to Helper { _: Any, _ -> "$nightSurferUsedAmount" },
+                        "nightSurferUsedAmountFormatted" to Helper { _: Any, _ -> DataAmountStringFormatter.toString(nightSurferUsedAmount) }))))
     configureFor("localhost", 8880)
     wireMock.start()
     if (args.isNotEmpty() && args[0] == "-bad") {

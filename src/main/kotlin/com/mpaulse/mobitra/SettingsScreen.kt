@@ -22,7 +22,6 @@
 
 package com.mpaulse.mobitra
 
-import com.mpaulse.mobitra.data.ApplicationData
 import com.mpaulse.mobitra.net.MonitoringAPIClient
 import com.mpaulse.mobitra.net.MonitoringAPIException
 import javafx.event.ActionEvent
@@ -91,12 +90,7 @@ class SettingsScreen(
     override fun onBack(): Boolean {
         app.appData.routerIPAddress = routerIPAddress
         app.appData.autoStart = autoStartCheckBox.isSelected
-        app.appData.save()
-        if (app.appData.autoStart) {
-            app.enableAutoStart()
-        } else {
-            app.disableAutoStart()
-        }
+        app.onExitSettings()
         return true
     }
 
@@ -104,7 +98,7 @@ class SettingsScreen(
     fun onTestConnection(event: ActionEvent) {
         val routerIPAddress = routerIPAddress
         if (routerIPAddress != null) {
-            val monitoringAPI = MonitoringAPIClient(routerIPAddress)
+            val monitoringAPIClient = MonitoringAPIClient(routerIPAddress)
 
             testConnLabel.graphic = testConnProgressSpinner
             testConnLabel.text = "Testing connection..."
@@ -114,14 +108,14 @@ class SettingsScreen(
             launch {
                 try {
                     try {
-                        monitoringAPI.getHuaweiTrafficStatistics()
+                        monitoringAPIClient.getHuaweiTrafficStatistics()
                     } catch (e: MonitoringAPIException) {
                         logger.error("Connection test to Huawei LTE router was unsuccessful", e)
                         throw ConnectionTestException("Huawei router")
                     }
 
                     try {
-                        val rsp = monitoringAPI.checkTelkomOnnet()
+                        val rsp = monitoringAPIClient.checkTelkomOnnet()
                         if (rsp.resultCode != 0 || rsp.sessionToken == null) {
                             logger.error("Connection test to Telkom was unsuccessful:\n$rsp")
                             throw ConnectionTestException("Telkom")

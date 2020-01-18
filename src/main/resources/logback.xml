@@ -22,9 +22,18 @@
             <level>WARN</level>
         </filter>
     </appender>
-    <logger name="hsqldb" level="warn"/>
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.out</target>
+        <encoder>
+            <pattern>%d %-5level [%thread] %logger - %msg%n%exception</pattern>
+        </encoder>
+    </appender>
     <root level="INFO">
         <appender-ref ref="file" />
         <appender-ref ref="stderr" />
     </root>
+    <logger name="hsqldb" level="WARN"/>
+    <logger name="com.mpaulse.mobitra.DataUsageMonitor" level="DEBUG">
+        <appender-ref ref="stdout" />
+    </logger>
 </configuration>
