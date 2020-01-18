@@ -56,4 +56,11 @@
          </left>
       </BorderPane>
    </top>
+   <bottom>
+      <HBox id="statusBar" alignment="CENTER_RIGHT">
+         <children>
+            <Label fx:id="statusBarLabel" alignment="CENTER" />
+         </children>
+      </HBox>
+   </bottom>
 </BorderPane>

@@ -40,6 +40,7 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.ChoiceBox
+import javafx.scene.control.Label
 import javafx.scene.control.MenuButton
 import javafx.scene.control.MenuItem
 import javafx.scene.control.ProgressIndicator
@@ -113,6 +114,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
     private var sysTrayIcon: TrayIcon? = null
     private val loadingSpinner = ProgressIndicator(-1.0)
+    @FXML private lateinit var statusBarLabel: Label
 
     override fun start(stage: Stage) {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
@@ -145,8 +147,6 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         createHistoryPane()
         initControls()
         startMainWindow()
-
-        // TODO: status bar showing current total download / upload
     }
 
     fun <T> loadFXMLPane(pane: String, controller: Any): T {
@@ -420,11 +420,16 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     private fun onDataTrafficUpdate(totalDownloadAmount: Long, totalUploadAmount: Long) {
+        val downloadAmountStr = DataAmountStringFormatter.toString(totalDownloadAmount)
+        val uploadAmountStr = DataAmountStringFormatter.toString(totalUploadAmount)
+
+        statusBarLabel.text = "Download: $downloadAmountStr    Upload: $uploadAmountStr"
+
         sysTrayIcon?.toolTip =
             """
             $APP_NAME
-            Download: ${DataAmountStringFormatter.toString(totalDownloadAmount)}
-            Upload: ${DataAmountStringFormatter.toString(totalUploadAmount)}
+            Download: $downloadAmountStr
+            Upload: $uploadAmountStr
             """.trimIndent()
     }
 
