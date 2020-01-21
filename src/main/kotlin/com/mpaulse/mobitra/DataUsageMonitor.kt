@@ -58,6 +58,7 @@ class DataUsageMonitor(
     private var monitoringAPIClient: MonitoringAPIClient? = null
     private val activeProductsMap = mutableMapOf<UUID, MobileDataProduct>()
     private var activeProductInUse: MobileDataProduct? = null
+    private var updateProducts = true
     private val logger = LoggerFactory.getLogger(DataUsageMonitor::class.java)
 
     var routerIPAddress: String? = null
@@ -75,6 +76,9 @@ class DataUsageMonitor(
 
     val activeProducts: Map<UUID, MobileDataProduct>
         get() = Collections.unmodifiableMap(activeProductsMap)
+
+    val currentProduct: MobileDataProduct?
+        get() = activeProductInUse
 
     init {
         for (product in productDB.getActiveProducts()) {
@@ -95,6 +99,7 @@ class DataUsageMonitor(
                 logger.debug("Data usage event: $event")
             }
             try {
+                yield()
                 val telkomFreeResources = monitoringAPIClient?.getTelkomFreeResources()
                 if (telkomFreeResources != null) {
                     var msisdn: String? = null
@@ -140,11 +145,13 @@ class DataUsageMonitor(
                         onActiveProductsUpdate()
                     }
                 }
+                updateProducts = false
             } catch (e: Exception) {
                 if (e is CancellationException) {
                     throw e
                 }
                 logger.error("Data usage monitoring error", e)
+                updateProducts = true
             }
         }
     }
@@ -178,13 +185,18 @@ class DataUsageMonitor(
                     }
 
                     // Emit event if:
+                    // - the data usage needs to be recorded and products from Telkom refreshed
                     // - there is a router restart or a switch a different router (d < 0 or u < 0)
                     // - the product remaining amount gets consumed
-                    if ((d < 0 || u < 0)
-                        || (activeProductInUse != null && (downloadAmount + uploadAmount) >= activeProductInUse!!.remainingAmount)) {
+                    if (updateProducts
+                            || (d < 0 || u < 0)
+                            || (activeProductInUse != null
+                                && (downloadAmount + uploadAmount) >= activeProductInUse!!.remainingAmount)) {
                         emit(DataUsageEvent(downloadAmount, uploadAmount))
-                        downloadAmount = 0
-                        uploadAmount = 0
+                        if (!updateProducts) {
+                            downloadAmount = 0
+                            uploadAmount = 0
+                        }
                     }
 
                     lastTrafficStats = trafficStats
@@ -193,13 +205,14 @@ class DataUsageMonitor(
                     }
                 }
 
-                // Delay until just before the next hour mark, or within 5 seconds, whichever comes first.
-                // TODO: need to emit on the hour mark
-                // TODO: t can be negative if we're within the last second of the hour
+                // Delay until just the next hour mark when we emit an event,
+                // or within 5 seconds, whichever comes first.
                 val now = LocalDateTime.now()
-                var t = now.until(now.truncatedTo(HOURS).plusHours(1).minusSeconds(1), MILLIS)
+                var t = now.until(now.truncatedTo(HOURS).plusHours(1), MILLIS)
                 if (t > 5000) {
                     t = 5000
+                } else {
+                    updateProducts = true
                 }
                 if (logger.isDebugEnabled) {
                     logger.debug("Poll in ${t}ms")

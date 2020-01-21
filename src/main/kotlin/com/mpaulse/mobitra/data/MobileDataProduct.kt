@@ -22,6 +22,7 @@
 
 package com.mpaulse.mobitra.data
 
+import com.mpaulse.mobitra.DataAmountStringFormatter
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -39,6 +40,12 @@ data class MobileDataProduct(
 
     val remainingAmount: Long
         get() = totalAmount - usedAmount
+
+    val displayName: String =
+        "${DataAmountStringFormatter.toString(totalAmount)} $name"
+
+    val fullDisplayName: String =
+        "$msisdn - $displayName"
 
 }
 

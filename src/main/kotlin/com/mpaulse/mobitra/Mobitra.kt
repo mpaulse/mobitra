@@ -114,7 +114,8 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     @FXML private lateinit var activeProductsMenu: ChoiceBox<ActiveProductMenuItem>
     private var sysTrayIcon: TrayIcon? = null
     private val loadingSpinner = ProgressIndicator(-1.0)
-    @FXML private lateinit var statusBarLabel: Label
+    @FXML private lateinit var statusBarLeftLabel: Label
+    @FXML private lateinit var statusBarRightLabel: Label
 
     override fun start(stage: Stage) {
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
@@ -146,6 +147,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         createActiveProductsPane()
         createHistoryPane()
         initControls()
+        setStatusBarProductInfoText()
         startMainWindow()
     }
 
@@ -251,9 +253,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         mainWindow = stage
         mainWindow.scene = Scene(loadFXMLPane("MainWindow", this))
         mainWindow.scene.stylesheets.add("style.css")
-        mainWindow.minWidth = 600.0
+        mainWindow.minWidth = 800.0
         mainWindow.width = if (appData.windowSize.first >= mainWindow.minWidth) appData.windowSize.first else mainWindow.minWidth
-        mainWindow.minHeight = 520.0
+        mainWindow.minHeight = 600.0
         mainWindow.height = if (appData.windowSize.second >= mainWindow.minHeight) appData.windowSize.second else mainWindow.minHeight
         mainWindow.icons.add(Image(APP_ICON))
 
@@ -358,7 +360,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         activeProductsMenu.items.add(allProductsItem)
 
         for ((productId, product) in dataUsageMonitor.activeProducts) {
-            val item = ActiveProductMenuItem("${product.msisdn} - ${product.name}", productId)
+            val item = ActiveProductMenuItem(product.fullDisplayName, productId)
             activeProductsMenu.items.add(item)
             if (productId == selectedItem?.productId) {
                 selectedItem = item
@@ -416,14 +418,29 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     private fun onActiveProductsUpdate() {
         refreshActiveProductsMenu()
-        // TODO: update graph
+        loadHistory = true
+        if (toggleGroup.selectedToggle == historyBtn) {
+            onViewHistory()
+        } else if (toggleGroup.selectedToggle == activeProductsBtn) {
+            onActiveProductSelected()
+        }
+
+        setStatusBarProductInfoText(dataUsageMonitor.currentProduct)
+    }
+
+    private fun setStatusBarProductInfoText(currentProduct: MobileDataProduct? = null) {
+        val currentProductDisplayName = currentProduct?.displayName ?: "Unknown"
+        val msisdn = currentProduct?.msisdn ?: "Unknown"
+        statusBarLeftLabel.text = "SIM: $msisdn        Product: $currentProductDisplayName"
     }
 
     private fun onDataTrafficUpdate(totalDownloadAmount: Long, totalUploadAmount: Long) {
+        // TODO: update displayed graph on traffic update tick
+
         val downloadAmountStr = DataAmountStringFormatter.toString(totalDownloadAmount)
         val uploadAmountStr = DataAmountStringFormatter.toString(totalUploadAmount)
 
-        statusBarLabel.text = "Download: $downloadAmountStr    Upload: $uploadAmountStr"
+        statusBarRightLabel.text = "Download: $downloadAmountStr    Upload: $uploadAmountStr"
 
         sysTrayIcon?.toolTip =
             """
@@ -443,7 +460,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     }
 
     @FXML
-    fun onViewHistory(event: ActionEvent) {
+    fun onViewHistory(event: ActionEvent? = null) {
         if (loadHistory) {
             historyScreen.center = loadingSpinner
 
@@ -475,7 +492,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         mainWindowPane.center = historyScreen
-        event.consume()
+        event?.consume()
     }
 
     fun onActiveProductSelected(event: ActionEvent? = null) {
