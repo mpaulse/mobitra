@@ -216,7 +216,7 @@ class MobileDataProductDB(
     fun getDataUsage(
         product: MobileDataProduct? = null,
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
-    ): List<MobileDataUsage> {
+    ): MutableList<MobileDataUsage> {
         val dataUsage = LinkedList<MobileDataUsage>()
         var dataUsageTotal = 0L
         var productUsageTotal = 0L
@@ -275,7 +275,7 @@ class MobileDataProductDB(
 
     fun getActiveProductDataUsage(
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
-    ): List<MobileDataUsage> {
+    ): MutableList<MobileDataUsage> {
         val dataUsage = LinkedList<MobileDataUsage>()
         var dataUsageTotal = 0L
         var productUsageTotal = 0L

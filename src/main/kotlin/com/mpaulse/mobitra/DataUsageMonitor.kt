@@ -52,7 +52,7 @@ class DataUsageMonitor(
     routerIPAddress: String?,
     private val productDB: MobileDataProductDB,
     private val onActiveProductsUpdate: () -> Unit,
-    private val onDataTrafficUpdate: (Long, Long) -> Unit
+    private val onDataTrafficUpdate: (delta: MobileDataUsage, total: MobileDataUsage) -> Unit
 ): CoroutineScope by MainScope() {
 
     private var monitoringAPIClient: MonitoringAPIClient? = null
@@ -94,9 +94,9 @@ class DataUsageMonitor(
     }
 
     private suspend fun updateProductInfo() = withContext(Dispatchers.Default) {
-        pollDataUsage().collect { event ->
+        pollDataUsage().collect { dataUsage ->
             if (logger.isDebugEnabled) {
-                logger.debug("Data usage event: $event")
+                logger.debug("Data usage event: $dataUsage")
             }
             try {
                 yield()
@@ -115,22 +115,19 @@ class DataUsageMonitor(
                         val prevUsedAmount = activeProductsMap[product.id]?.usedAmount ?: 0
                         if (product.usedAmount != prevUsedAmount) {
                             activeProductsMap[product.id] = product
-                            var downloadAmount = 0L
-                            var uploadAmount = 0L
                             var uncategorisedAmount = product.usedAmount - prevUsedAmount
-                            if (activeProductInUse?.id == product.id) {
-                                downloadAmount = event.downloadAmount
-                                uploadAmount = event.uploadAmount
-                                uncategorisedAmount -= (downloadAmount + uploadAmount)
-                            }
-                            val dataUsage = MobileDataUsage(
-                                downloadAmount = downloadAmount,
-                                uploadAmount = uploadAmount,
-                                uncategorisedAmount = uncategorisedAmount)
+                            val dataUsageToAdd =
+                                if (activeProductInUse?.id == product.id) {
+                                    uncategorisedAmount -= (dataUsage.downloadAmount + dataUsage.uploadAmount)
+                                    dataUsage.uncategorisedAmount = uncategorisedAmount
+                                    dataUsage
+                                } else {
+                                    MobileDataUsage(uncategorisedAmount = uncategorisedAmount)
+                                }
                             if (logger.isDebugEnabled) {
-                                logger.debug("Add data usage:\n\tproduct: $product\n\tusage: $dataUsage")
+                                logger.debug("Add data usage:\n\tproduct: $product\n\tusage: $dataUsageToAdd")
                             }
-                            productDB.addDataUsage(product, dataUsage)
+                            productDB.addDataUsage(product, dataUsageToAdd)
                         }
                     }
 
@@ -158,30 +155,32 @@ class DataUsageMonitor(
 
     private fun pollDataUsage() = flow {
         var lastTrafficStats: HuaweiTrafficStats? = null
-        var totalDownloadAmount = 0L
-        var totalUploadAmount = 0L
-        var downloadAmount = 0L
-        var uploadAmount = 0L
+        var downloadAmountTickDelta: Long
+        var downloadAmountUpdateDelta = 0L
+        var downloadAmountTotal = 0L
+        var uploadAmountTickDelta: Long
+        var uploadAmountUpdateDelta = 0L
+        var uploadAmountTotal = 0L
 
         while (true) {
             try {
                 yield()
                 val trafficStats = monitoringAPIClient?.getHuaweiTrafficStatistics()
                 if (trafficStats != null) {
-                    var d = -1L
-                    var u = -1L
+                    downloadAmountTickDelta = -1L
+                    uploadAmountTickDelta = -1L
                     if (lastTrafficStats != null) {
-                        d = trafficStats.currentDownloadAmount - lastTrafficStats.currentDownloadAmount
-                        u = trafficStats.currentUploadAmount - lastTrafficStats.currentUploadAmount
+                        downloadAmountTickDelta = trafficStats.currentDownloadAmount - lastTrafficStats.currentDownloadAmount
+                        uploadAmountTickDelta = trafficStats.currentUploadAmount - lastTrafficStats.currentUploadAmount
                     }
-                    if (d >= 0 && u >= 0) {
-                        downloadAmount += d
-                        totalDownloadAmount += d
-                        uploadAmount += u
-                        totalUploadAmount += u
+                    if (downloadAmountTickDelta >= 0 && uploadAmountTickDelta >= 0) {
+                        downloadAmountUpdateDelta += downloadAmountTickDelta
+                        downloadAmountTotal += downloadAmountTickDelta
+                        uploadAmountUpdateDelta += uploadAmountTickDelta
+                        uploadAmountTotal += uploadAmountTickDelta
                     }
                     if (logger.isDebugEnabled) {
-                        logger.debug("Tick: downloads = $downloadAmount B, uploads = $uploadAmount B")
+                        logger.debug("Tick: downloads = $downloadAmountUpdateDelta B, uploads = $uploadAmountUpdateDelta B")
                     }
 
                     // Emit event if:
@@ -189,19 +188,23 @@ class DataUsageMonitor(
                     // - there is a router restart or a switch a different router (d < 0 or u < 0)
                     // - the product remaining amount gets consumed
                     if (updateProducts
-                            || (d < 0 || u < 0)
+                            || (downloadAmountTickDelta < 0 || uploadAmountTickDelta < 0)
                             || (activeProductInUse != null
-                                && (downloadAmount + uploadAmount) >= activeProductInUse!!.remainingAmount)) {
-                        emit(DataUsageEvent(downloadAmount, uploadAmount))
+                                && (downloadAmountUpdateDelta + uploadAmountUpdateDelta) >= activeProductInUse!!.remainingAmount)) {
+                        emit(MobileDataUsage(
+                            downloadAmount = downloadAmountUpdateDelta,
+                            uploadAmount = uploadAmountUpdateDelta))
                         if (!updateProducts) {
-                            downloadAmount = 0
-                            uploadAmount = 0
+                            downloadAmountUpdateDelta = 0
+                            uploadAmountUpdateDelta = 0
                         }
                     }
 
                     lastTrafficStats = trafficStats
                     launch(Dispatchers.Main) {
-                        onDataTrafficUpdate(totalDownloadAmount, totalUploadAmount)
+                        onDataTrafficUpdate(
+                            MobileDataUsage(downloadAmount = downloadAmountTickDelta, uploadAmount = uploadAmountTickDelta),
+                            MobileDataUsage(downloadAmount = downloadAmountTotal, uploadAmount = uploadAmountTotal))
                     }
                 }
 
@@ -282,8 +285,3 @@ class DataUsageMonitor(
     }
 
 }
-
-private data class DataUsageEvent(
-    val downloadAmount: Long,
-    val uploadAmount: Long
-)

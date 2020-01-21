@@ -55,9 +55,9 @@ private fun timestampToXValue(timestamp: Instant, product: MobileDataProduct) =
     dateToXValue(timestamp.atZone(ZoneId.systemDefault()).toLocalDate(), product)
 
 class CumulativeDataUsagePerDayChart(
-    usageData: List<MobileDataUsage>,
+    dataUsageList: List<MobileDataUsage>,
     private val product: MobileDataProduct
-): BorderPane() {
+): Chart, BorderPane() {
 
     private val xAxis = NumberAxis(0.0, dateToXValue(product.expiryDate.plusDays(5), product).toDouble(), 1.0)
     private val yAxis = NumberAxis()
@@ -86,7 +86,7 @@ class CumulativeDataUsagePerDayChart(
 
         yAxis.tickLabelFormatter = DataAmountStringFormatter
 
-        for (usage in usageData) {
+        for (usage in dataUsageList) {
             plotDataUsage(usage)
         }
 
@@ -118,6 +118,21 @@ class CumulativeDataUsagePerDayChart(
         dataSeries.data.add(Data(
             timestampToXValue(dataUsage.timestamp, product),
             usedAmount))
+    }
+
+    override fun addDataUsage(dataUsage: MobileDataUsage) {
+        var lastDataPointUpdated = false
+        if (dataSeries.data.isNotEmpty()) {
+            val lastDataPoint = dataSeries.data.last()
+            if (timestampToXValue(dataUsage.timestamp, product) == lastDataPoint.xValue) {
+                usedAmount += dataUsage.totalAmount
+                lastDataPoint.yValue = usedAmount
+                lastDataPointUpdated = true
+            }
+        }
+        if (!lastDataPointUpdated) {
+            plotDataUsage(dataUsage)
+        }
     }
 
 }
@@ -176,14 +191,17 @@ private class CumulativeDataUsagePerDayChartOverlay(
 
         val x = xAxis.getValueForDisplay(xAxis.parentToLocal(event.x, event.y).x).toLong()
         val y = yAxis.getValueForDisplay(yAxis.parentToLocal(event.x, event.y).y - chart.padding.top).toLong()
-        if (x >= 0 && y >= 0) {
+        if (x >= 0 && y >= 0 && dataSeries.isNotEmpty()) {
+            var closestPoint: Data<Number, Number>? = null
             for (point in dataSeries) {
-                if (x == point.xValue.toLong() && y <= point.yValue.toLong()) {
-                    val date = xValueToDate(x, product)
-                    if (date != null) {
-                        dataUsagePopup = CumulativeDataUsagePerDayPopup(date, product.totalAmount, point.yValue.toLong())
-                        break
-                    }
+                if (point.xValue.toLong() <= x) {
+                    closestPoint = point
+                }
+            }
+            if (closestPoint != null && x <= dataSeries.last().xValue.toLong() && y <= closestPoint.yValue.toLong()) {
+                val date = xValueToDate(x, product)
+                if (date != null) {
+                    dataUsagePopup = CumulativeDataUsagePerDayPopup(date, product.totalAmount, closestPoint.yValue.toLong())
                 }
             }
         }

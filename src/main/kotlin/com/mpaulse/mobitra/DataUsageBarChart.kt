@@ -55,9 +55,9 @@ enum class DataUsageBarChartType {
 }
 
 class DataUsageBarChart(
-    private val dataUsage: List<MobileDataUsage>,
+    private val dataUsageList: MutableList<MobileDataUsage>,
     private val type: DataUsageBarChartType = DAILY
-): BorderPane() {
+): Chart, BorderPane() {
 
     private lateinit var dateRangeFrom: LocalDate
     private lateinit var dateRangeTo: LocalDate
@@ -105,8 +105,8 @@ class DataUsageBarChart(
         val numBars = 40L
         var dateFrom: LocalDate
         var dateTo: LocalDate
-        if (dataUsage.size >= numBars) {
-            dateTo = timestampToDate(dataUsage.last().timestamp)
+        if (dataUsageList.size >= numBars) {
+            dateTo = timestampToDate(dataUsageList.last().timestamp)
             if (type == MONTHLY) {
                 dateTo = dateTo.withDayOfMonth(1)
             }
@@ -115,7 +115,7 @@ class DataUsageBarChart(
                 else dateTo.minusMonths(numBars - 1)
         } else {
             dateFrom =
-                if (dataUsage.isNotEmpty()) timestampToDate(dataUsage.first().timestamp)
+                if (dataUsageList.isNotEmpty()) timestampToDate(dataUsageList.first().timestamp)
                 else LocalDate.now()
             if (type == MONTHLY) {
                 dateFrom = dateFrom.withDayOfMonth(1)
@@ -132,9 +132,9 @@ class DataUsageBarChart(
         uploadDataSeries.data.clear()
         uncategorisedDataSeries.data.clear()
 
-        if (dateRangeFrom <= timestampToDate(dataUsage.last().timestamp)
-                && dateRangeTo >= timestampToDate(dataUsage.first().timestamp)) {
-            for (usage in dataUsage) {
+        if (dateRangeFrom <= timestampToDate(dataUsageList.last().timestamp)
+                && dateRangeTo >= timestampToDate(dataUsageList.first().timestamp)) {
+            for (usage in dataUsageList) {
                 val date = timestampToDate(usage.timestamp)
                 if (date < dateRangeFrom) {
                     continue
@@ -154,6 +154,23 @@ class DataUsageBarChart(
         if (amount > 0) {
             series.data.add(Data(date, amount))
         }
+    }
+
+    override fun addDataUsage(dataUsage: MobileDataUsage) {
+        var lastPointUpdated = false
+        if (dataUsageList.isNotEmpty()) {
+            val lastPoint = dataUsageList.last()
+            if (timestampToDate(lastPoint.timestamp) == timestampToDate(dataUsage.timestamp)) {
+                lastPoint.downloadAmount += dataUsage.downloadAmount
+                lastPoint.uploadAmount += dataUsage.uploadAmount
+                lastPoint.uncategorisedAmount += dataUsage.uncategorisedAmount
+                lastPointUpdated = true
+            }
+        }
+        if (!lastPointUpdated) {
+            dataUsageList += dataUsage
+        }
+        plotDataUsage()
     }
 
     private fun adjustDateRange(from: LocalDate, to: LocalDate) {

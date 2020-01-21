@@ -72,6 +72,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
+import java.util.LinkedList
 import java.util.UUID
 import javax.swing.JDialog
 import javax.swing.JMenuItem
@@ -93,6 +94,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     val appData = ApplicationData(APP_HOME_PATH)
     private lateinit var productDB: MobileDataProductDB
     private lateinit var dataUsageMonitor: DataUsageMonitor
+    private val unrecordedDataUsage = LinkedList<MobileDataUsage>()
     private val logger = LoggerFactory.getLogger(MobitraApplication::class.java)
     private var loadHistory = true
 
@@ -426,6 +428,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         setStatusBarProductInfoText(dataUsageMonitor.currentProduct)
+        unrecordedDataUsage.clear()
     }
 
     private fun setStatusBarProductInfoText(currentProduct: MobileDataProduct? = null) {
@@ -434,20 +437,49 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         statusBarLeftLabel.text = "SIM: $msisdn        Product: $currentProductDisplayName"
     }
 
-    private fun onDataTrafficUpdate(totalDownloadAmount: Long, totalUploadAmount: Long) {
-        // TODO: update displayed graph on traffic update tick
+    private fun onDataTrafficUpdate(delta: MobileDataUsage, total: MobileDataUsage) {
+        // Keep track of deltas, so that they can be added when a chart is loaded for the first time
+        var lastUsageUpdated = false
+        if (unrecordedDataUsage.isNotEmpty()) {
+            val lastUsage = unrecordedDataUsage.last()
+            lastUsage.downloadAmount += delta.downloadAmount
+            lastUsage.uploadAmount += delta.uploadAmount
+            lastUsageUpdated = true
+        }
+        if (!lastUsageUpdated) {
+            unrecordedDataUsage += delta
+        }
 
-        val downloadAmountStr = DataAmountStringFormatter.toString(totalDownloadAmount)
-        val uploadAmountStr = DataAmountStringFormatter.toString(totalUploadAmount)
+        // Update charts with delta
+        // TODO: the numbers seem incorrect on chart (double-added?)
+        // TODO: Panning does not work correctly for bar charts
+        val selectedProductId = activeProductsMenu.selectionModel.selectedItem.productId
+        if (selectedProductId == null || selectedProductId == dataUsageMonitor.currentProduct?.id) {
+            addDataUsageToChartScreen(delta, activeProductsScreen)
+        }
+        addDataUsageToChartScreen(delta, historyScreen)
 
+        // Update status bar and system tray tooltip
+        val downloadAmountStr = DataAmountStringFormatter.toString(total.downloadAmount)
+        val uploadAmountStr = DataAmountStringFormatter.toString(total.uploadAmount)
         statusBarRightLabel.text = "Download: $downloadAmountStr    Upload: $uploadAmountStr"
-
         sysTrayIcon?.toolTip =
             """
             $APP_NAME
             Download: $downloadAmountStr
             Upload: $uploadAmountStr
             """.trimIndent()
+    }
+
+    private fun addDataUsageToChartScreen(dataUsage: MobileDataUsage, chartScreen: BorderPane) {
+        val charts = chartScreen.center as? Pane
+        if (charts != null) {
+            for (chart in charts.children) {
+                if (chart is Chart) {
+                    chart.addDataUsage(dataUsage)
+                }
+            }
+        }
     }
 
     @FXML
@@ -469,10 +501,12 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                 val dataUsagePerMonth = withContext(Dispatchers.IO) {
                     productDB.getAllProductDataUsagePerMonth()
                 }
+                dataUsagePerMonth.addAll(unrecordedDataUsage)
                 yield()
                 val dataUsagePerDay = withContext(Dispatchers.IO) {
                     productDB.getAllProductDataUsagePerDay()
                 }
+                dataUsagePerDay.addAll(unrecordedDataUsage)
                 yield()
                 if (dataUsagePerMonth.isNotEmpty()) {
                     val charts = VBox()
@@ -500,7 +534,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
         launch {
             var product: MobileDataProduct? = null
-            var dataUsage: List<MobileDataUsage>? = null
+            var dataUsage: MutableList<MobileDataUsage>? = null
 
             if (dataUsageMonitor.activeProducts.isNotEmpty()) {
                 val productId = activeProductsMenu.selectionModel.selectedItem.productId
@@ -509,6 +543,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                     if (product != null) {
                         dataUsage = withContext(Dispatchers.IO) {
                             productDB.getProductDataUsagePerDay(product!!)
+                        }
+                        if (product.id == dataUsageMonitor.currentProduct?.id) {
+                            dataUsage.addAll(unrecordedDataUsage)
                         }
                         yield()
                     }
@@ -539,6 +576,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                     dataUsage = withContext(Dispatchers.IO) {
                         productDB.getActiveProductDataUsagePerDay()
                     }
+                    dataUsage.addAll(unrecordedDataUsage)
                     yield()
                 }
             }
