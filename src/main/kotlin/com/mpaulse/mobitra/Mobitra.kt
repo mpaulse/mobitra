@@ -361,10 +361,27 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         val allProductsItem = ActiveProductMenuItem("All", null)
         activeProductsMenu.items.add(allProductsItem)
 
-        for ((productId, product) in dataUsageMonitor.activeProducts) {
-            val item = ActiveProductMenuItem(product.fullDisplayName, productId)
+        val activeProducts = dataUsageMonitor.activeProducts.values.sortedWith(Comparator {
+            p1: MobileDataProduct, p2: MobileDataProduct ->
+            var c = 0
+            if (p1.remainingAmount == 0L && p2.remainingAmount > 0L) {
+                c = 1
+            } else if (p2.remainingAmount == 0L && p1.remainingAmount > 0L) {
+                c = -1
+            }
+            if (c == 0) {
+                c = p1.activationDate.compareTo(p2.activationDate)
+            }
+            if (c == 0) {
+                c = p1.type.compareTo(p2.type)
+            }
+            c
+        })
+
+        for (product in activeProducts) {
+            val item = ActiveProductMenuItem(product.fullDisplayName, product.id)
             activeProductsMenu.items.add(item)
-            if (productId == selectedItem?.productId) {
+            if (product.id == selectedItem?.productId) {
                 selectedItem = item
             }
         }
@@ -421,6 +438,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
     private fun onActiveProductsUpdate() {
         refreshActiveProductsMenu()
         loadHistory = true
+        unrecordedDataUsage.clear()
         if (toggleGroup.selectedToggle == historyBtn) {
             onViewHistory()
         } else if (toggleGroup.selectedToggle == activeProductsBtn) {
@@ -428,13 +446,12 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         setStatusBarProductInfoText(dataUsageMonitor.currentProduct)
-        unrecordedDataUsage.clear()
     }
 
     private fun setStatusBarProductInfoText(currentProduct: MobileDataProduct? = null) {
         val currentProductDisplayName = currentProduct?.displayName ?: "Unknown"
         val msisdn = currentProduct?.msisdn ?: "Unknown"
-        statusBarLeftLabel.text = "SIM: $msisdn        Product: $currentProductDisplayName"
+        statusBarLeftLabel.text = "SIM: $msisdn    Current Product: $currentProductDisplayName"
     }
 
     private fun onDataTrafficUpdate(delta: MobileDataUsage, total: MobileDataUsage) {
@@ -451,8 +468,6 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         // Update charts with delta
-        // TODO: the numbers seem incorrect on chart (double-added?)
-        // TODO: Panning does not work correctly for bar charts
         val selectedProductId = activeProductsMenu.selectionModel.selectedItem.productId
         if (selectedProductId == null || selectedProductId == dataUsageMonitor.currentProduct?.id) {
             addDataUsageToChartScreen(delta, activeProductsScreen)
@@ -462,7 +477,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         // Update status bar and system tray tooltip
         val downloadAmountStr = DataAmountStringFormatter.toString(total.downloadAmount)
         val uploadAmountStr = DataAmountStringFormatter.toString(total.uploadAmount)
-        statusBarRightLabel.text = "Download: $downloadAmountStr    Upload: $uploadAmountStr"
+        statusBarRightLabel.text = "Current Download / Upload: $downloadAmountStr / $uploadAmountStr"
         sysTrayIcon?.toolTip =
             """
             $APP_NAME

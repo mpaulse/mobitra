@@ -160,7 +160,7 @@ class DataUsageBarChart(
         var lastPointUpdated = false
         if (dataUsageList.isNotEmpty()) {
             val lastPoint = dataUsageList.last()
-            if (timestampToDate(lastPoint.timestamp) == timestampToDate(dataUsage.timestamp)) {
+            if (dateToString(timestampToDate(lastPoint.timestamp)) == dateToString(timestampToDate(dataUsage.timestamp))) {
                 lastPoint.downloadAmount += dataUsage.downloadAmount
                 lastPoint.uploadAmount += dataUsage.uploadAmount
                 lastPoint.uncategorisedAmount += dataUsage.uncategorisedAmount

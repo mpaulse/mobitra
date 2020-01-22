@@ -47,7 +47,7 @@ fun generateProductData(
 
     val product = MobileDataProduct(
         UUID.randomUUID(),
-        "012345678912345",
+        "0678912345",
         productName,
         type,
         totalAmount,

@@ -155,11 +155,11 @@ class DataUsageMonitor(
 
     private fun pollDataUsage() = flow {
         var lastTrafficStats: HuaweiTrafficStats? = null
-        var downloadAmountTickDelta: Long
-        var downloadAmountUpdateDelta = 0L
+        var downloadAmountTick: Long
+        var downloadAmountToLog = 0L
         var downloadAmountTotal = 0L
-        var uploadAmountTickDelta: Long
-        var uploadAmountUpdateDelta = 0L
+        var uploadAmountTick: Long
+        var uploadAmountToLog = 0L
         var uploadAmountTotal = 0L
 
         while (true) {
@@ -167,20 +167,25 @@ class DataUsageMonitor(
                 yield()
                 val trafficStats = monitoringAPIClient?.getHuaweiTrafficStatistics()
                 if (trafficStats != null) {
-                    downloadAmountTickDelta = -1L
-                    uploadAmountTickDelta = -1L
+                    downloadAmountTick = -1L
+                    uploadAmountTick = -1L
                     if (lastTrafficStats != null) {
-                        downloadAmountTickDelta = trafficStats.currentDownloadAmount - lastTrafficStats.currentDownloadAmount
-                        uploadAmountTickDelta = trafficStats.currentUploadAmount - lastTrafficStats.currentUploadAmount
+                        downloadAmountTick = trafficStats.currentDownloadAmount - lastTrafficStats.currentDownloadAmount
+                        uploadAmountTick = trafficStats.currentUploadAmount - lastTrafficStats.currentUploadAmount
                     }
-                    if (downloadAmountTickDelta >= 0 && uploadAmountTickDelta >= 0) {
-                        downloadAmountUpdateDelta += downloadAmountTickDelta
-                        downloadAmountTotal += downloadAmountTickDelta
-                        uploadAmountUpdateDelta += uploadAmountTickDelta
-                        uploadAmountTotal += uploadAmountTickDelta
+                    if (downloadAmountTick >= 0 && uploadAmountTick >= 0) {
+                        downloadAmountToLog += downloadAmountTick
+                        downloadAmountTotal += downloadAmountTick
+                        uploadAmountToLog += uploadAmountTick
+                        uploadAmountTotal += uploadAmountTick
+                        launch(Dispatchers.Main) {
+                            onDataTrafficUpdate(
+                                MobileDataUsage(downloadAmount = downloadAmountTick, uploadAmount = uploadAmountTick),
+                                MobileDataUsage(downloadAmount = downloadAmountTotal, uploadAmount = uploadAmountTotal))
+                        }
                     }
                     if (logger.isDebugEnabled) {
-                        logger.debug("Tick: downloads = $downloadAmountUpdateDelta B, uploads = $uploadAmountUpdateDelta B")
+                        logger.debug("Update tick: downloads = $downloadAmountToLog B, uploads = $uploadAmountToLog B")
                     }
 
                     // Emit event if:
@@ -188,24 +193,19 @@ class DataUsageMonitor(
                     // - there is a router restart or a switch a different router (d < 0 or u < 0)
                     // - the product remaining amount gets consumed
                     if (updateProducts
-                            || (downloadAmountTickDelta < 0 || uploadAmountTickDelta < 0)
+                            || (downloadAmountTick < 0 || uploadAmountTick < 0)
                             || (activeProductInUse != null
-                                && (downloadAmountUpdateDelta + uploadAmountUpdateDelta) >= activeProductInUse!!.remainingAmount)) {
+                                && (downloadAmountToLog + uploadAmountToLog) >= activeProductInUse!!.remainingAmount)) {
                         emit(MobileDataUsage(
-                            downloadAmount = downloadAmountUpdateDelta,
-                            uploadAmount = uploadAmountUpdateDelta))
+                            downloadAmount = downloadAmountToLog,
+                            uploadAmount = uploadAmountToLog))
                         if (!updateProducts) {
-                            downloadAmountUpdateDelta = 0
-                            uploadAmountUpdateDelta = 0
+                            downloadAmountToLog = 0
+                            uploadAmountToLog = 0
                         }
                     }
 
                     lastTrafficStats = trafficStats
-                    launch(Dispatchers.Main) {
-                        onDataTrafficUpdate(
-                            MobileDataUsage(downloadAmount = downloadAmountTickDelta, uploadAmount = uploadAmountTickDelta),
-                            MobileDataUsage(downloadAmount = downloadAmountTotal, uploadAmount = uploadAmountTotal))
-                    }
                 }
 
                 // Delay until just the next hour mark when we emit an event,
@@ -274,7 +274,7 @@ class DataUsageMonitor(
     private fun getProductInUseOfType(msisdn: String, type: MobileDataProductType): MobileDataProduct? {
         var productInUse: MobileDataProduct? = null
         for (product in activeProductsMap.values) {
-            if (product.totalAmount > 0
+            if (product.remainingAmount > 0
                 && product.msisdn == msisdn
                 && product.type == type
                 && (productInUse == null || product.activationDate <= productInUse.activationDate)) {

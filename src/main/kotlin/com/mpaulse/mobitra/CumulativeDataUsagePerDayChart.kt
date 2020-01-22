@@ -196,6 +196,8 @@ private class CumulativeDataUsagePerDayChartOverlay(
             for (point in dataSeries) {
                 if (point.xValue.toLong() <= x) {
                     closestPoint = point
+                } else {
+                    break
                 }
             }
             if (closestPoint != null && x <= dataSeries.last().xValue.toLong() && y <= closestPoint.yValue.toLong()) {

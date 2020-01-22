@@ -90,7 +90,7 @@ private fun simulateGoodHost() {
                     "resultMessage": "Onnet session created",
                     "friendlyCustomerMessage": "",
                     "payload": {
-                        "msisdn": "0123456789"
+                        "msisdn": "0678912345"
                     }
                 }
                 """.trimIndent())))
@@ -125,8 +125,8 @@ private fun simulateGoodHost() {
                                 "type": "5125",
                                 "typeName": "Once-off LTE/LTE-A Night Surfer Data",
                                 "service": "GPRS",
-                                "totalAmount": "64183731327",
-                                "totalAmountAndMeasure": "61210 MB",
+                                "totalAmount": "241591910400",
+                                "totalAmountAndMeasure": "230400 MB",
                                 "usedAmount": "{{nightSurferUsedAmount}}",
                                 "usedAmountAndMeasure": "{{nightSurferUsedAmountFormatted}}",
                                 "measure": "Bytes",
@@ -142,8 +142,8 @@ private fun simulateGoodHost() {
                                 "type": "5127",
                                 "typeName": "Once-off LTE/LTE-A Anytime Data",
                                 "service": "GPRS",
-                                "totalAmount": "53002844210",
-                                "totalAmountAndMeasure": "50547 MB",
+                                "totalAmount": "241591910400",
+                                "totalAmountAndMeasure": "230400 MB",
                                 "usedAmount": "{{anytimeUsedAmount}}",
                                 "usedAmountAndMeasure": "{{anytimeUsedAmountFormatted}}",
                                 "measure": "Bytes",

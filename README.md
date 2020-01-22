@@ -21,7 +21,7 @@ usage patterns.
 
 ## Download:
 
-Not yet released.
+Development builds for testing purposes are available on the [Releases](https://github.com/mpaulse/mobitra/releases) page.
 
 ## Installation and Setup:
 
