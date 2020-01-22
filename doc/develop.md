@@ -5,6 +5,7 @@ Development Notes
 
 - Integrate UI with networking back-end, with a timer to periodically collect and reconcile data from Huawei and Telkom.
 - Historic data removal after retention period.
+- Save unrecorded data usage on exit.
 
 ## Ideas:
 
@@ -12,6 +13,17 @@ Development Notes
 - Create a separate Windows service to do monitoring, so that no Windows login is required
   (e.g. using [Procrun](http://commons.apache.org/proper/commons-daemon/procrun.html)).
 
+## Bugs:
+
+- On first load, no active product not shown. Active Products screen says "No data available".
+  Status bar text says: "SIM: Unknown     Current Product: Unknown".
+- Gaps in the history bar chart x-axis at the second and second-last category positions when
+  the window is set to the minimum width.
+- Big discrepancy between the bar chart download/upload stats (for an unrecorded new bar) and the
+  status bar download/upload stats. E.g. 14 MB download on bar chart vs. 4.7 MB download shown
+  on status bar.
+- Discrepancy between monthly and daily history bar chart stats for an unrecorded new bar. E.g.
+  18.36 MB total for monthly bar vs 18.38 total for daily bar.
 
 ## Huawei LTE Router API:
 
