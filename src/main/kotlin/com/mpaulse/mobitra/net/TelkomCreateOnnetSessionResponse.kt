@@ -33,7 +33,8 @@ data class TelkomCreateOnnetSessionResponse(
     val resultCode: Int,
     val resultMessageCode: String,
     val resultMessage: String?,
-    val msisdn: String?
+    val msisdn: String?,
+    val jSessionIdCookie: String?
 )
 
 private class TelkomCreateOnnetSessionDeserializer
@@ -51,7 +52,8 @@ private class TelkomCreateOnnetSessionDeserializer
             root["resultMessageCode"]?.textValue()
                 ?: throw MonitoringAPIException("Missing resultMessageCode"),
             root["resultMessage"]?.textValue(),
-            root["payload"]?.get("msisdn")?.textValue())
+            root["payload"]?.get("msisdn")?.textValue(),
+            context.getAttribute("jSessionIdCookie") as? String)
     }
 
 }

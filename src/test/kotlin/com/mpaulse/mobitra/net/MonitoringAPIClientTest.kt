@@ -237,6 +237,7 @@ class MonitoringAPIClientTest {
     fun `getTelkomFreeResources - successful response`() {
         val sessionToken = "8474625425622783908"
         val msisdn = "0123456789"
+        val jSessionIdCookie = "9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579"
 
         stubFor(get(urlEqualTo("/onnet/public/api/checkOnnet"))
             .willReturn(okJson(
@@ -267,8 +268,10 @@ class MonitoringAPIClientTest {
                         "msisdn": "$msisdn"
                     }
                 }
-                """.trimIndent())))
+                """.trimIndent())
+                .withHeader("Set-Cookie", "JSESSIONID=$jSessionIdCookie; path=/; HttpOnly")))
         stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+            .withCookie("JSESSIONID", equalTo(jSessionIdCookie))
             .willReturn(okJson(
                 """
                 {
@@ -605,7 +608,7 @@ class MonitoringAPIClientTest {
     }
 
     @Test
-    fun `getTelkomFreeResources - create Onnet session no msisdn`() {
+    fun `getTelkomFreeResources - create Onnet session no msisdn and no jSessionId cookie`() {
         stubFor(get(urlEqualTo("/onnet/public/api/checkOnnet"))
             .willReturn(okJson(
                 """
@@ -732,8 +735,10 @@ class MonitoringAPIClientTest {
                         "msisdn": "0123456789"
                     }
                 }
-                """.trimIndent())))
+                """.trimIndent())
+                .withHeader("Set-Cookie", "JSESSIONID=9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579; path=/; HttpOnly")))
         stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+            .withCookie("JSESSIONID", equalTo("9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579"))
             .willReturn(okJson(
                 """
                 {
@@ -814,8 +819,10 @@ class MonitoringAPIClientTest {
                         "msisdn": "0123456789"
                     }
                 }
-                """.trimIndent())))
+                """.trimIndent())
+                .withHeader("Set-Cookie", "JSESSIONID=9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579; path=/; HttpOnly")))
         stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+            .withCookie("JSESSIONID", equalTo("9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579"))
             .willReturn(okJson(
                 """
                 {
@@ -860,8 +867,10 @@ class MonitoringAPIClientTest {
                         "msisdn": "0123456789"
                     }
                 }
-                """.trimIndent())))
+                """.trimIndent())
+                .withHeader("Set-Cookie", "JSESSIONID=9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579; path=/; HttpOnly")))
         stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+            .withCookie("JSESSIONID", equalTo("9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579"))
             .willReturn(okJson(
                 """
                 {
@@ -912,8 +921,10 @@ class MonitoringAPIClientTest {
                         "msisdn": "0123456789"
                     }
                 }
-                """.trimIndent())))
+                """.trimIndent())
+                .withHeader("Set-Cookie", "JSESSIONID=9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579; path=/; HttpOnly")))
         stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+            .withCookie("JSESSIONID", equalTo("9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579"))
             .willReturn(okJson(
                 """
                 {
@@ -962,8 +973,10 @@ class MonitoringAPIClientTest {
                         "msisdn": "0123456789"
                     }
                 }
-                """.trimIndent())))
+                """.trimIndent())
+                .withHeader("Set-Cookie", "JSESSIONID=9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579; path=/; HttpOnly")))
         stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+            .withCookie("JSESSIONID", equalTo("9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579"))
             .willReturn(serverError()))
 
         assertThrows<MonitoringAPIException>("MonitoringAPIException not thrown") {
@@ -1004,8 +1017,10 @@ class MonitoringAPIClientTest {
                         "msisdn": "0123456789"
                     }
                 }
-                """.trimIndent())))
+                """.trimIndent())
+                .withHeader("Set-Cookie", "JSESSIONID=9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579; path=/; HttpOnly")))
         stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+            .withCookie("JSESSIONID", equalTo("9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579"))
             .willReturn(ok().withFixedDelay((HTTP_TIMEOUT + 500).toInt())))
 
         assertThrows<MonitoringAPIException>("MonitoringAPIException not thrown") {
@@ -1046,8 +1061,10 @@ class MonitoringAPIClientTest {
                         "msisdn": "0123456789"
                     }
                 }
-                """.trimIndent())))
+                """.trimIndent())
+                .withHeader("Set-Cookie", "JSESSIONID=9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579; path=/; HttpOnly")))
         stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+            .withCookie("JSESSIONID", equalTo("9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579"))
             .willReturn(okJson(
                 """
                 {

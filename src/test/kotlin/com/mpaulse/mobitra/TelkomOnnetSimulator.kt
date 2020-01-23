@@ -24,6 +24,7 @@ package com.mpaulse.mobitra
 
 import com.github.jknack.handlebars.Helper
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.configureFor
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.okJson
@@ -93,8 +94,10 @@ private fun simulateGoodHost() {
                         "msisdn": "0678912345"
                     }
                 }
-                """.trimIndent())))
+                """.trimIndent())
+                .withHeader("Set-Cookie", "JSESSIONID=9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579; path=/; HttpOnly")))
     stubFor(post(urlEqualTo("/onnet/public/api/getFreeResources"))
+        .withCookie("JSESSIONID", WireMock.equalTo("9QyJpqFGYM9PHhQ5W11LkbTQ7wrqtvFqpq3Qm2KLMLcG6hHd9yDv!-372627579"))
         .willReturn(okJson(
             """
                 {

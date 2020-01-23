@@ -38,6 +38,7 @@ import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers
+import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandlers
 import java.security.cert.X509Certificate
 import java.time.Duration
@@ -83,7 +84,7 @@ class MonitoringAPIClient(
     suspend fun getHuaweiTrafficStatistics(): HuaweiTrafficStats = withContext(Dispatchers.IO) {
         try {
             xmlMapper.readValue(
-                doHttpGet("http://$huaweiHost:$huaweiPort/api/monitoring/traffic-statistics"),
+                doHttpGet("http://$huaweiHost:$huaweiPort/api/monitoring/traffic-statistics").body(),
                 HuaweiTrafficStats::class.java)
         } catch (e: MonitoringAPIException) {
             throw e
@@ -97,9 +98,9 @@ class MonitoringAPIClient(
         if (checkRsp.resultCode == 0 && checkRsp.sessionToken != null) {
             yield()
             val createSessionRsp = createTelkomOnnetSession(checkRsp.sessionToken)
-            if (createSessionRsp.resultCode == 0 && createSessionRsp.msisdn != null) {
+            if (createSessionRsp.resultCode == 0 && createSessionRsp.msisdn != null && createSessionRsp.jSessionIdCookie != null) {
                 yield()
-                val freeResourcesRsp = getTelkomFreeResources(createSessionRsp.msisdn)
+                val freeResourcesRsp = getTelkomFreeResources(createSessionRsp.msisdn, createSessionRsp.jSessionIdCookie)
                 if (freeResourcesRsp.resultCode == 0) {
                     return mergeTelkomFreeResources(freeResourcesRsp.freeResources)
                 } else {
@@ -135,7 +136,7 @@ class MonitoringAPIClient(
     suspend fun checkTelkomOnnet(): TelkomCheckOnnetResponse = withContext(Dispatchers.IO) {
         try {
             jsonMapper.readValue(
-                doHttpGet("http://$telkomOnnetHttpHost:$telkomOnnetHttpPort$TELKOM_ONNET_BASE_PATH/checkOnnet"),
+                doHttpGet("http://$telkomOnnetHttpHost:$telkomOnnetHttpPort$TELKOM_ONNET_BASE_PATH/checkOnnet").body(),
                 TelkomCheckOnnetResponse::class.java)
         } catch (e: MonitoringAPIException) {
             throw e
@@ -146,11 +147,23 @@ class MonitoringAPIClient(
 
     private suspend fun createTelkomOnnetSession(sessionToken: String): TelkomCreateOnnetSessionResponse = withContext(Dispatchers.IO) {
         try {
-            jsonMapper.readValue(
-                doUrlEncodedHttpPost(
-                    "https://$telkomOnnetHttpsHost:$telkomOnnetHttpsPort$TELKOM_ONNET_BASE_PATH/createOnnetSession",
-                    mapOf("sid" to sessionToken)),
-                TelkomCreateOnnetSessionResponse::class.java)
+            val rsp = doUrlEncodedHttpPost(
+                "https://$telkomOnnetHttpsHost:$telkomOnnetHttpsPort$TELKOM_ONNET_BASE_PATH/createOnnetSession",
+                mapOf("sid" to sessionToken))
+            var jSessionIdCookie: String? = null
+            val cookies = rsp.headers().allValues("Set-Cookie")
+            for (cookie in cookies) {
+                val nameValue = cookie.split("=", limit = 2)
+                if (nameValue.size == 2 && nameValue[0] == "JSESSIONID") {
+                    jSessionIdCookie = nameValue[1].substringBefore(";")
+                    break
+                }
+            }
+            jsonMapper
+                .reader()
+                .forType(TelkomCreateOnnetSessionResponse::class.java)
+                .withAttribute("jSessionIdCookie", jSessionIdCookie)
+                .readValue<TelkomCreateOnnetSessionResponse>(rsp.body())
         } catch (e: MonitoringAPIException) {
             throw e
         } catch (e: Exception) {
@@ -158,16 +171,17 @@ class MonitoringAPIClient(
         }
     }
 
-    private suspend fun getTelkomFreeResources(msisdn: String): TelkomFreeResourcesResponse = withContext(Dispatchers.IO) {
+    private suspend fun getTelkomFreeResources(msisdn: String, jSessionIdCookie: String): TelkomFreeResourcesResponse = withContext(Dispatchers.IO) {
         try {
             val rsp = doUrlEncodedHttpPost(
                 "https://$telkomOnnetHttpsHost:$telkomOnnetHttpsPort$TELKOM_ONNET_BASE_PATH/getFreeResources",
-                mapOf("msisdn" to msisdn))
+                mapOf("msisdn" to msisdn),
+                mapOf("Cookie" to "JSESSIONID=$jSessionIdCookie"))
             jsonMapper
                 .reader()
                 .forType(TelkomFreeResourcesResponse::class.java)
                 .withAttribute("msisdn", msisdn)
-                .readValue<TelkomFreeResourcesResponse>(rsp)
+                .readValue<TelkomFreeResourcesResponse>(rsp.body())
         } catch (e: MonitoringAPIException) {
             throw e
         } catch (e: Exception) {
@@ -175,7 +189,7 @@ class MonitoringAPIClient(
         }
     }
 
-    private fun doHttpGet(uri: String): InputStream {
+    private fun doHttpGet(uri: String): HttpResponse<InputStream> {
         return doHttpRequest(HttpRequest.newBuilder()
             .uri(URI.create(uri))
             .header("User-Agent", HTTP_USER_AGENT)
@@ -184,8 +198,16 @@ class MonitoringAPIClient(
             .build())
     }
 
-    private fun doUrlEncodedHttpPost(uri: String, params: Map<String, String>): InputStream {
-        return doHttpRequest(HttpRequest.newBuilder()
+    private fun doUrlEncodedHttpPost(
+        uri: String,
+        params: Map<String, String>,
+        headers: Map<String, String> = emptyMap()
+    ): HttpResponse<InputStream> {
+        val reqBuilder = HttpRequest.newBuilder()
+        for ((name, value) in headers) {
+            reqBuilder.header(name, value)
+        }
+        return doHttpRequest(reqBuilder
             .uri(URI.create(uri))
             .header("User-Agent", HTTP_USER_AGENT)
             .header("Content-Type", "application/x-www-form-urlencoded")
@@ -194,7 +216,7 @@ class MonitoringAPIClient(
             .build())
     }
 
-    private fun doHttpRequest(req: HttpRequest): InputStream {
+    private fun doHttpRequest(req: HttpRequest): HttpResponse<InputStream> {
         val rsp = httpClient.send(req, BodyHandlers.ofInputStream())
         val status = rsp.statusCode()
         if (rsp.statusCode() < 200 || rsp.statusCode() >= 300) {
@@ -202,7 +224,7 @@ class MonitoringAPIClient(
                 "${req.method()} ${req.uri()} failed: response status $status\n"
                 + "${rsp.headers()}\n${String(rsp.body().readAllBytes())}")
         }
-        return rsp.body()
+        return rsp
     }
 
     private fun urlEncode(params: Map<String, String>): String {

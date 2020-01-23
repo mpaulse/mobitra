@@ -18,25 +18,7 @@ Development Notes
 
 - On first load, no active product not shown. Active Products screen says "No data available".
   Status bar text says: "SIM: Unknown     Current Product: Unknown". Show monitoring error on status bar.
-2020-01-23 22:14:27,052 ERROR [DefaultDispatcher-worker-3] com.mpaulse.mobitra.DataUsageMonitor - Data usage monitoring error
-com.mpaulse.mobitra.net.MonitoringAPIException: POST https://onnetsecure.telkom.co.za:443/onnet/public/api/getFreeResources failed: response status 302
-java.net.http.HttpHeaders@75d7eaf2 { {content-language=[en], content-length=[331], content-type=[text/plain], date=[Thu, 23 Jan 2020 20:14:27 GMT], location=[http://onnetsecure.telkom.co.za/onnet/public/api/loggedOut?version=1], server=[Oracle-HTTP-Server-11g Oracle-Web-Cache-11g/11.1.1.6.0 (N;ecid=84720070977817868,0:1:1)], set-cookie=[JSESSIONID=56HDpp2DynHyQdfhLG2sQnSv1dZ4qCM82QzwvXpqPhtfghGD7dzC!-372627579; path=/; HttpOnly], x-powered-by=[Servlet/2.5 JSP/2.1]} }
-<html><head><title>302 Moved Temporarily</title></head>
-<body bgcolor="#FFFFFF">
-<p>This document you requested has moved temporarily.</p>
-<p>It's now at <a href="http://onnetsecure.telkom.co.za/onnet/public/api/loggedOut?version=1">http://onnetsecure.telkom.co.za/onnet/public/api/loggedOut?version=1</a>.</p>
-</body></html>
-
-	at com.mpaulse.mobitra.net.MonitoringAPIClient.doHttpRequest(MonitoringAPIClient.kt:202)
-	at com.mpaulse.mobitra.net.MonitoringAPIClient.doUrlEncodedHttpPost(MonitoringAPIClient.kt:189)
-	at com.mpaulse.mobitra.net.MonitoringAPIClient.access$doUrlEncodedHttpPost(MonitoringAPIClient.kt:59)
-	at com.mpaulse.mobitra.net.MonitoringAPIClient$getTelkomFreeResources$3.invokeSuspend(MonitoringAPIClient.kt:164)
-	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
-	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:56)
-	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:561)
-	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:727)
-	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:667)
-	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:655)
+- TelkomFreeResource.totalAmount is actually the total available amount, not the original total.
 
 
 ## Huawei LTE Router API:
@@ -123,6 +105,10 @@ Response
 
 POST https://onnetsecure.telkom.co.za/onnet/public/api/getFreeResources
 
+Headers:
+```
+Cookie: JSESSIONID from createOnnetSession
+```
 Body Parameters (x-www-form-urlencoded):
 ```
 msisdn = msisdn from createOnnetSession
