@@ -10,9 +10,9 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  jdkVersion: 13.0.1
+  jdkVersion: 13.0.2
   jdkVersionMajor: 13
-  jdkDownloadUrl: https://download.java.net/java/GA/jdk13.0.1/cec27d702aa74d5a8630c65ae61e4305/9/GPL/openjdk-13.0.1_windows-x64_bin.zip
+  jdkDownloadUrl: https://download.java.net/java/GA/jdk13.0.2/d4173c853231432d94f001e99d882ca7/8/GPL/openjdk-13.0.2_windows-x64_bin.zip
   jdkInstallPackage: '$(Agent.TempDirectory)\jdk-$(jdkVersion).zip'
 
 steps:
