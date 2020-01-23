@@ -3,16 +3,9 @@ Development Notes
 
 ## TODO:
 
-- Integrate UI with networking back-end, with a timer to periodically collect and reconcile data from Huawei and Telkom.
-- Historic data removal after retention period.
 - Save unrecorded data usage on exit.
 - Realtime traffic updates for chart popups.
-
-## Ideas:
-
-- Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.
-- Create a separate Windows service to do monitoring, so that no Windows login is required
-  (e.g. using [Procrun](http://commons.apache.org/proper/commons-daemon/procrun.html)).
+- Historic data removal after retention period.
 
 ## Bugs:
 
@@ -20,6 +13,11 @@ Development Notes
   Status bar text says: "SIM: Unknown     Current Product: Unknown". Show monitoring error on status bar.
 - TelkomFreeResource.totalAmount is actually the total available amount, not the original total.
 
+## Ideas:
+
+- Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.
+- Create a separate Windows service to do monitoring, so that no Windows login is required
+  (e.g. using [Procrun](http://commons.apache.org/proper/commons-daemon/procrun.html)).
 
 ## Huawei LTE Router API:
 
