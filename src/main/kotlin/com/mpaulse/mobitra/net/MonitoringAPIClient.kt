@@ -72,15 +72,12 @@ class MonitoringAPIClient(
     private val jsonMapper = jacksonObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES)
 
     init {
-        val sslContext =
-            if (validateSSLCert) {
-                SSLContext.getDefault()
-            } else {
-                val context = SSLContext.getInstance("TLS")
-                context.init(null, arrayOf(NonValidatingTrustManager()), null)
-                context
-            }
-        httpClient = HttpClient.newBuilder().sslContext(sslContext).build()
+        val sslContext = SSLContext.getInstance("TLSv1.3")
+        sslContext.init(
+            null,
+            if (validateSSLCert) null else arrayOf(NonValidatingTrustManager()),
+            null)
+        httpClient = HttpClient.newBuilder().sslContext(sslContext).sslParameters(sslContext.supportedSSLParameters).build()
     }
 
     suspend fun getHuaweiTrafficStatistics(): HuaweiTrafficStats = withContext(Dispatchers.IO) {
@@ -201,7 +198,9 @@ class MonitoringAPIClient(
         val rsp = httpClient.send(req, BodyHandlers.ofInputStream())
         val status = rsp.statusCode()
         if (rsp.statusCode() < 200 || rsp.statusCode() >= 300) {
-            throw MonitoringAPIException("${req.method()} ${req.uri()} failed: response status $status")
+            throw MonitoringAPIException(
+                "${req.method()} ${req.uri()} failed: response status $status\n"
+                + "${rsp.headers()}\n${String(rsp.body().readAllBytes())}")
         }
         return rsp.body()
     }
@@ -215,11 +214,11 @@ class MonitoringAPIClient(
             } else {
                 s.append("&")
             }
-            s.append(param)
+            s.append(URLEncoder.encode(param, "utf8"))
             s.append("=")
-            s.append(value)
+            s.append(URLEncoder.encode(value, "utf8"))
         }
-        return URLEncoder.encode(s.toString(), "utf8")
+        return s.toString()
     }
 
 }

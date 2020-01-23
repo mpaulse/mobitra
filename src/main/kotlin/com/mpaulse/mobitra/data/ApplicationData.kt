@@ -24,6 +24,8 @@ package com.mpaulse.mobitra.data
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.mpaulse.mobitra.DEFAULT_MIN_WINDOW_HEIGHT
+import com.mpaulse.mobitra.DEFAULT_MIN_WINDOW_WIDTH
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,7 +38,7 @@ class ApplicationData(
     private val jsonHandler = jacksonObjectMapper()
     private val logger = LoggerFactory.getLogger(ApplicationData::class.java)
 
-    var windowSize = 800.0 to 600.0
+    var windowSize = DEFAULT_MIN_WINDOW_WIDTH to DEFAULT_MIN_WINDOW_HEIGHT
     var windowPosition: Pair<Double, Double>? = null
 
     var routerIPAddress: String? = null
@@ -74,8 +76,8 @@ class ApplicationData(
             val data = mapOf(
                 "windowWidth" to windowSize.first,
                 "windowHeight" to windowSize.second,
-                "windowPosX" to windowPosition?.first as Double,
-                "windowPosY" to windowPosition?.second as Double,
+                "windowPosX" to windowPosition?.first,
+                "windowPosY" to windowPosition?.second,
                 "routerIPAddress" to routerIPAddress,
                 "autoStart" to autoStart)
             Files.writeString(dataFilePath, jsonHandler.writeValueAsString(data))

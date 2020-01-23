@@ -72,6 +72,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.LinkedList
 import java.util.UUID
 import javax.swing.JDialog
@@ -86,6 +87,9 @@ import java.awt.event.MouseEvent as AWTMouseEvent
 
 private const val HIDE_IN_BACKGROUND_PARAMETER = "-b"
 private const val RUN_AT_WIN_LOGIN_REGISTRY_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+
+const val DEFAULT_MIN_WINDOW_WIDTH = 900.0
+const val DEFAULT_MIN_WINDOW_HEIGHT = 600.0
 
 val devModeEnabled = System.getProperty("dev")?.toBoolean() ?: false
 
@@ -132,17 +136,17 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
 
         productDB = MobileDataProductDB(APP_HOME_PATH)
+        Runtime.getRuntime().addShutdownHook(thread(start = false) {
+            onJVMShutdown()
+        })
+
         dataUsageMonitor = DataUsageMonitor(
             appData.routerIPAddress,
             productDB,
             ::onActiveProductsUpdate,
             ::onDataTrafficUpdate)
-
-        Runtime.getRuntime().addShutdownHook(thread(start = false) {
-            onJVMShutdown()
-        })
-
         dataUsageMonitor.start()
+
         verifyAutoStartConfig()
         createMainWindow(stage)
         createSystemTrayIcon()
@@ -246,8 +250,8 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     private fun onJVMShutdown() {
         productDB.close()
-        appData.windowPosition = Pair(mainWindow.x, mainWindow.y)
-        appData.windowSize = Pair(mainWindow.width, mainWindow.height)
+        appData.windowPosition = mainWindow.x to mainWindow.y
+        appData.windowSize = mainWindow.width to mainWindow.height
         appData.save()
     }
 
@@ -255,9 +259,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         mainWindow = stage
         mainWindow.scene = Scene(loadFXMLPane("MainWindow", this))
         mainWindow.scene.stylesheets.add("style.css")
-        mainWindow.minWidth = 800.0
+        mainWindow.minWidth = DEFAULT_MIN_WINDOW_WIDTH
         mainWindow.width = if (appData.windowSize.first >= mainWindow.minWidth) appData.windowSize.first else mainWindow.minWidth
-        mainWindow.minHeight = 600.0
+        mainWindow.minHeight = DEFAULT_MIN_WINDOW_HEIGHT
         mainWindow.height = if (appData.windowSize.second >= mainWindow.minHeight) appData.windowSize.second else mainWindow.minHeight
         mainWindow.icons.add(Image(APP_ICON))
 
@@ -267,6 +271,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
             mainWindow.y = pos.second
         } else {
             mainWindow.centerOnScreen()
+            appData.windowPosition = mainWindow.x to mainWindow.y
         }
 
         mainWindow.title = APP_NAME
@@ -456,16 +461,19 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
 
     private fun onDataTrafficUpdate(delta: MobileDataUsage, total: MobileDataUsage) {
         // Keep track of deltas, so that they can be added when a chart is loaded for the first time
-        var lastUsageUpdated = false
+        var usage = delta
         if (unrecordedDataUsage.isNotEmpty()) {
-            val lastUsage = unrecordedDataUsage.last()
-            lastUsage.downloadAmount += delta.downloadAmount
-            lastUsage.uploadAmount += delta.uploadAmount
-            lastUsageUpdated = true
+            var lastUsage = unrecordedDataUsage.last()
+            val zoneId = ZoneId.systemDefault()
+            if (lastUsage.timestamp.atZone(zoneId).toLocalDate() == usage.timestamp.atZone(zoneId).toLocalDate()) {
+                unrecordedDataUsage.removeLast()
+                usage = lastUsage.copy(
+                    downloadAmount = lastUsage.downloadAmount + delta.downloadAmount,
+                    uploadAmount = lastUsage.uploadAmount + delta.uploadAmount,
+                    uncategorisedAmount = lastUsage.uncategorisedAmount + delta.uncategorisedAmount)
+            }
         }
-        if (!lastUsageUpdated) {
-            unrecordedDataUsage += delta
-        }
+        unrecordedDataUsage += usage
 
         // Update charts with delta
         val selectedProductId = activeProductsMenu.selectionModel.selectedItem.productId
@@ -516,12 +524,10 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                 val dataUsagePerMonth = withContext(Dispatchers.IO) {
                     productDB.getAllProductDataUsagePerMonth()
                 }
-                dataUsagePerMonth.addAll(unrecordedDataUsage)
                 yield()
                 val dataUsagePerDay = withContext(Dispatchers.IO) {
                     productDB.getAllProductDataUsagePerDay()
                 }
-                dataUsagePerDay.addAll(unrecordedDataUsage)
                 yield()
                 if (dataUsagePerMonth.isNotEmpty()) {
                     val charts = VBox()
@@ -533,6 +539,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                     }
                     yield()
                     historyScreen.center = charts
+                    for (dataUsage in unrecordedDataUsage) {
+                        addDataUsageToChartScreen(dataUsage, historyScreen)
+                    }
                     loadHistory = false
                 } else {
                     historyScreen.center = noDataPane
@@ -551,16 +560,13 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
             var product: MobileDataProduct? = null
             var dataUsage: MutableList<MobileDataUsage>? = null
 
+            val selectedProductId = activeProductsMenu.selectionModel.selectedItem.productId
             if (dataUsageMonitor.activeProducts.isNotEmpty()) {
-                val productId = activeProductsMenu.selectionModel.selectedItem.productId
-                if (productId != null) {
-                    product = dataUsageMonitor.activeProducts[productId]
+                if (selectedProductId != null) {
+                    product = dataUsageMonitor.activeProducts[selectedProductId]
                     if (product != null) {
                         dataUsage = withContext(Dispatchers.IO) {
                             productDB.getProductDataUsagePerDay(product!!)
-                        }
-                        if (product.id == dataUsageMonitor.currentProduct?.id) {
-                            dataUsage.addAll(unrecordedDataUsage)
                         }
                         yield()
                     }
@@ -591,7 +597,6 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                     dataUsage = withContext(Dispatchers.IO) {
                         productDB.getActiveProductDataUsagePerDay()
                     }
-                    dataUsage.addAll(unrecordedDataUsage)
                     yield()
                 }
             }
@@ -605,6 +610,11 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                 }
                 yield()
                 activeProductsScreen.center = charts
+                if (selectedProductId == null || product.id == selectedProductId) {
+                    for (dataUsage in unrecordedDataUsage) {
+                        addDataUsageToChartScreen(dataUsage, activeProductsScreen)
+                    }
+                }
             } else {
                 activeProductsScreen.center = noDataPane
             }

@@ -157,19 +157,18 @@ class DataUsageBarChart(
     }
 
     override fun addDataUsage(dataUsage: MobileDataUsage) {
-        var lastPointUpdated = false
+        var usage = dataUsage
         if (dataUsageList.isNotEmpty()) {
-            val lastPoint = dataUsageList.last()
-            if (dateToString(timestampToDate(lastPoint.timestamp)) == dateToString(timestampToDate(dataUsage.timestamp))) {
-                lastPoint.downloadAmount += dataUsage.downloadAmount
-                lastPoint.uploadAmount += dataUsage.uploadAmount
-                lastPoint.uncategorisedAmount += dataUsage.uncategorisedAmount
-                lastPointUpdated = true
+            val lastUsage = dataUsageList.last()
+            if (dateToString(timestampToDate(lastUsage.timestamp)) == dateToString(timestampToDate(dataUsage.timestamp))) {
+                dataUsageList.removeAt(dataUsageList.size - 1)
+                usage = lastUsage.copy(
+                    downloadAmount = lastUsage.downloadAmount + dataUsage.downloadAmount,
+                    uploadAmount = lastUsage.uploadAmount + dataUsage.uploadAmount,
+                    uncategorisedAmount = lastUsage.uncategorisedAmount + dataUsage.uncategorisedAmount)
             }
         }
-        if (!lastPointUpdated) {
-            dataUsageList += dataUsage
-        }
+        dataUsageList += usage
         plotDataUsage()
     }
 

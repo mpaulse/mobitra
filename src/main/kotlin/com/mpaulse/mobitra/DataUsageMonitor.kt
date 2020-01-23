@@ -118,9 +118,7 @@ class DataUsageMonitor(
                             var uncategorisedAmount = product.usedAmount - prevUsedAmount
                             val dataUsageToAdd =
                                 if (activeProductInUse?.id == product.id) {
-                                    uncategorisedAmount -= (dataUsage.downloadAmount + dataUsage.uploadAmount)
-                                    dataUsage.uncategorisedAmount = uncategorisedAmount
-                                    dataUsage
+                                    dataUsage.copy(uncategorisedAmount = uncategorisedAmount - (dataUsage.downloadAmount + dataUsage.uploadAmount))
                                 } else {
                                     MobileDataUsage(uncategorisedAmount = uncategorisedAmount)
                                 }

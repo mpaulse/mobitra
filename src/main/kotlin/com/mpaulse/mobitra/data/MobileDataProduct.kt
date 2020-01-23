@@ -57,9 +57,9 @@ enum class MobileDataProductType {
 
 data class MobileDataUsage(
     val timestamp: Instant = Instant.now(),
-    var downloadAmount: Long = 0,
-    var uploadAmount: Long = 0,
-    var uncategorisedAmount: Long = 0
+    val downloadAmount: Long = 0,
+    val uploadAmount: Long = 0,
+    val uncategorisedAmount: Long = 0
 ) {
 
     val totalAmount: Long

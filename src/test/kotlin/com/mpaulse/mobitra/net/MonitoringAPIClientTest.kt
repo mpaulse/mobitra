@@ -370,11 +370,11 @@ class MonitoringAPIClientTest {
         verify(postRequestedFor(
             urlEqualTo("/onnet/public/api/createOnnetSession"))
             .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION"))
-            .withRequestBody(equalTo("sid%3D$sessionToken")))
+            .withRequestBody(equalTo("sid=$sessionToken")))
         verify(postRequestedFor(
             urlEqualTo("/onnet/public/api/getFreeResources"))
             .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION"))
-            .withRequestBody(equalTo("msisdn%3D$msisdn")))
+            .withRequestBody(equalTo("msisdn=$msisdn")))
     }
 
     @Test

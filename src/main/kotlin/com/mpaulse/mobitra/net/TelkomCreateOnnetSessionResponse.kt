@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 data class TelkomCreateOnnetSessionResponse(
     val resultCode: Int,
     val resultMessageCode: String,
+    val resultMessage: String?,
     val msisdn: String?
 )
 
@@ -49,6 +50,7 @@ private class TelkomCreateOnnetSessionDeserializer
                 ?: throw MonitoringAPIException("Missing resultCode"),
             root["resultMessageCode"]?.textValue()
                 ?: throw MonitoringAPIException("Missing resultMessageCode"),
+            root["resultMessage"]?.textValue(),
             root["payload"]?.get("msisdn")?.textValue())
     }
 
