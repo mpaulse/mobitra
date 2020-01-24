@@ -34,12 +34,12 @@ import com.mpaulse.mobitra.net.TelkomFreeResource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
@@ -56,8 +56,11 @@ class DataUsageMonitor(
 ): CoroutineScope by MainScope() {
 
     private var monitoringAPIClient: MonitoringAPIClient? = null
+    private var monitoringJob: Job? = null
     private val activeProductsMap = mutableMapOf<UUID, MobileDataProduct>()
     private var activeProductInUse: MobileDataProduct? = null
+    private var downloadAmountUnrecorded = 0L
+    private var uploadAmountUnrecorded = 0L
     private var updateProducts = true
     private val logger = LoggerFactory.getLogger(DataUsageMonitor::class.java)
 
@@ -88,8 +91,31 @@ class DataUsageMonitor(
     }
 
     fun start() {
-        launch(Dispatchers.Default) {
+        monitoringJob = launch(Dispatchers.Default) {
             updateProductInfo()
+        }
+    }
+
+    fun stop() {
+        monitoringJob?.cancel()
+
+        val product = activeProductInUse
+        if (product != null) {
+            val dataUsage = MobileDataUsage(downloadAmount = downloadAmountUnrecorded, uploadAmount = uploadAmountUnrecorded)
+            if (dataUsage.totalAmount > 0) {
+                product.availableAmount -= dataUsage.totalAmount
+                product.usedAmount += dataUsage.totalAmount
+
+                if (logger.isDebugEnabled) {
+                    logger.debug("Store product: $product")
+                }
+                productDB.storeProduct(product)
+
+                if (logger.isDebugEnabled) {
+                    logger.debug("Add data usage:\n\tproduct: $product\n\tusage: $dataUsage")
+                }
+                productDB.addDataUsage(product, dataUsage)
+            }
         }
     }
 
@@ -152,11 +178,9 @@ class DataUsageMonitor(
 
     private fun pollDataUsage() = flow {
         var lastTrafficStats: HuaweiTrafficStats? = null
-        var downloadAmountTick: Long
-        var downloadAmountToLog = 0L
+        var downloadAmountPolled: Long
         var downloadAmountTotal = 0L
-        var uploadAmountTick: Long
-        var uploadAmountToLog = 0L
+        var uploadAmountPolled: Long
         var uploadAmountTotal = 0L
 
         while (true) {
@@ -164,23 +188,23 @@ class DataUsageMonitor(
                 yield()
                 val trafficStats = monitoringAPIClient?.getHuaweiTrafficStatistics()
                 if (trafficStats != null) {
-                    downloadAmountTick = -1L
-                    uploadAmountTick = -1L
+                    downloadAmountPolled = -1L
+                    uploadAmountPolled = -1L
                     if (lastTrafficStats != null) {
-                        downloadAmountTick = trafficStats.currentDownloadAmount - lastTrafficStats.currentDownloadAmount
-                        uploadAmountTick = trafficStats.currentUploadAmount - lastTrafficStats.currentUploadAmount
+                        downloadAmountPolled = trafficStats.currentDownloadAmount - lastTrafficStats.currentDownloadAmount
+                        uploadAmountPolled = trafficStats.currentUploadAmount - lastTrafficStats.currentUploadAmount
                     }
-                    if (downloadAmountTick >= 0 && uploadAmountTick >= 0) {
-                        downloadAmountToLog += downloadAmountTick
-                        downloadAmountTotal += downloadAmountTick
-                        uploadAmountToLog += uploadAmountTick
-                        uploadAmountTotal += uploadAmountTick
+                    if (downloadAmountPolled >= 0 && uploadAmountPolled >= 0) {
+                        downloadAmountUnrecorded += downloadAmountPolled
+                        downloadAmountTotal += downloadAmountPolled
+                        uploadAmountUnrecorded += uploadAmountPolled
+                        uploadAmountTotal += uploadAmountPolled
                         listener.onDataTrafficUpdate(
-                            MobileDataUsage(downloadAmount = downloadAmountTick, uploadAmount = uploadAmountTick),
+                            MobileDataUsage(downloadAmount = downloadAmountPolled, uploadAmount = uploadAmountPolled),
                             MobileDataUsage(downloadAmount = downloadAmountTotal, uploadAmount = uploadAmountTotal))
                     }
                     if (logger.isDebugEnabled) {
-                        logger.debug("Update tick: downloads = $downloadAmountToLog B, uploads = $uploadAmountToLog B")
+                        logger.debug("Unrecorded traffic: download = $downloadAmountUnrecorded B, upload = $uploadAmountUnrecorded B")
                     }
 
                     // Emit event if:
@@ -188,15 +212,15 @@ class DataUsageMonitor(
                     // - there is a router restart or a switch a different router (d < 0 or u < 0)
                     // - the product remaining amount gets consumed
                     if (updateProducts
-                            || (downloadAmountTick < 0 || uploadAmountTick < 0)
+                            || (downloadAmountPolled < 0 || uploadAmountPolled < 0)
                             || (activeProductInUse != null
-                                && (downloadAmountToLog + uploadAmountToLog) >= activeProductInUse!!.availableAmount)) {
+                                && (downloadAmountUnrecorded + uploadAmountUnrecorded) >= activeProductInUse!!.availableAmount)) {
                         emit(MobileDataUsage(
-                            downloadAmount = downloadAmountToLog,
-                            uploadAmount = uploadAmountToLog))
+                            downloadAmount = downloadAmountUnrecorded,
+                            uploadAmount = uploadAmountUnrecorded))
                         if (!updateProducts) {
-                            downloadAmountToLog = 0
-                            uploadAmountToLog = 0
+                            downloadAmountUnrecorded = 0
+                            uploadAmountUnrecorded = 0
                         }
                     }
 

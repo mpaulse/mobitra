@@ -249,6 +249,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
     }
 
     private fun onJVMShutdown() {
+        if (::dataUsageMonitor.isInitialized) {
+            dataUsageMonitor.stop()
+        }
         productDB.close()
         appData.windowPosition = mainWindow.x to mainWindow.y
         appData.windowSize = mainWindow.width to mainWindow.height

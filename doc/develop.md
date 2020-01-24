@@ -2,12 +2,9 @@ Development Notes
 ===
 
 ## TODO:
-
-- Save unrecorded data usage on exit.
 - Historic data removal after retention period.
 
 ## Ideas:
-
 - Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.
 - Create a separate Windows service to do monitoring, so that no Windows login is required
   (e.g. using [Procrun](http://commons.apache.org/proper/commons-daemon/procrun.html)).
