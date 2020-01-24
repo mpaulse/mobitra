@@ -89,7 +89,7 @@ class TelkomFreeResourceTest {
             "5127",
             "LTE",
             "GPRS",
-            21_474_836_479,
+            21_451_404_047,
             23432432,
             LocalDate.of(2019, Month.DECEMBER, 31))
         assertEquals(LocalDate.of(2019, Month.DECEMBER, 1), resource.activationDate)
@@ -102,8 +102,8 @@ class TelkomFreeResourceTest {
             "5127",
             "LTE",
             "GPRS",
-            21_474_836_480,
-            23432432,
+            21_451_404_048,
+            23_432_432,
             LocalDate.of(2019, Month.DECEMBER, 31))
         assertEquals(LocalDate.of(2019, Month.NOVEMBER, 1), resource.activationDate)
 
@@ -112,8 +112,8 @@ class TelkomFreeResourceTest {
             "5127",
             "LTE",
             "GPRS",
-            21_474_836_481,
-            23432432,
+            21_451_404_049,
+            23_432_432,
             LocalDate.of(2019, Month.DECEMBER, 31))
         assertEquals(LocalDate.of(2019, Month.NOVEMBER, 1), resource.activationDate)
     }

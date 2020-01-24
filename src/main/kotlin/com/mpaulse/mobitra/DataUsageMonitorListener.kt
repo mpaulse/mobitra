@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Marlon Paulse
+ * Copyright (c) 2020 Marlon Paulse
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,30 +20,14 @@
  * SOFTWARE.
  */
 
-package com.mpaulse.mobitra.data
+package com.mpaulse.mobitra
 
-import com.mpaulse.mobitra.DataAmountStringFormatter
-import java.time.LocalDate
-import java.util.UUID
+import com.mpaulse.mobitra.data.MobileDataUsage
 
-data class MobileDataProduct(
-    val id: UUID,
-    val msisdn: String,
-    val name: String,
-    val type: MobileDataProductType,
-    var availableAmount: Long,
-    var usedAmount: Long,
-    val activationDate: LocalDate,
-    val expiryDate: LocalDate
-) {
+interface DataUsageMonitorListener {
 
-    val initialAvailableAmount: Long
-        get() = availableAmount + usedAmount
-
-    val displayName: String =
-        "$name (${DataAmountStringFormatter.toString(availableAmount)})"
-
-    val fullDisplayName: String =
-        "$msisdn - $displayName"
+    fun onActiveProductsUpdate()
+    fun onDataTrafficUpdate(delta: MobileDataUsage, total: MobileDataUsage)
+    fun onDataUsageMonitoringException(error: DataUsageMonitoringException)
 
 }

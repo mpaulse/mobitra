@@ -123,7 +123,7 @@ class MonitoringAPIClient(
                    r.type,
                    r.name,
                    r.service,
-                   r.totalAmount + r2.totalAmount,
+                   r.availableAmount + r2.availableAmount,
                    r.usedAmount + r2.usedAmount,
                    r.expiryDate)
             } else {

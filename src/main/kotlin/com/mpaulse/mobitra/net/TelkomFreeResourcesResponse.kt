@@ -27,13 +27,9 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.UUID
-
-private const val TWENTY_GB = 21_474_836_480
 
 @JsonDeserialize(using = TelkomFreeResourcesDeserializer::class)
 data class TelkomFreeResourcesResponse(
@@ -60,53 +56,6 @@ data class TelkomFreeResourcesResponse(
         return result
     }
 
-}
-
-data class TelkomFreeResource(
-    val msisdn: String,
-    val type: String,
-    val name: String,
-    val service: String,
-    val totalAmount: Long,
-    val usedAmount: Long,
-    val expiryDate: LocalDate
-) {
-
-    val id: UUID
-
-    val activationDate: LocalDate?
-        get() {
-            if (isMobileData) {
-                when (type) {
-                    TelkomFreeResourceType.LTE_ONCE_OFF_NIGHT_SURFER_DATA.string
-                        -> return expiryDate.minusDays(30)
-                    TelkomFreeResourceType.LTE_ONCE_OFF_ANYTIME_DATA.string
-                        -> return if (totalAmount < TWENTY_GB) expiryDate.minusDays(30)
-                                  else expiryDate.minusDays(60)
-                }
-            }
-            return null
-        }
-
-    init {
-        val buf = ByteArrayOutputStream()
-        buf.writeBytes(msisdn.toByteArray())
-        buf.writeBytes(type.toByteArray())
-        buf.writeBytes(service.toByteArray())
-        buf.writeBytes(expiryDate.toString().toByteArray())
-        id = UUID.nameUUIDFromBytes(buf.toByteArray())
-    }
-
-    val isMobileData: Boolean
-        get() =
-            service.toUpperCase() == "GPRS"
-                && type !in setOf("5124", "5749", "5135", "5136", "5149", "5177")
-
-}
-
-enum class TelkomFreeResourceType(val string: String) {
-    LTE_ONCE_OFF_NIGHT_SURFER_DATA("5125"),
-    LTE_ONCE_OFF_ANYTIME_DATA("5127")
 }
 
 private class TelkomFreeResourcesDeserializer

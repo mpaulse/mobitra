@@ -97,7 +97,7 @@ const val DEFAULT_MIN_WINDOW_HEIGHT = 600.0
 
 val devModeEnabled = System.getProperty("dev")?.toBoolean() ?: false
 
-class MobitraApplication: Application(), CoroutineScope by MainScope() {
+class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsageMonitorListener {
 
     val appData = ApplicationData(APP_HOME_PATH)
     private lateinit var productDB: MobileDataProductDB
@@ -144,11 +144,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
             onJVMShutdown()
         })
 
-        dataUsageMonitor = DataUsageMonitor(
-            appData.routerIPAddress,
-            productDB,
-            ::onActiveProductsUpdate,
-            ::onDataTrafficUpdate)
+        dataUsageMonitor = DataUsageMonitor(appData.routerIPAddress, productDB, this)
         dataUsageMonitor.start()
 
         verifyAutoStartConfig()
@@ -373,9 +369,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         val activeProducts = dataUsageMonitor.activeProducts.values.sortedWith(Comparator {
             p1: MobileDataProduct, p2: MobileDataProduct ->
             var c = 0
-            if (p1.remainingAmount == 0L && p2.remainingAmount > 0L) {
+            if (p1.availableAmount == 0L && p2.availableAmount > 0L) {
                 c = 1
-            } else if (p2.remainingAmount == 0L && p1.remainingAmount > 0L) {
+            } else if (p2.availableAmount == 0L && p1.availableAmount > 0L) {
                 c = -1
             }
             if (c == 0) {
@@ -444,58 +440,77 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
         }
     }
 
-    private fun onActiveProductsUpdate() {
-        refreshActiveProductsMenu()
-        loadHistory = true
-        unrecordedDataUsage.clear()
-        if (toggleGroup.selectedToggle == historyBtn) {
-            onViewHistory()
-        } else if (toggleGroup.selectedToggle == activeProductsBtn) {
-            onActiveProductSelected()
-        }
+    override fun onActiveProductsUpdate() {
+        Platform.runLater {
+            refreshActiveProductsMenu()
+            loadHistory = true
+            unrecordedDataUsage.clear()
+            if (toggleGroup.selectedToggle == historyBtn) {
+                onViewHistory()
+            } else if (toggleGroup.selectedToggle == activeProductsBtn) {
+                onActiveProductSelected()
+            }
 
-        setStatusBarProductInfoText(dataUsageMonitor.currentProduct)
+            setStatusBarProductInfoText(dataUsageMonitor.currentProduct)
+        }
     }
 
     private fun setStatusBarProductInfoText(currentProduct: MobileDataProduct? = null) {
         val currentProductDisplayName = currentProduct?.displayName ?: "Unknown"
         val msisdn = currentProduct?.msisdn ?: "Unknown"
         statusBarLeftLabel.text = "SIM: $msisdn    Current Product: $currentProductDisplayName"
+        statusBarLeftLabel.styleClass.clear()
     }
 
-    private fun onDataTrafficUpdate(delta: MobileDataUsage, total: MobileDataUsage) {
-        // Keep track of deltas, so that they can be added when a chart is loaded for the first time
-        var usage = delta
-        if (unrecordedDataUsage.isNotEmpty()) {
-            var lastUsage = unrecordedDataUsage.last()
-            val zoneId = ZoneId.systemDefault()
-            if (lastUsage.timestamp.atZone(zoneId).toLocalDate() == usage.timestamp.atZone(zoneId).toLocalDate()) {
-                unrecordedDataUsage.removeLast()
-                usage = lastUsage.copy(
-                    downloadAmount = lastUsage.downloadAmount + delta.downloadAmount,
-                    uploadAmount = lastUsage.uploadAmount + delta.uploadAmount,
-                    uncategorisedAmount = lastUsage.uncategorisedAmount + delta.uncategorisedAmount)
+    override fun onDataTrafficUpdate(delta: MobileDataUsage, total: MobileDataUsage) {
+        Platform.runLater {
+            // Keep track of deltas, so that they can be added when a chart is loaded for the first time
+            var usage = delta
+            if (unrecordedDataUsage.isNotEmpty()) {
+                var lastUsage = unrecordedDataUsage.last()
+                val zoneId = ZoneId.systemDefault()
+                if (lastUsage.timestamp.atZone(zoneId).toLocalDate() == usage.timestamp.atZone(zoneId).toLocalDate()) {
+                    unrecordedDataUsage.removeLast()
+                    usage = lastUsage.copy(
+                        downloadAmount = lastUsage.downloadAmount + delta.downloadAmount,
+                        uploadAmount = lastUsage.uploadAmount + delta.uploadAmount,
+                        uncategorisedAmount = lastUsage.uncategorisedAmount + delta.uncategorisedAmount)
+                }
             }
-        }
-        unrecordedDataUsage += usage
+            unrecordedDataUsage += usage
 
-        // Update charts with delta
-        val selectedProductId = activeProductsMenu.selectionModel.selectedItem.productId
-        if (selectedProductId == null || selectedProductId == dataUsageMonitor.currentProduct?.id) {
-            addDataUsageToChartScreen(delta, activeProductsScreen)
-        }
-        addDataUsageToChartScreen(delta, historyScreen)
+            // Update charts with delta
+            val selectedProductId = activeProductsMenu.selectionModel.selectedItem.productId
+            if (selectedProductId == null || selectedProductId == dataUsageMonitor.currentProduct?.id) {
+                addDataUsageToChartScreen(delta, activeProductsScreen)
+            }
+            addDataUsageToChartScreen(delta, historyScreen)
 
-        // Update status bar and system tray tooltip
-        val downloadAmountStr = DataAmountStringFormatter.toString(total.downloadAmount)
-        val uploadAmountStr = DataAmountStringFormatter.toString(total.uploadAmount)
-        statusBarRightLabel.text = "Current Download / Upload: $downloadAmountStr / $uploadAmountStr"
-        sysTrayIcon?.toolTip =
-            """
+            // Update status bar and system tray tooltip
+            val currentProduct = dataUsageMonitor.currentProduct
+            if (currentProduct != null) {
+                setStatusBarProductInfoText(
+                    currentProduct.copy(
+                        availableAmount = currentProduct.availableAmount - delta.totalAmount))
+            }
+            val downloadAmountStr = DataAmountStringFormatter.toString(total.downloadAmount)
+            val uploadAmountStr = DataAmountStringFormatter.toString(total.uploadAmount)
+            statusBarRightLabel.text = "Current Download / Upload: $downloadAmountStr / $uploadAmountStr"
+            sysTrayIcon?.toolTip =
+                """
             $APP_NAME
             Download: $downloadAmountStr
             Upload: $uploadAmountStr
             """.trimIndent()
+        }
+    }
+
+    override fun onDataUsageMonitoringException(error: DataUsageMonitoringException) {
+        logger.error("Data usage monitoring error", error)
+        Platform.runLater {
+            statusBarLeftLabel.text = error.message
+            statusBarLeftLabel.styleClass += "error"
+        }
     }
 
     private fun addDataUsageToChartScreen(dataUsage: MobileDataUsage, chartScreen: BorderPane) {
@@ -575,12 +590,12 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                         yield()
                     }
                 } else {
-                    var totalAmount = 0L
+                    var availableAmount = 0L
                     var usedAmount = 0L
                     var activationDate: LocalDate? = null
                     var expiryDate: LocalDate? = null
                     for (p in dataUsageMonitor.activeProducts.values) {
-                        totalAmount += p.totalAmount
+                        availableAmount += p.availableAmount
                         usedAmount += p.usedAmount
                         if (activationDate == null || activationDate > p.activationDate) {
                             activationDate = p.activationDate
@@ -594,7 +609,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope() {
                         "All",
                         "All",
                         MobileDataProductType.UNSPECIFIED,
-                        totalAmount,
+                        availableAmount,
                         usedAmount,
                         activationDate as LocalDate,
                         expiryDate as LocalDate)

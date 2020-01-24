@@ -93,8 +93,8 @@ class CumulativeDataUsagePerDayChart(
 
         // An upper bound line to express the product total amount.
         val upperBoundSeries = Series<Number, Number>()
-        upperBoundSeries.data.add(Data(0, product.totalAmount))
-        upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate.minusDays(4), product), product.totalAmount))
+        upperBoundSeries.data.add(Data(0, product.initialAvailableAmount))
+        upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate.minusDays(4), product), product.initialAvailableAmount))
 
         chart.data.addAll(dataSeries, upperBoundSeries)
 
@@ -163,12 +163,12 @@ private class CumulativeDataUsagePerDayChartOverlay(
 
     private fun addChartLabels() {
         Platform.runLater {
-            val totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.totalAmount)} total")
+            val totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.initialAvailableAmount)} total")
             setLabelDataPoint(totalAmountLabel,upperBoundSeries.last())
 
             val usedAmountLabel = Label(
                 "${DataAmountStringFormatter.toString(product.usedAmount)} used"
-                    + " (${DataAmountStringFormatter.toString(product.remainingAmount)} remaining)")
+                    + " (${DataAmountStringFormatter.toString(product.availableAmount)} remaining)")
             setLabelDataPoint(usedAmountLabel, dataSeries.last())
 
             // Prevent the used amount label touching the upper bound line
@@ -204,7 +204,7 @@ private class CumulativeDataUsagePerDayChartOverlay(
             if (closestPoint != null && x <= dataSeries.last().xValue.toLong() && y <= closestPoint.yValue.toLong()) {
                 val date = xValueToDate(x, product)
                 if (date != null) {
-                    dataUsagePopup = CumulativeDataUsagePerDayPopup(date, product.totalAmount, closestPoint.yValue.toLong())
+                    dataUsagePopup = CumulativeDataUsagePerDayPopup(date, product.availableAmount, closestPoint.yValue.toLong())
                 }
             }
         }
@@ -233,7 +233,7 @@ private class CumulativeDataUsagePerDayChartOverlay(
 
 private class CumulativeDataUsagePerDayPopup(
     date: LocalDate,
-    totalAmount: Long,
+    availableAmount: Long,
     usedAmount: Long
 ): StackPane() {
 
@@ -242,7 +242,7 @@ private class CumulativeDataUsagePerDayPopup(
         layout.children.addAll(
             Label("Date: ${date}"),
             Label("Data used: ${DataAmountStringFormatter.toString(usedAmount)}"),
-            Label("Data remaining: ${DataAmountStringFormatter.toString(totalAmount - usedAmount)}"))
+            Label("Data remaining: ${DataAmountStringFormatter.toString(availableAmount)}"))
         children += layout
 
         styleClass += "chart-pane-popup"

@@ -27,9 +27,10 @@ import com.mpaulse.mobitra.data.MobileDataProductDB
 import com.mpaulse.mobitra.data.MobileDataProductType
 import com.mpaulse.mobitra.data.MobileDataUsage
 import com.mpaulse.mobitra.net.HuaweiTrafficStats
+import com.mpaulse.mobitra.net.LTE_ONCE_OFF_ANYTIME_DATA_RESOURCE_TYPE
+import com.mpaulse.mobitra.net.LTE_ONCE_OFF_NIGHT_SURFER_DATA_RESOURCE_TYPE
 import com.mpaulse.mobitra.net.MonitoringAPIClient
 import com.mpaulse.mobitra.net.TelkomFreeResource
-import com.mpaulse.mobitra.net.TelkomFreeResourceType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,8 +52,7 @@ import java.util.UUID
 class DataUsageMonitor(
     routerIPAddress: String?,
     private val productDB: MobileDataProductDB,
-    private val onActiveProductsUpdate: () -> Unit,
-    private val onDataTrafficUpdate: (delta: MobileDataUsage, total: MobileDataUsage) -> Unit
+    private val listener: DataUsageMonitorListener
 ): CoroutineScope by MainScope() {
 
     private var monitoringAPIClient: MonitoringAPIClient? = null
@@ -88,12 +88,12 @@ class DataUsageMonitor(
     }
 
     fun start() {
-        launch {
+        launch(Dispatchers.Default) {
             updateProductInfo()
         }
     }
 
-    private suspend fun updateProductInfo() = withContext(Dispatchers.Default) {
+    private suspend fun updateProductInfo() {
         pollDataUsage().collect { dataUsage ->
             if (logger.isDebugEnabled) {
                 logger.debug("Data usage event: $dataUsage")
@@ -136,17 +136,16 @@ class DataUsageMonitor(
                         logger.debug("Active product: $activeProductInUse")
                     }
 
-                    launch(Dispatchers.Main) {
-                        onActiveProductsUpdate()
-                    }
+                    listener.onActiveProductsUpdate()
                 }
                 updateProducts = false
             } catch (e: Exception) {
                 if (e is CancellationException) {
                     throw e
                 }
-                logger.error("Data usage monitoring error", e)
                 updateProducts = true
+                listener.onDataUsageMonitoringException(
+                    DataUsageMonitoringException("Error retrieving usage information from Telkom", e))
             }
         }
     }
@@ -176,11 +175,9 @@ class DataUsageMonitor(
                         downloadAmountTotal += downloadAmountTick
                         uploadAmountToLog += uploadAmountTick
                         uploadAmountTotal += uploadAmountTick
-                        launch(Dispatchers.Main) {
-                            onDataTrafficUpdate(
-                                MobileDataUsage(downloadAmount = downloadAmountTick, uploadAmount = uploadAmountTick),
-                                MobileDataUsage(downloadAmount = downloadAmountTotal, uploadAmount = uploadAmountTotal))
-                        }
+                        listener.onDataTrafficUpdate(
+                            MobileDataUsage(downloadAmount = downloadAmountTick, uploadAmount = uploadAmountTick),
+                            MobileDataUsage(downloadAmount = downloadAmountTotal, uploadAmount = uploadAmountTotal))
                     }
                     if (logger.isDebugEnabled) {
                         logger.debug("Update tick: downloads = $downloadAmountToLog B, uploads = $uploadAmountToLog B")
@@ -193,7 +190,7 @@ class DataUsageMonitor(
                     if (updateProducts
                             || (downloadAmountTick < 0 || uploadAmountTick < 0)
                             || (activeProductInUse != null
-                                && (downloadAmountToLog + uploadAmountToLog) >= activeProductInUse!!.remainingAmount)) {
+                                && (downloadAmountToLog + uploadAmountToLog) >= activeProductInUse!!.availableAmount)) {
                         emit(MobileDataUsage(
                             downloadAmount = downloadAmountToLog,
                             uploadAmount = uploadAmountToLog))
@@ -223,7 +220,9 @@ class DataUsageMonitor(
                 if (e is CancellationException) {
                     throw e
                 }
-                logger.error("Data usage monitoring error", e)
+                updateProducts = true
+                listener.onDataUsageMonitoringException(
+                    DataUsageMonitoringException("Error retrieving data traffic information from router", e))
             }
         }
     }
@@ -231,8 +230,8 @@ class DataUsageMonitor(
     private fun resourceToProduct(resource: TelkomFreeResource): MobileDataProduct? {
         val activationDate = resource.activationDate ?: return null
         val type = when (resource.type) {
-            TelkomFreeResourceType.LTE_ONCE_OFF_ANYTIME_DATA.string -> MobileDataProductType.ANYTIME
-            TelkomFreeResourceType.LTE_ONCE_OFF_NIGHT_SURFER_DATA.string -> MobileDataProductType.NIGHT_SURFER
+            LTE_ONCE_OFF_ANYTIME_DATA_RESOURCE_TYPE -> MobileDataProductType.ANYTIME
+            LTE_ONCE_OFF_NIGHT_SURFER_DATA_RESOURCE_TYPE -> MobileDataProductType.NIGHT_SURFER
             else -> MobileDataProductType.UNSPECIFIED
         }
         if (type == MobileDataProductType.UNSPECIFIED) {
@@ -243,7 +242,7 @@ class DataUsageMonitor(
             resource.msisdn,
             resource.name,
             type,
-            resource.totalAmount,
+            resource.availableAmount,
             resource.usedAmount,
             activationDate,
             resource.expiryDate)
@@ -272,7 +271,7 @@ class DataUsageMonitor(
     private fun getProductInUseOfType(msisdn: String, type: MobileDataProductType): MobileDataProduct? {
         var productInUse: MobileDataProduct? = null
         for (product in activeProductsMap.values) {
-            if (product.remainingAmount > 0
+            if (product.availableAmount > 0
                 && product.msisdn == msisdn
                 && product.type == type
                 && (productInUse == null || product.activationDate <= productInUse.activationDate)) {
@@ -283,3 +282,7 @@ class DataUsageMonitor(
     }
 
 }
+
+class DataUsageMonitoringException(
+    message: String, cause: Throwable? = null
+): Exception(message, cause)

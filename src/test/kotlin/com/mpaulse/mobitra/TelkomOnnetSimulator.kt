@@ -40,7 +40,9 @@ import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemp
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent
 import java.time.LocalDateTime
 
+private var anytimeAvailableAmount = 230_170_245_170
 private var anytimeUsedAmount = 11_421_665_230L
+private var nightSurferAvailableAmount = 241_351_132_287
 private var nightSurferUsedAmount = 240_778_113L
 private val usageAmountUpdater = UsageAmountUpdater()
 
@@ -49,16 +51,20 @@ private class UsageAmountUpdater: PostServeAction() {
     override fun getName() = "UsageAmountUpdater"
 
     override fun doAction(serveEvent: ServeEvent?, admin: Admin?, parameters: Parameters?) {
+        var delta = 52_428_800L
         if (LocalDateTime.now().hour in 0..7) {
-            nightSurferUsedAmount = getUpdatedAmount(nightSurferUsedAmount)
+            if (delta > nightSurferAvailableAmount) {
+                delta = nightSurferAvailableAmount
+            }
+            nightSurferAvailableAmount -= delta
+            nightSurferUsedAmount += delta
         } else {
-            anytimeUsedAmount = getUpdatedAmount(anytimeUsedAmount)
+            if (delta > anytimeAvailableAmount) {
+                delta = anytimeAvailableAmount
+            }
+            anytimeAvailableAmount -= delta
+            anytimeUsedAmount += delta
         }
-    }
-
-    private fun getUpdatedAmount(amount: Long): Long {
-        val a = amount - 52_428_800
-        return if (a < 0) 0 else a
     }
 
 }
@@ -128,8 +134,8 @@ private fun simulateGoodHost() {
                                 "type": "5125",
                                 "typeName": "Once-off LTE/LTE-A Night Surfer Data",
                                 "service": "GPRS",
-                                "totalAmount": "241591910400",
-                                "totalAmountAndMeasure": "230400 MB",
+                                "totalAmount": "{{nightSurferAvailableAmount}}",
+                                "totalAmountAndMeasure": "{{nightSurferAvailableAmountFormatted}}",
                                 "usedAmount": "{{nightSurferUsedAmount}}",
                                 "usedAmountAndMeasure": "{{nightSurferUsedAmountFormatted}}",
                                 "measure": "Bytes",
@@ -145,8 +151,8 @@ private fun simulateGoodHost() {
                                 "type": "5127",
                                 "typeName": "Once-off LTE/LTE-A Anytime Data",
                                 "service": "GPRS",
-                                "totalAmount": "241591910400",
-                                "totalAmountAndMeasure": "230400 MB",
+                                "totalAmount": "{{anytimeAvailableAmount}}",
+                                "totalAmountAndMeasure": "{{anytimeAvailableAmountFormatted}}",
                                 "usedAmount": "{{anytimeUsedAmount}}",
                                 "usedAmountAndMeasure": "{{anytimeUsedAmountFormatted}}",
                                 "measure": "Bytes",
@@ -188,8 +194,12 @@ fun main(args: Array<String>) {
                 ResponseTemplateTransformer(
                     true,
                     mapOf(
+                        "anytimeAvailableAmount" to Helper { _: Any, _ -> "$anytimeAvailableAmount" },
+                        "anytimeAvailableAmountFormatted" to Helper { _: Any, _ -> DataAmountStringFormatter.toString(anytimeAvailableAmount) },
                         "anytimeUsedAmount" to Helper { _: Any, _ -> "$anytimeUsedAmount" },
                         "anytimeUsedAmountFormatted" to Helper { _: Any, _ -> DataAmountStringFormatter.toString(anytimeUsedAmount) },
+                        "nightSurferAvailableAmount" to Helper { _: Any, _ -> "$nightSurferAvailableAmount" },
+                        "nightSurferAvailableAmountFormatted" to Helper { _: Any, _ -> DataAmountStringFormatter.toString(nightSurferAvailableAmount) },
                         "nightSurferUsedAmount" to Helper { _: Any, _ -> "$nightSurferUsedAmount" },
                         "nightSurferUsedAmountFormatted" to Helper { _: Any, _ -> DataAmountStringFormatter.toString(nightSurferUsedAmount) }))))
     configureFor("localhost", 8880)

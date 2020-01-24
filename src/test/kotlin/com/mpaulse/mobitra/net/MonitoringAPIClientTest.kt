@@ -44,12 +44,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.net.Socket
-import java.security.cert.X509Certificate
 import java.time.LocalDate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLEngine
-import javax.net.ssl.X509ExtendedTrustManager
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -343,7 +338,7 @@ class MonitoringAPIClientTest {
             assertEquals("5036", resources[0].type, "Incorrect type")
             assertEquals("Campaign Welcome Bonus Messaging", resources[0].name, "Incorrect name")
             assertEquals("SMS/MMS", resources[0].service, "Incorrect service")
-            assertEquals(5, resources[0].totalAmount, "Incorrect total amount")
+            assertEquals(5, resources[0].availableAmount, "Incorrect available amount")
             assertEquals(0, resources[0].usedAmount, "Incorrect used amount")
             assertEquals(LocalDate.of(2019, 11, 4), resources[0].expiryDate, "Incorrect expiry date")
             assertFalse(resources[0].isMobileData, "Should not be mobile data")
@@ -352,7 +347,7 @@ class MonitoringAPIClientTest {
             assertEquals("5125", resources[1].type, "Incorrect type")
             assertEquals("Once-off LTE/LTE-A Night Surfer Data", resources[1].name, "Incorrect name")
             assertEquals("GPRS", resources[1].service, "Incorrect service")
-            assertEquals(64183731327, resources[1].totalAmount, "Incorrect total amount")
+            assertEquals(64183731327, resources[1].availableAmount, "Incorrect available amount")
             assertEquals(240778113, resources[1].usedAmount, "Incorrect used amount")
             assertEquals(LocalDate.of(2019, 11, 28), resources[1].expiryDate, "Incorrect expiry date")
             assertTrue(resources[1].isMobileData, "Should be mobile data")
@@ -361,7 +356,7 @@ class MonitoringAPIClientTest {
             assertEquals("5127", resources[2].type, "Incorrect type")
             assertEquals("Once-off LTE/LTE-A Anytime Data", resources[2].name, "Incorrect name")
             assertEquals("GPRS", resources[2].service, "Incorrect service")
-            assertEquals(53002844210, resources[2].totalAmount, "Incorrect total amount")
+            assertEquals(53002844210, resources[2].availableAmount, "Incorrect available amount")
             assertEquals(11421665230, resources[2].usedAmount, "Incorrect used amount")
             assertEquals(LocalDate.of(2019, 12, 28), resources[2].expiryDate, "Incorrect expiry date")
             assertTrue(resources[2].isMobileData, "Should be mobile data")

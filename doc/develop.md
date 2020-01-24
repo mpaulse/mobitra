@@ -7,12 +7,6 @@ Development Notes
 - Realtime traffic updates for chart popups.
 - Historic data removal after retention period.
 
-## Bugs:
-
-- On first load, no active product not shown. Active Products screen says "No data available".
-  Status bar text says: "SIM: Unknown     Current Product: Unknown". Show monitoring error on status bar.
-- TelkomFreeResource.totalAmount is actually the total available amount, not the original total.
-
 ## Ideas:
 
 - Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.

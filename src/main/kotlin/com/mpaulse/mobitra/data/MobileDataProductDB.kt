@@ -74,14 +74,14 @@ class MobileDataProductDB(
                 conn.prepareStatement(
                         """
                         INSERT INTO mobile_data_products (
-                            id, msisdn, name, type, total_amount, used_amount, activation_date, expiry_date, update_timestamp
+                            id, msisdn, name, type, available_amount, used_amount, activation_date, expiry_date, update_timestamp
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
                         """.trimIndent()).use { stmt ->
                     stmt.setObject(1, product.id)
                     stmt.setString(2, product.msisdn)
                     stmt.setString(3, product.name)
                     stmt.setInt(4, productTypeToInt(product.type))
-                    stmt.setLong(5, product.totalAmount)
+                    stmt.setLong(5, product.availableAmount)
                     stmt.setLong(6, product.usedAmount)
                     stmt.setDate(7, Date.valueOf(product.activationDate))
                     stmt.setDate(8, Date.valueOf(product.expiryDate))
@@ -92,14 +92,14 @@ class MobileDataProductDB(
                         """
                             UPDATE mobile_data_products SET
                             name = ?,
-                            total_amount = ?,
+                            available_amount = ?,
                             used_amount = ?,
                             activation_date = ?,
                             update_timestamp = NOW()
                             WHERE id = ?
                         """.trimIndent()).use { stmt ->
                     stmt.setString(1, product.name)
-                    stmt.setLong(2, product.totalAmount)
+                    stmt.setLong(2, product.availableAmount)
                     stmt.setLong(3, product.usedAmount)
                     stmt.setDate(4, Date.valueOf(product.activationDate))
                     stmt.setObject(5, product.id)
@@ -128,7 +128,7 @@ class MobileDataProductDB(
         try {
             conn.prepareStatement(
                     """
-                    SELECT msisdn, name, type, total_amount, used_amount, activation_date, expiry_date
+                    SELECT msisdn, name, type, available_amount, used_amount, activation_date, expiry_date
                     FROM mobile_data_products
                     WHERE id = ?
                     """.trimIndent()).use { stmt ->
@@ -167,7 +167,7 @@ class MobileDataProductDB(
             conn.createStatement().use { stmt ->
                 stmt.executeQuery(
                         """
-                        SELECT id, msisdn, name, type, total_amount, used_amount, activation_date, expiry_date
+                        SELECT id, msisdn, name, type, available_amount, used_amount, activation_date, expiry_date
                         FROM mobile_data_products
                         """.trimIndent()
                         + if (activeOnly) " WHERE expiry_date > NOW()" else "").use { rs ->
@@ -408,7 +408,7 @@ class MobileDataProductDB(
                     msisdn VARCHAR(15) NOT NULL,
                     name VARCHAR(255) NOT NULL,
                     type TINYINT NOT NULL,
-                    total_amount BIGINT NOT NULL,
+                    available_amount BIGINT NOT NULL,
                     used_amount BIGINT NOT NULL,
                     activation_date DATE NULL,
                     expiry_date DATE NULL,

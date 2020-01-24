@@ -38,19 +38,18 @@ val productDB = MobileDataProductDB(APP_HOME_PATH)
 fun generateProductData(
     productName: String,
     type: MobileDataProductType,
-    totalAmount: Long,
+    availableAmount: Long,
     activationDate: LocalDate,
     expiryDate: LocalDate
 ) {
-    val usedAmount = Random.nextLong(0, totalAmount / 3)
-    var remAmount = totalAmount - usedAmount
+    val usedAmount = Random.nextLong(0, availableAmount / 3)
 
     val product = MobileDataProduct(
         UUID.randomUUID(),
         "0678912345",
         productName,
         type,
-        totalAmount,
+        availableAmount - usedAmount,
         usedAmount,
         activationDate,
         expiryDate)
@@ -63,16 +62,16 @@ fun generateProductData(
     var timestamp = activationDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
 
     val maxBytesPerHour = 268_435_456L
-    while (remAmount > 0 && timestamp < endTimestamp) {
-        var max = if (remAmount > maxBytesPerHour) maxBytesPerHour else remAmount
+    while (product.availableAmount > 0 && timestamp < endTimestamp) {
+        var max = if (product.availableAmount > maxBytesPerHour) maxBytesPerHour else product.availableAmount
         val downloadAmount = Random.nextLong(0, max + 1)
-        remAmount -= downloadAmount
+        product.availableAmount -= downloadAmount
 
-        max = if (remAmount > maxBytesPerHour) maxBytesPerHour else remAmount
+        max = if (product.availableAmount > maxBytesPerHour) maxBytesPerHour else product.availableAmount
         val uploadAmount =
-            if (remAmount > 0) Random.nextLong(0, max + 1)
+            if (product.availableAmount > 0) Random.nextLong(0, max + 1)
             else 0
-        remAmount -= uploadAmount
+        product.availableAmount -= uploadAmount
 
         productDB.addDataUsage(
             product,
@@ -97,17 +96,17 @@ fun main() {
     var date = today.minusMonths(months)
 
     for (m in 0..months) {
-        val totalAmount = 225L * 1_073_741_824
+        val availableAmount = 225L * 1_073_741_824
         generateProductData(
             "Once-off LTE/LTE-A Anytime Data",
             MobileDataProductType.ANYTIME,
-            totalAmount,
+            availableAmount,
             date,
             date.plusDays(60))
         generateProductData(
             "Once-off LTE/LTE-A Night Surfer Data",
             MobileDataProductType.NIGHT_SURFER,
-            totalAmount,
+            availableAmount,
             date,
             date.plusDays(30))
         date = date.plusMonths(1)
