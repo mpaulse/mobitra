@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Marlon Paulse
+ * Copyright (c) 2020 Marlon Paulse
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +20,11 @@
  * SOFTWARE.
  */
 
-package com.mpaulse.mobitra
+package com.mpaulse.mobitra.chart
 
-import com.mpaulse.mobitra.DataUsageBarChartType.DAILY
-import com.mpaulse.mobitra.DataUsageBarChartType.MONTHLY
+import com.mpaulse.mobitra.DataAmountStringFormatter
+import com.mpaulse.mobitra.chart.DataUsageBarChartType.DAILY
+import com.mpaulse.mobitra.chart.DataUsageBarChartType.MONTHLY
 import com.mpaulse.mobitra.data.MobileDataUsage
 import javafx.collections.FXCollections
 import javafx.geometry.Pos.CENTER
@@ -48,11 +49,6 @@ import java.util.LinkedList
 
 private fun timestampToDate(timestamp: Instant) =
     timestamp.atZone(ZoneId.systemDefault()).toLocalDate()
-
-enum class DataUsageBarChartType {
-    DAILY,
-    MONTHLY
-}
 
 class DataUsageBarChart(
     private val dataUsageList: MutableList<MobileDataUsage>,

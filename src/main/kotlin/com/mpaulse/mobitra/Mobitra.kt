@@ -24,6 +24,10 @@
 
 package com.mpaulse.mobitra
 
+import com.mpaulse.mobitra.chart.Chart
+import com.mpaulse.mobitra.chart.CumulativeDataUsagePerDayChart
+import com.mpaulse.mobitra.chart.DataUsageBarChart
+import com.mpaulse.mobitra.chart.DataUsageBarChartType
 import com.mpaulse.mobitra.data.ApplicationData
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB

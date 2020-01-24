@@ -20,12 +20,9 @@
  * SOFTWARE.
  */
 
-package com.mpaulse.mobitra
+package com.mpaulse.mobitra.chart
 
-import com.mpaulse.mobitra.data.MobileDataUsage
-
-interface Chart {
-
-    fun addDataUsage(dataUsage: MobileDataUsage)
-
+enum class DataUsageBarChartType {
+    DAILY,
+    MONTHLY
 }
