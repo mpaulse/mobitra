@@ -4,7 +4,6 @@ Development Notes
 ## TODO:
 
 - Save unrecorded data usage on exit.
-- Realtime traffic updates for chart popups.
 - Historic data removal after retention period.
 
 ## Ideas:

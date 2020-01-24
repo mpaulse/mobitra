@@ -63,6 +63,7 @@ class CumulativeDataUsagePerDayChart(
     private val xAxis = NumberAxis(0.0, dateToXValue(product.expiryDate.plusDays(5), product).toDouble(), 1.0)
     private val yAxis = NumberAxis()
     private val chart = AreaChart<Number, Number>(xAxis, yAxis)
+    private val chartOverlay: CumulativeDataUsagePerDayChartOverlay
     private val dataSeries = Series<Number, Number>()
 
     private var usedAmount = 0L
@@ -97,9 +98,10 @@ class CumulativeDataUsagePerDayChart(
         upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate.minusDays(4), product), product.initialAvailableAmount))
 
         chart.data.addAll(dataSeries, upperBoundSeries)
+        chartOverlay = CumulativeDataUsagePerDayChartOverlay(chart, product)
 
         val chartPane = StackPane()
-        chartPane.children.addAll(chart, CumulativeDataUsagePerDayChartOverlay(chart, product))
+        chartPane.children.addAll(chart, chartOverlay)
         center = chartPane
 
         // Use our own title label instead of the chart's internal title, so that the y-axis
@@ -134,6 +136,7 @@ class CumulativeDataUsagePerDayChart(
         if (!lastDataPointUpdated) {
             plotDataUsage(dataUsage)
         }
+        chartOverlay.refreshDataUsagePopup()
     }
 
 }
@@ -148,6 +151,7 @@ private class CumulativeDataUsagePerDayChartOverlay(
     private val dataSeries = chart.data[0].data
     private val upperBoundSeries = chart.data[1].data
     private var dataUsagePopup: CumulativeDataUsagePerDayPopup? = null
+    private var dataUsagePopupMousePos: Point2D? = null
 
     init {
         chart.widthProperty().addListener { _, _, _ ->
@@ -188,10 +192,15 @@ private class CumulativeDataUsagePerDayChartOverlay(
     }
 
     private fun onMouseMoved(event: MouseEvent) {
+        showPopup(Point2D(event.x, event.y))
+        event.consume()
+    }
+
+    private fun showPopup(mousePos: Point2D) {
         removePopup()
 
-        val x = xAxis.getValueForDisplay(xAxis.parentToLocal(event.x, event.y).x).toLong()
-        val y = yAxis.getValueForDisplay(yAxis.parentToLocal(event.x, event.y).y - chart.padding.top).toLong()
+        val x = xAxis.getValueForDisplay(xAxis.parentToLocal(mousePos.x, mousePos.y).x).toLong()
+        val y = yAxis.getValueForDisplay(yAxis.parentToLocal(mousePos.x, mousePos.y).y - chart.padding.top).toLong()
         if (x >= 0 && y >= 0 && dataSeries.isNotEmpty()) {
             var closestPoint: Data<Number, Number>? = null
             for (point in dataSeries) {
@@ -210,11 +219,17 @@ private class CumulativeDataUsagePerDayChartOverlay(
         }
 
         if (dataUsagePopup != null) {
-            dataUsagePopup!!.relocate(event.x, event.y + 16)
+            dataUsagePopup!!.relocate(mousePos.x, mousePos.y + 16)
             children += dataUsagePopup
+            dataUsagePopupMousePos = mousePos
         }
+    }
 
-        event.consume()
+    fun refreshDataUsagePopup() {
+        val mousePos = dataUsagePopupMousePos
+        if (mousePos != null) {
+            showPopup(mousePos)
+        }
     }
 
     private fun onMouseExited(event: MouseEvent) {
@@ -226,6 +241,7 @@ private class CumulativeDataUsagePerDayChartOverlay(
         if (dataUsagePopup != null) {
             children.remove(dataUsagePopup)
             dataUsagePopup = null
+            dataUsagePopupMousePos = null
         }
     }
 
