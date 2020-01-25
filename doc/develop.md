@@ -3,6 +3,13 @@ Development Notes
 
 ## TODO:
 - Historic data removal after retention period.
+- Disable debug logging.
+
+## Bugs:
+- Overlapping x-axis tick labels on the cumulative chart, e.g. the Today date overlaps
+  Activation or Expiry.
+- The "used" label overlaps the "total" label on the cumulative chart when the data is
+  exhausted and the current date is near or equal to the expiry date. 
 
 ## Ideas:
 - Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.
