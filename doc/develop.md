@@ -4,6 +4,7 @@ Development Notes
 ## TODO:
 - Historic data removal after retention period.
 - Disable debug logging.
+- Switch to official jpackage tool in JDK 14.
 
 ## Bugs:
 - Overlapping x-axis tick labels on the cumulative chart, e.g. the Today date overlaps
