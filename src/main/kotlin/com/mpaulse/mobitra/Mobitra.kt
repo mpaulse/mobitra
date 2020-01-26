@@ -224,6 +224,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
     }
 
     private fun enableAutoStart() {
+        if (devModeEnabled) {
+            return
+        }
         val launcherPath = getLauncherPath()
         if (launcherPath != null) {
             try {
@@ -239,6 +242,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
     }
 
     private fun disableAutoStart() {
+        if (devModeEnabled) {
+            return
+        }
         try {
             Advapi32Util.registryDeleteValue(
                 WinReg.HKEY_CURRENT_USER,
@@ -633,8 +639,8 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
                 yield()
                 activeProductsScreen.center = charts
                 if (selectedProductId == null || product.id == selectedProductId) {
-                    for (dataUsage in unrecordedDataUsage) {
-                        addDataUsageToChartScreen(dataUsage, activeProductsScreen)
+                    for (du in unrecordedDataUsage) {
+                        addDataUsageToChartScreen(du, activeProductsScreen)
                     }
                 }
             } else {

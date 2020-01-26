@@ -19,12 +19,9 @@ usage patterns.
 - Bar chart of the daily usage per product or for all active products.
 - Historic daily and monthly bar charts.
 
-## Download:
-
-Development builds for testing purposes are available on the [Releases](https://github.com/mpaulse/mobitra/releases) page.
-
 ## Installation and Setup:
 
+- [Download](https://github.com/mpaulse/mobitra/releases) the latest release.
 - Extract the release ZIP file into a directory of your choice.
 - Execute mobitra.exe.
 - On the Settings screen, specify the Huawei router IP address and any other

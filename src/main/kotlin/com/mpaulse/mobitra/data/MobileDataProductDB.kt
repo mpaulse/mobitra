@@ -58,6 +58,7 @@ class MobileDataProductDB(
         }
     }
 
+    @Synchronized
     fun storeProduct(product: MobileDataProduct) {
         try {
             conn.autoCommit = false
@@ -124,6 +125,7 @@ class MobileDataProductDB(
         }
     }
 
+    @Synchronized
     fun getProduct(id: UUID): MobileDataProduct {
         try {
             conn.prepareStatement(
@@ -161,6 +163,7 @@ class MobileDataProductDB(
         return getProducts(activeOnly = true)
     }
 
+    @Synchronized
     private fun getProducts(activeOnly: Boolean = false): List<MobileDataProduct> {
         val products = LinkedList<MobileDataProduct>()
         try {
@@ -190,6 +193,7 @@ class MobileDataProductDB(
         return products
     }
 
+    @Synchronized
     fun addDataUsage(
         product: MobileDataProduct,
         dataUsage: MobileDataUsage
@@ -213,6 +217,7 @@ class MobileDataProductDB(
         }
     }
 
+    @Synchronized
     fun getDataUsage(
         product: MobileDataProduct? = null,
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
@@ -273,6 +278,7 @@ class MobileDataProductDB(
     fun getAllProductDataUsagePerMonth() =
         getDataUsage(timestampsEqual = ::timestampsEqualByMonth)
 
+    @Synchronized
     fun getActiveProductDataUsage(
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
     ): MutableList<MobileDataUsage> {
@@ -379,6 +385,7 @@ class MobileDataProductDB(
         return usedAmount
     }
 
+    @Synchronized
     fun clearAllData() {
         try {
             conn.createStatement().use { stmt ->
@@ -389,6 +396,7 @@ class MobileDataProductDB(
         }
     }
 
+    @Synchronized
     fun close() {
         try {
             conn.createStatement().use { stmt ->

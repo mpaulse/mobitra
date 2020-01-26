@@ -10,6 +10,8 @@ Development Notes
   Activation or Expiry.
 - The "used" label overlaps the "total" label on the cumulative chart when the data is
   exhausted and the current date is near or equal to the expiry date. 
+- Handle multi-instance detection better. Sometimes the DB lock file exists even though
+  no instance is running.
 
 ## Ideas:
 - Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.
