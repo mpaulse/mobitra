@@ -9,3 +9,6 @@
 
 ## [0.6-alpha] - 2020-01-25
 - First public alpha release.
+
+[0.7]: https://github.com/mpaulse/mobitra/compare/0.6-alpha...0.7
+[0.6-alpha]: https://github.com/mpaulse/mobitra/releases/tag/0.6-alpha
