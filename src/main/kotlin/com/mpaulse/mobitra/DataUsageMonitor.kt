@@ -283,7 +283,7 @@ class DataUsageMonitor(
 
     private fun getActiveProductInUse(msisdn: String): MobileDataProduct? {
         var productInUse: MobileDataProduct? = null
-        if (LocalDateTime.now().hour in 0..7) {
+        if (LocalDateTime.now().hour in 0..6) {
             productInUse = getProductInUseOfType(msisdn, MobileDataProductType.NIGHT_SURFER)
         }
         if (productInUse == null) {

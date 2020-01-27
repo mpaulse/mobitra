@@ -36,9 +36,6 @@ import java.util.UUID
 
 private const val DB_NAME = "db"
 
-fun isMobileDataProductDBLocked(homePath: Path) =
-    homePath.resolve("$DB_NAME.lck").toFile().exists()
-
 class MobileDataProductDB(
     homePath: Path
 ) {
@@ -46,6 +43,14 @@ class MobileDataProductDB(
     private val conn: Connection
 
     init {
+        // Jpackager's single instance functionality ensures there is only one instance
+        // of the application. So, it should be safe to delete a spurious lock file for now.
+        // TODO: No such support in official jpackage tool. Save PID and check if that PID is running.
+        val dbLockFile = homePath.resolve("$DB_NAME.lck").toFile()
+        if (dbLockFile.exists()) {
+            dbLockFile.delete()
+        }
+
         try {
             Class.forName("org.hsqldb.jdbc.JDBCDriver")
             conn = DriverManager.getConnection(

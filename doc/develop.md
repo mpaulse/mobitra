@@ -2,17 +2,17 @@ Development Notes
 ===
 
 ## TODO:
-- Historic data removal after retention period.
-- Disable debug logging.
+
 - Switch to official jpackage tool in JDK 14.
+- Check for multiple application instances after switch to JDK14's jpackage tool.
+- Disable debug logging.
+- Historic data removal after retention period.
 
 ## Bugs:
 - Overlapping x-axis tick labels on the cumulative chart, e.g. the Today date overlaps
   Activation or Expiry.
 - The "used" label overlaps the "total" label on the cumulative chart when the data is
   exhausted and the current date is near or equal to the expiry date. 
-- Handle multi-instance detection better. Sometimes the DB lock file exists even though
-  no instance is running.
 
 ## Ideas:
 - Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.

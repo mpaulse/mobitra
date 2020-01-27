@@ -33,7 +33,6 @@ import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
 import com.mpaulse.mobitra.data.MobileDataProductType
 import com.mpaulse.mobitra.data.MobileDataUsage
-import com.mpaulse.mobitra.data.isMobileDataProductDBLocked
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
 import javafx.application.Application
@@ -131,19 +130,11 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
             logger.error("Application error", e)
         }
-        if (isMobileDataProductDBLocked(APP_HOME_PATH)) {
-            logger.warn("$APP_NAME already appears to be running. Exiting.")
-            Platform.runLater {
-                Platform.exit()
-            }
-            return
-        }
-
-        productDB = MobileDataProductDB(APP_HOME_PATH)
         Runtime.getRuntime().addShutdownHook(thread(start = false) {
             onJVMShutdown()
         })
 
+        productDB = MobileDataProductDB(APP_HOME_PATH)
         dataUsageMonitor = DataUsageMonitor(appData.routerIPAddress, productDB, this)
         dataUsageMonitor.start()
 
@@ -258,7 +249,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         if (::dataUsageMonitor.isInitialized) {
             dataUsageMonitor.stop()
         }
-        productDB.close()
+        if (::productDB.isInitialized) {
+            productDB.close()
+        }
         appData.windowPosition = mainWindow.x to mainWindow.y
         appData.windowSize = mainWindow.width to mainWindow.height
         appData.save()

@@ -71,3 +71,5 @@ steps:
     tagSource: 'gitTag'
     assets: '$(Build.ArtifactStagingDirectory)/Mobitra-*.zip*'
     addChangeLog: false
+    releaseNotesSource: 'input'
+    releaseNotes: '[Changelog](https://github.com/mpaulse/mobitra/blob/master/CHANGELOG.md)'

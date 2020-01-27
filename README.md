@@ -21,7 +21,8 @@ usage patterns.
 
 ## Installation and Setup:
 
-- [Download](https://github.com/mpaulse/mobitra/releases) the latest release.
+- [Download](https://github.com/mpaulse/mobitra/releases) the latest release. See the
+  [changelog](CHANGELOG.md) for the release notes.
 - Extract the release ZIP file into a directory of your choice.
 - Execute mobitra.exe.
 - On the Settings screen, specify the Huawei router IP address and any other
