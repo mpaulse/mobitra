@@ -92,7 +92,7 @@ private const val HIDE_IN_BACKGROUND_PARAMETER = "-b"
 private const val RUN_AT_WIN_LOGIN_REGISTRY_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
 
 const val DEFAULT_MIN_WINDOW_WIDTH = 900.0
-const val DEFAULT_MIN_WINDOW_HEIGHT = 600.0
+const val DEFAULT_MIN_WINDOW_HEIGHT = 650.0
 
 val devModeEnabled = System.getProperty("dev")?.toBoolean() ?: false
 

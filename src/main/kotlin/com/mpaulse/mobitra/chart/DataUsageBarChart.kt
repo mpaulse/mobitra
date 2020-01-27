@@ -359,16 +359,14 @@ private class DataUsageBarChartPopup(
         val layout = VBox()
         layout.children.addAll(
             Label("Date: $date"),
+            Label("Total: ${DataAmountStringFormatter.toString(downloadAmount + uploadAmount + uncategorisedAmount)}"),
             Label("Download: ${DataAmountStringFormatter.toString(downloadAmount)}"),
             Label("Upload: ${DataAmountStringFormatter.toString(uploadAmount)}"))
         if (uncategorisedAmount > 0) {
             layout.children +=
                 Label("Uncategorised: ${DataAmountStringFormatter.toString(uncategorisedAmount)}")
         }
-        layout.children +=
-            Label("Total: ${DataAmountStringFormatter.toString(downloadAmount + uploadAmount + uncategorisedAmount)}")
         children += layout
-
         styleClass += "chart-pane-popup"
     }
 
