@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.7](https://github.com/mpaulse/mobitra/compare/0.6-alpha...0.7) - 2020-01-27
+## [0.7](https://github.com/mpaulse/mobitra/releases/tag/0.7) - 2020-01-27
 ### Improvements:
 - Thread-safe database access.
 ### Fixes:
