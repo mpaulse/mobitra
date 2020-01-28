@@ -4,7 +4,7 @@
 ### Improvements:
 - Bar charts: Display the total amount first before other amounts on the bar information popup.
 ### Fixes:
-- History charts: Inflated the data amounts after products expire.
+- History charts: Inflated data amounts after products expire.
 
 ## [0.7](https://github.com/mpaulse/mobitra/releases/tag/0.7) - 2020-01-27
 ### Improvements:
