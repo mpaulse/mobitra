@@ -131,7 +131,7 @@ class MobileDataProductDB(
     }
 
     @Synchronized
-    fun getProduct(id: UUID): MobileDataProduct {
+    fun getProduct(id: UUID): MobileDataProduct? {
         try {
             conn.prepareStatement(
                     """
@@ -157,7 +157,7 @@ class MobileDataProductDB(
         } catch (e: SQLException) {
             throw MobileDataProductDBException("Error retrieving product: $id", e)
         }
-        throw MobileDataProductDBException("Failed to retrieve unknown product: $id")
+        return null
     }
 
     fun getAllProducts(): List<MobileDataProduct> {

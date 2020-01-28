@@ -40,6 +40,9 @@ data class MobileDataProduct(
     val initialAvailableAmount: Long
         get() = availableAmount + usedAmount
 
+    val expired: Boolean
+        = LocalDate.now() >= expiryDate
+
     val displayName: String =
         "$name (${DataAmountStringFormatter.toString(availableAmount)})"
 

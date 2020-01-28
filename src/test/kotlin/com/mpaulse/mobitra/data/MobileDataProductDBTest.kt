@@ -24,6 +24,7 @@ package com.mpaulse.mobitra.data
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -64,6 +65,11 @@ class MobileDataProductDBTest {
         productDB.storeProduct(product)
         val product2 = productDB.getProduct(product.id)
         assertEquals(product, product2)
+    }
+
+    @Test
+    fun `getProduct - does not exist`() {
+        assertNull(productDB.getProduct(UUID.randomUUID()))
     }
 
     @Test

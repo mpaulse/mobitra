@@ -134,13 +134,17 @@ class DataUsageMonitor(
                         if (msisdn == null) {
                             msisdn = product.msisdn
                         }
+
+                        val prevProductInfo = productDB.getProduct(product.id)
+                        val prevUsedAmount = prevProductInfo?.usedAmount ?: 0
+
                         if (logger.isDebugEnabled) {
                             logger.debug("Store product: $product")
                         }
                         productDB.storeProduct(product)
-                        val prevUsedAmount = activeProductsMap[product.id]?.usedAmount ?: 0
+                        activeProductsMap[product.id] = product
+
                         if (product.usedAmount != prevUsedAmount) {
-                            activeProductsMap[product.id] = product
                             var uncategorisedAmount = product.usedAmount - prevUsedAmount
                             val dataUsageToAdd =
                                 if (activeProductInUse?.id == product.id) {
@@ -155,7 +159,11 @@ class DataUsageMonitor(
                         }
                     }
 
-                    purgeExpiredProducts()
+                    for (product in activeProductsMap.values) {
+                        if (product.expired) {
+                            activeProductsMap.remove(product.id)
+                        }
+                    }
 
                     activeProductInUse = if (msisdn != null) getActiveProductInUse(msisdn) else null
                     if (logger.isDebugEnabled) {
@@ -270,15 +278,6 @@ class DataUsageMonitor(
             resource.usedAmount,
             activationDate,
             resource.expiryDate)
-    }
-
-    private fun purgeExpiredProducts() {
-        val currentDate = LocalDate.now()
-        for (product in activeProductsMap.values) {
-            if (currentDate >= product.expiryDate) {
-                activeProductsMap.remove(product.id)
-            }
-        }
     }
 
     private fun getActiveProductInUse(msisdn: String): MobileDataProduct? {
