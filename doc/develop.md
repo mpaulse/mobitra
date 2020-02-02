@@ -22,36 +22,139 @@ Development Notes
 
 ## Huawei LTE Router API:
 
-GET http://192.168.1.254/api/monitoring/month_statistics
+**NOTE:** Some devices (e.g. E5573) needs the SessionID cookie returned by ```GET http://ROUTER-IP-ADDRESS```.
+
+---
+
+GET http://ROUTER-IP-ADDRESS/api/wlan/basic-settings
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
 <response>
-<CurrentMonthDownload>10179248566</CurrentMonthDownload>
-<CurrentMonthUpload>350146232</CurrentMonthUpload>
-<MonthDuration>175201</MonthDuration>
-<MonthLastClearTime>2019-10-29</MonthLastClearTime>
+<WifiSsid>MY-MOBILE</WifiSsid>
+<WifiChannel>0</WifiChannel>
+<WifiHide>0</WifiHide>
+<WifiCountry>ZA</WifiCountry>
+<WifiMode>b&#x2F;g&#x2F;n</WifiMode>
+<WifiRate>0</WifiRate>
+<WifiTxPwrPcnt>100</WifiTxPwrPcnt>
+<WifiMaxAssoc>16</WifiMaxAssoc>
+<WifiEnable>1</WifiEnable>
+<WifiFrgThrshld>2346</WifiFrgThrshld>
+<WifiRtsThrshld>2347</WifiRtsThrshld>
+<WifiDtmIntvl>1</WifiDtmIntvl>
+<WifiBcnIntvl>100</WifiBcnIntvl>
+<WifiWme>1</WifiWme>
+<WifiPamode>0</WifiPamode>
+<WifiIsolate>0</WifiIsolate>
+<WifiProtectionmode>1</WifiProtectionmode>
+<Wifioffenable>1</Wifioffenable>
+<Wifiofftime>600</Wifiofftime>
+<wifibandwidth>20</wifibandwidth>
+<wifiautocountryswitch>1</wifiautocountryswitch>
+<wifiantennanum>2</wifiantennanum>
+<wifiguestofftime>0</wifiguestofftime><WifiRestart>0</WifiRestart>
+</response>
+```
+
+---
+
+GET http://ROUTER-IP-ADDRESS/api/device/basic_information
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+<productfamily>LTE</productfamily>
+<classify>mobile-wifi</classify>
+<multimode>0</multimode>
+<restore_default_status>0</restore_default_status>
+<sim_save_pin_enable>0</sim_save_pin_enable>
+<devicename>E5573Cs-322</devicename>
+</response>
+```
+
+---
+
+GET http://ROUTER-IP-ADDRESS/api/device/information
+
+**NOTE**: Needs admin login SessionID cookie.
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+<DeviceName>E5573Cs-322</DeviceName>
+<SerialNumber>5LL7S181300123456</SerialNumber>
+<Imei>12345</Imei>
+<Imsi>6789</Imsi>
+<Iccid>012345</Iccid>
+<Msisdn></Msisdn>
+<HardwareVersion>CL1E5573CSM11 Ver.B</HardwareVersion>
+<SoftwareVersion>21.318.03.00.778</SoftwareVersion>
+<WebUIVersion>17.100.08.01.983</WebUIVersion>
+<MacAddress1>12:34:56:78:18:5A</MacAddress1>
+<MacAddress2></MacAddress2>
+<ProductFamily>LTE</ProductFamily>
+<Classify>mobile-wifi</Classify>
+<supportmode>LTE|WCDMA|GSM</supportmode>
+<workmode>LTE</workmode>
+</response>
+```
+
+---
+
+GET http://ROUTER-IP-ADDRESS/api/monitoring/status
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+<ConnectionStatus>901</ConnectionStatus>
+<WifiConnectionStatus>902</WifiConnectionStatus>
+<SignalStrength></SignalStrength>
+<SignalIcon>4</SignalIcon>
+<CurrentNetworkType>19</CurrentNetworkType>
+<CurrentServiceDomain>3</CurrentServiceDomain>
+<RoamingStatus>0</RoamingStatus>
+<BatteryStatus>1</BatteryStatus>
+<BatteryLevel>4</BatteryLevel>
+<BatteryPercent>100</BatteryPercent>
+<simlockStatus>0</simlockStatus>
+<WanIPAddress>100.1.2.345</WanIPAddress>
+<WanIPv6Address></WanIPv6Address>
+<PrimaryDns>196.1.2.345</PrimaryDns>
+<SecondaryDns>105.1.2.345</SecondaryDns>
+<PrimaryIPv6Dns></PrimaryIPv6Dns>
+<SecondaryIPv6Dns></SecondaryIPv6Dns>
+<CurrentWifiUser>1</CurrentWifiUser>
+<TotalWifiUser>16</TotalWifiUser>
+<currenttotalwifiuser>16</currenttotalwifiuser>
+<ServiceStatus>2</ServiceStatus>
+<SimStatus>1</SimStatus>
+<WifiStatus>1</WifiStatus>
+<CurrentNetworkTypeEx>101</CurrentNetworkTypeEx>
+<WanPolicy>0</WanPolicy>
+<maxsignal>5</maxsignal>
+<wifiindooronly>0</wifiindooronly>
+<wififrequence>0</wififrequence>
+<classify>mobile-wifi</classify>
+<flymode>0</flymode>
+<cellroam>1</cellroam>
+<ltecastatus>0</ltecastatus>
 </response>
 ```
 ---
-GET http://192.168.1.254/api/monitoring/traffic-statistics
+
+GET http://ROUTER-IP-ADDRESS/api/monitoring/traffic-statistics
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
 <response>
-
-current mobile network connection session
-<CurrentConnectTime>170010</CurrentConnectTime> <- sec
-<CurrentUpload>318170852</CurrentUpload>  <- bytes
-<CurrentDownload>9845754134</CurrentDownload> <- bytes
-<CurrentDownloadRate>996</CurrentDownloadRate> <- Bps?
+<CurrentConnectTime>170010</CurrentConnectTime>
+<CurrentUpload>318170852</CurrentUpload>
+<CurrentDownload>9845754134</CurrentDownload>
+<CurrentDownloadRate>996</CurrentDownloadRate>
 <CurrentUploadRate>160</CurrentUploadRate>
-
-month stats
 <TotalUpload>350674492</TotalUpload> 
 <TotalDownload>10211903746</TotalDownload>
 <TotalConnectTime>175243</TotalConnectTime>
-
 <showtraffic>1</showtraffic>
 </response>
 ```
@@ -101,6 +204,8 @@ Response
     }
 }
 ```
+
+---
 
 POST https://onnetsecure.telkom.co.za/onnet/public/api/getFreeResources
 
