@@ -26,7 +26,7 @@ import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
 import com.mpaulse.mobitra.data.MobileDataProductType
 import com.mpaulse.mobitra.data.MobileDataUsage
-import com.mpaulse.mobitra.net.HuaweiTrafficStats
+import com.mpaulse.mobitra.net.HuaweiMonitoringInfo
 import com.mpaulse.mobitra.net.LTE_ONCE_OFF_ANYTIME_DATA_RESOURCE_TYPE
 import com.mpaulse.mobitra.net.LTE_ONCE_OFF_NIGHT_SURFER_DATA_RESOURCE_TYPE
 import com.mpaulse.mobitra.net.MonitoringAPIClient
@@ -42,7 +42,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.slf4j.LoggerFactory
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.HOURS
 import java.time.temporal.ChronoUnit.MILLIS
@@ -185,22 +184,25 @@ class DataUsageMonitor(
     }
 
     private fun pollDataUsage() = flow {
-        var lastTrafficStats: HuaweiTrafficStats? = null
+        var lastMonitoringInfo: HuaweiMonitoringInfo? = null
         var downloadAmountPolled: Long
         var downloadAmountTotal = 0L
         var uploadAmountPolled: Long
         var uploadAmountTotal = 0L
+        val pollDelay = 5000L
 
         while (true) {
             try {
                 yield()
-                val trafficStats = monitoringAPIClient?.getHuaweiTrafficStatistics()
-                if (trafficStats != null) {
+                val monitoringInfo = monitoringAPIClient?.getHuaweiMonitoringInfo()
+                if (monitoringInfo != null) {
                     downloadAmountPolled = -1L
                     uploadAmountPolled = -1L
-                    if (lastTrafficStats != null) {
-                        downloadAmountPolled = trafficStats.currentDownloadAmount - lastTrafficStats.currentDownloadAmount
-                        uploadAmountPolled = trafficStats.currentUploadAmount - lastTrafficStats.currentUploadAmount
+                    if (lastMonitoringInfo != null
+                            && monitoringInfo.deviceInfo.deviceName == lastMonitoringInfo.deviceInfo.deviceName
+                            && monitoringInfo.wirelessLANSettings.ssid == lastMonitoringInfo.wirelessLANSettings.ssid) {
+                        downloadAmountPolled = monitoringInfo.trafficStats.currentDownloadAmount - lastMonitoringInfo.trafficStats.currentDownloadAmount
+                        uploadAmountPolled = monitoringInfo.trafficStats.currentUploadAmount - lastMonitoringInfo.trafficStats.currentUploadAmount
                     }
                     if (downloadAmountPolled >= 0 && uploadAmountPolled >= 0) {
                         downloadAmountUnrecorded += downloadAmountPolled
@@ -232,15 +234,15 @@ class DataUsageMonitor(
                         }
                     }
 
-                    lastTrafficStats = trafficStats
+                    lastMonitoringInfo = monitoringInfo
                 }
 
                 // Delay until just the next hour mark when we emit an event,
                 // or within 5 seconds, whichever comes first.
                 val now = LocalDateTime.now()
                 var t = now.until(now.truncatedTo(HOURS).plusHours(1), MILLIS)
-                if (t > 5000) {
-                    t = 5000
+                if (t > pollDelay) {
+                    t = pollDelay
                 } else {
                     updateProducts = true
                 }
@@ -253,8 +255,10 @@ class DataUsageMonitor(
                     throw e
                 }
                 updateProducts = true
+                lastMonitoringInfo = null
                 listener.onDataUsageMonitoringException(
                     DataUsageMonitoringException("Error retrieving data traffic information from router", e))
+                delay(pollDelay)
             }
         }
     }

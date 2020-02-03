@@ -1,10 +1,15 @@
 # Changelog
 
+## [0.8](https://github.com/mpaulse/mobitra/releases/tag/0.8) - 2020-02-03
+### Improvements:
+- Support E5-series routers (e.g. E5573).
+- Detect when the connection changes to a different router/SIM using the device name and WIFI SSID.
+
 ## [0.7.1](https://github.com/mpaulse/mobitra/releases/tag/0.7.1) - 2020-01-28
 ### Improvements:
 - Bar charts: Display the total amount first before other amounts on the bar information popup.
 ### Fixes:
-- History charts: Inflated data amounts after products expire.
+- History charts: Inflated data amounts were reported after products expire.
 
 ## [0.7](https://github.com/mpaulse/mobitra/releases/tag/0.7) - 2020-01-27
 ### Improvements:

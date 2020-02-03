@@ -108,7 +108,7 @@ class SettingsScreen(
             launch {
                 try {
                     try {
-                        monitoringAPIClient.getHuaweiTrafficStatistics()
+                        monitoringAPIClient.getHuaweiMonitoringInfo()
                     } catch (e: MonitoringAPIException) {
                         logger.error("Connection test to Huawei LTE router was unsuccessful", e)
                         throw ConnectionTestException("Huawei router")

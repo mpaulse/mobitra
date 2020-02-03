@@ -81,11 +81,24 @@ class MonitoringAPIClient(
         httpClient = HttpClient.newBuilder().sslContext(sslContext).sslParameters(sslContext.supportedSSLParameters).build()
     }
 
-    suspend fun getHuaweiTrafficStatistics(): HuaweiTrafficStats = withContext(Dispatchers.IO) {
+    suspend fun getHuaweiMonitoringInfo(): HuaweiMonitoringInfo = withContext(Dispatchers.IO) {
         try {
-            xmlMapper.readValue(
-                doHttpGet("http://$huaweiHost:$huaweiPort/api/monitoring/traffic-statistics").body(),
+            val sessionId = getCookies(doHttpGet("http://$huaweiHost:$huaweiPort/html/index.html"))["SessionID"]
+                ?: throw MonitoringAPIException("Could not get Huawei session ID")
+            val headers = mapOf("Cookie" to "SessionID=$sessionId")
+            yield()
+            val deviceInfo = xmlMapper.readValue(
+                doHttpGet("http://$huaweiHost:$huaweiPort/api/device/basic_information", headers).body(),
+                HuaweiDeviceInfo::class.java)
+            yield()
+            val wlanSettings = xmlMapper.readValue(
+                doHttpGet("http://$huaweiHost:$huaweiPort/api/wlan/basic-settings", headers).body(),
+                HuaweiWirelessLANSettings::class.java)
+            yield()
+            val trafficStats = xmlMapper.readValue(
+                doHttpGet("http://$huaweiHost:$huaweiPort/api/monitoring/traffic-statistics", headers).body(),
                 HuaweiTrafficStats::class.java)
+            HuaweiMonitoringInfo(deviceInfo, wlanSettings, trafficStats)
         } catch (e: MonitoringAPIException) {
             throw e
         } catch (e: Exception) {
@@ -150,19 +163,10 @@ class MonitoringAPIClient(
             val rsp = doUrlEncodedHttpPost(
                 "https://$telkomOnnetHttpsHost:$telkomOnnetHttpsPort$TELKOM_ONNET_BASE_PATH/createOnnetSession",
                 mapOf("sid" to sessionToken))
-            var jSessionIdCookie: String? = null
-            val cookies = rsp.headers().allValues("Set-Cookie")
-            for (cookie in cookies) {
-                val nameValue = cookie.split("=", limit = 2)
-                if (nameValue.size == 2 && nameValue[0] == "JSESSIONID") {
-                    jSessionIdCookie = nameValue[1].substringBefore(";")
-                    break
-                }
-            }
             jsonMapper
                 .reader()
                 .forType(TelkomCreateOnnetSessionResponse::class.java)
-                .withAttribute("jSessionIdCookie", jSessionIdCookie)
+                .withAttribute("jSessionIdCookie", getCookies(rsp)["JSESSIONID"])
                 .readValue<TelkomCreateOnnetSessionResponse>(rsp.body())
         } catch (e: MonitoringAPIException) {
             throw e
@@ -189,10 +193,14 @@ class MonitoringAPIClient(
         }
     }
 
-    private fun doHttpGet(uri: String): HttpResponse<InputStream> {
+    private fun doHttpGet(
+        uri: String,
+        headers: Map<String, String> = emptyMap()
+    ): HttpResponse<InputStream> {
         return doHttpRequest(HttpRequest.newBuilder()
             .uri(URI.create(uri))
             .header("User-Agent", HTTP_USER_AGENT)
+            .headers(headers)
             .timeout(Duration.ofMillis(timeout))
             .GET()
             .build())
@@ -203,14 +211,11 @@ class MonitoringAPIClient(
         params: Map<String, String>,
         headers: Map<String, String> = emptyMap()
     ): HttpResponse<InputStream> {
-        val reqBuilder = HttpRequest.newBuilder()
-        for ((name, value) in headers) {
-            reqBuilder.header(name, value)
-        }
-        return doHttpRequest(reqBuilder
+        return doHttpRequest(HttpRequest.newBuilder()
             .uri(URI.create(uri))
             .header("User-Agent", HTTP_USER_AGENT)
             .header("Content-Type", "application/x-www-form-urlencoded")
+            .headers(headers)
             .timeout(Duration.ofMillis(timeout))
             .POST(BodyPublishers.ofString(urlEncode(params)))
             .build())
@@ -243,6 +248,18 @@ class MonitoringAPIClient(
         return s.toString()
     }
 
+    private fun getCookies(rsp: HttpResponse<InputStream>): Map<String, String> {
+        val cookies = mutableMapOf<String, String>()
+        val cookieHeaders = rsp.headers().allValues("Set-Cookie")
+        for (cookie in cookieHeaders) {
+            val nameValue = cookie.split("=", limit = 2)
+            if (nameValue.size == 2) {
+                cookies[nameValue[0]] = nameValue[1].substringBefore(";")
+            }
+        }
+        return cookies
+    }
+
 }
 
 private class NonValidatingTrustManager : X509ExtendedTrustManager() {
@@ -253,4 +270,11 @@ private class NonValidatingTrustManager : X509ExtendedTrustManager() {
     override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) = Unit
     override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) = Unit
     override fun getAcceptedIssuers() = emptyArray<X509Certificate>()
+}
+
+private fun HttpRequest.Builder.headers(headers: Map<String, String> = emptyMap()): HttpRequest.Builder {
+    for ((name, value) in headers) {
+        header(name, value)
+    }
+    return this
 }

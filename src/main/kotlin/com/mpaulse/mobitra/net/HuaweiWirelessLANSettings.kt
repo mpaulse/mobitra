@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Marlon Paulse
+ * Copyright (c) 2020 Marlon Paulse
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
 
 @JacksonXmlRootElement(localName = "response")
-data class HuaweiTrafficStats(
+data class HuaweiWirelessLANSettings(
 
-    @JsonProperty("CurrentUpload")
-    val currentUploadAmount: Long,
-
-    @JsonProperty("CurrentDownload")
-    val currentDownloadAmount: Long
+    @JsonProperty("WifiSsid")
+    val ssid: String?
 
 )

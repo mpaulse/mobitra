@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Marlon Paulse
+ * Copyright (c) 2020 Marlon Paulse
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,16 +22,8 @@
 
 package com.mpaulse.mobitra.net
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
-
-@JacksonXmlRootElement(localName = "response")
-data class HuaweiTrafficStats(
-
-    @JsonProperty("CurrentUpload")
-    val currentUploadAmount: Long,
-
-    @JsonProperty("CurrentDownload")
-    val currentDownloadAmount: Long
-
+data class HuaweiMonitoringInfo(
+    val deviceInfo: HuaweiDeviceInfo,
+    val wirelessLANSettings: HuaweiWirelessLANSettings,
+    val trafficStats: HuaweiTrafficStats
 )
