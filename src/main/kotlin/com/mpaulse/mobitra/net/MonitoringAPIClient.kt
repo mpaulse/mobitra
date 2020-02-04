@@ -78,12 +78,17 @@ class MonitoringAPIClient(
             null,
             if (validateSSLCert) null else arrayOf(NonValidatingTrustManager()),
             null)
-        httpClient = HttpClient.newBuilder().sslContext(sslContext).sslParameters(sslContext.supportedSSLParameters).build()
+        httpClient = HttpClient
+            .newBuilder()
+            .sslContext(sslContext)
+            .sslParameters(sslContext.supportedSSLParameters)
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build()
     }
 
     suspend fun getHuaweiMonitoringInfo(): HuaweiMonitoringInfo = withContext(Dispatchers.IO) {
         try {
-            val sessionId = getCookies(doHttpGet("http://$huaweiHost:$huaweiPort/html/index.html"))["SessionID"]
+            val sessionId = getCookies(doHttpGet("http://$huaweiHost:$huaweiPort"))["SessionID"]
                 ?: throw MonitoringAPIException("Could not get Huawei session ID")
             val headers = mapOf("Cookie" to "SessionID=$sessionId")
             yield()

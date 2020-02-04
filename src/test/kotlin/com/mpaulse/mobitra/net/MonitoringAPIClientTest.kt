@@ -23,6 +23,7 @@
 package com.mpaulse.mobitra.net
 
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
@@ -84,7 +85,7 @@ class MonitoringAPIClientTest {
     fun `getHuaweiMonitoringInfo - successful response`() {
         val sessionIdCookie = "y72ijDtXgdbUUiEuYovCgG3nFQcC1EtClXNQdLPOseM88LxZBnbgYw3sE+YCYVYSXhGMO0pNvnQJugRmKkRGTb2ovnWgma6UBy2AmBoukF7UX5aVQtnDYmqzLHSjNhds"
 
-        stubFor(get(urlEqualTo("/html/index.html"))
+        stubFor(get(urlEqualTo("/"))
             .willReturn(okForContentType("text/html",
                 """
                 <html>
@@ -165,7 +166,116 @@ class MonitoringAPIClientTest {
         }
 
         verify(getRequestedFor(
-            urlEqualTo("/html/index.html"))
+            urlEqualTo("/"))
+            .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION")))
+        verify(getRequestedFor(
+            urlEqualTo("/api/device/basic_information"))
+            .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION"))
+            .withHeader("Cookie", equalTo("SessionID=$sessionIdCookie")))
+        verify(getRequestedFor(
+            urlEqualTo("/api/wlan/basic-settings"))
+            .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION"))
+            .withHeader("Cookie", equalTo("SessionID=$sessionIdCookie")))
+        verify(getRequestedFor(
+            urlEqualTo("/api/monitoring/traffic-statistics"))
+            .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION"))
+            .withHeader("Cookie", equalTo("SessionID=$sessionIdCookie")))
+    }
+
+    @Test
+    fun `getHuaweiMonitoringInfo - successful response after 307 redirect`() {
+        val sessionIdCookie = "y72ijDtXgdbUUiEuYovCgG3nFQcC1EtClXNQdLPOseM88LxZBnbgYw3sE+YCYVYSXhGMO0pNvnQJugRmKkRGTb2ovnWgma6UBy2AmBoukF7UX5aVQtnDYmqzLHSjNhds"
+
+        stubFor(get(urlEqualTo("/"))
+            .willReturn(aResponse()
+                .withStatus(307)
+                .withHeader("Location", "http://localhost:8080/home/index.html")))
+
+        stubFor(get(urlEqualTo("/home/index.html"))
+            .willReturn(okForContentType("text/html",
+                """
+                <html>
+                <head><title>Test</title></head>
+                <body><h1>Home Page</h1></body>
+                </html>
+                """.trimIndent())
+                .withHeader("Set-Cookie", "SessionID=$sessionIdCookie; path=/; HttpOnly")))
+
+        stubFor(get(urlEqualTo("/api/device/basic_information"))
+            .willReturn(okForContentType("text/html",
+                """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <response>
+                    <productfamily>LTE</productfamily>
+                    <classify>mobile-wifi</classify>
+                    <multimode>0</multimode>
+                    <restore_default_status>0</restore_default_status>
+                    <sim_save_pin_enable>0</sim_save_pin_enable>
+                    <devicename>E5573Cs-322</devicename>
+                </response>
+                """.trimIndent())))
+
+        stubFor(get(urlEqualTo("/api/wlan/basic-settings"))
+            .willReturn(okForContentType("text/html",
+                """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <response>
+                    <WifiSsid>MY-MOBILE</WifiSsid>
+                    <WifiChannel>0</WifiChannel>
+                    <WifiHide>0</WifiHide>
+                    <WifiCountry>ZA</WifiCountry>
+                    <WifiMode>b&#x2F;g&#x2F;n</WifiMode>
+                    <WifiRate>0</WifiRate>
+                    <WifiTxPwrPcnt>100</WifiTxPwrPcnt>
+                    <WifiMaxAssoc>16</WifiMaxAssoc>
+                    <WifiEnable>1</WifiEnable>
+                    <WifiFrgThrshld>2346</WifiFrgThrshld>
+                    <WifiRtsThrshld>2347</WifiRtsThrshld>
+                    <WifiDtmIntvl>1</WifiDtmIntvl>
+                    <WifiBcnIntvl>100</WifiBcnIntvl>
+                    <WifiWme>1</WifiWme>
+                    <WifiPamode>0</WifiPamode>
+                    <WifiIsolate>0</WifiIsolate>
+                    <WifiProtectionmode>1</WifiProtectionmode>
+                    <Wifioffenable>1</Wifioffenable>
+                    <Wifiofftime>600</Wifiofftime>
+                    <wifibandwidth>20</wifibandwidth>
+                    <wifiautocountryswitch>1</wifiautocountryswitch>
+                    <wifiantennanum>2</wifiantennanum>
+                    <wifiguestofftime>0</wifiguestofftime><WifiRestart>0</WifiRestart>
+                </response>
+                """.trimIndent())))
+
+        stubFor(get(urlEqualTo("/api/monitoring/traffic-statistics"))
+            .willReturn(okForContentType("text/html",
+                """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <response>
+                    <CurrentConnectTime>254310</CurrentConnectTime>
+                    <CurrentUpload>787033379</CurrentUpload>
+                    <CurrentDownload>20707877903</CurrentDownload>
+                    <CurrentDownloadRate>23442</CurrentDownloadRate>
+                    <CurrentUploadRate>1704</CurrentUploadRate>
+                    <TotalUpload>1140231732</TotalUpload>
+                    <TotalDownload>31003595763</TotalDownload>
+                    <TotalConnectTime>431017</TotalConnectTime>
+                    <showtraffic>1</showtraffic>
+                </response>
+                """.trimIndent())))
+
+        runBlocking {
+            val info = client.getHuaweiMonitoringInfo()
+            assertEquals(info.deviceInfo.deviceName, "E5573Cs-322", "Incorrect device name")
+            assertEquals(info.wirelessLANSettings.ssid, "MY-MOBILE", "Incorrect SSID")
+            assertEquals(info.trafficStats.currentUploadAmount, 787033379, "Incorrect session total bytes uploaded")
+            assertEquals(info.trafficStats.currentDownloadAmount, 20707877903, "Incorrect session total bytes downloaded")
+        }
+
+        verify(getRequestedFor(
+            urlEqualTo("/"))
+            .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION")))
+        verify(getRequestedFor(
+            urlEqualTo("/home/index.html"))
             .withHeader("User-Agent", equalTo("$APP_NAME/$APP_VERSION")))
         verify(getRequestedFor(
             urlEqualTo("/api/device/basic_information"))
@@ -183,7 +293,7 @@ class MonitoringAPIClientTest {
 
     @Test
     fun `getHuaweiMonitoringInfo - missing response data`() {
-        stubFor(get(urlEqualTo("/html/index.html"))
+        stubFor(get(urlEqualTo("/"))
             .willReturn(okForContentType("text/html",
                 """
                 <html>
@@ -259,7 +369,7 @@ class MonitoringAPIClientTest {
 
     @Test
     fun `getHuaweiMonitoringInfo - blank response`() {
-        stubFor(get(urlEqualTo("/html/index.html"))
+        stubFor(get(urlEqualTo("/"))
             .willReturn(okForContentType("text/html",
                 """
                 <html>
@@ -281,7 +391,7 @@ class MonitoringAPIClientTest {
 
     @Test
     fun `getHuaweiMonitoringInfo - server error status`() {
-        stubFor(get(urlEqualTo("/html/index.html"))
+        stubFor(get(urlEqualTo("/"))
             .willReturn(okForContentType("text/html",
                 """
                 <html>
@@ -303,7 +413,7 @@ class MonitoringAPIClientTest {
 
     @Test
     fun `getHuaweiMonitoringInfo - bad XML response`() {
-        stubFor(get(urlEqualTo("/html/index.html"))
+        stubFor(get(urlEqualTo("/"))
             .willReturn(okForContentType("text/html",
                 """
                 <html>
@@ -336,7 +446,7 @@ class MonitoringAPIClientTest {
 
     @Test
     fun `getHuaweiMonitoringInfo - bad field data types`() {
-        stubFor(get(urlEqualTo("/html/index.html"))
+        stubFor(get(urlEqualTo("/"))
             .willReturn(okForContentType("text/html",
                 """
                 <html>
@@ -428,7 +538,7 @@ class MonitoringAPIClientTest {
 
     @Test
     fun `getHuaweiMonitoringInfo - response timeout`() {
-        stubFor(get(urlEqualTo("/html/index.html"))
+        stubFor(get(urlEqualTo("/"))
             .willReturn(ok().withFixedDelay((HTTP_TIMEOUT + 500).toInt())))
 
         assertThrows<MonitoringAPIException>("MonitoringAPIException not thrown") {

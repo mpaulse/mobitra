@@ -9,7 +9,7 @@ import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-version = "0.8"
+version = "0.8.1"
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.3.61"
@@ -26,20 +26,20 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.3")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.2")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.2")
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("org.slf4j:log4j-over-slf4j:1.7.30")
     implementation("org.hsqldb:hsqldb:2.5.0")
     implementation("net.java.dev.jna:jna-platform:5.5.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.25.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.6.0")
+    testImplementation("com.github.tomakehurst:wiremock-jre8:2.26.0")
 }
 
 javafx {
-    version = "13.0.1"
+    version = "13.0.2"
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 

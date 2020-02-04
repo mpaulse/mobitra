@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.1](https://github.com/mpaulse/mobitra/releases/tag/0.8.1) - 2020-02-04
+### Improvements:
+- Support HTTP redirection status codes.
+### Fixes:
+- Fix an issue retrieving the Session ID HTTP cookie from B618 routers.
+
 ## [0.8](https://github.com/mpaulse/mobitra/releases/tag/0.8) - 2020-02-03
 ### Improvements:
 - Support E5-series routers (e.g. E5573).
