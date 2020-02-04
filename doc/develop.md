@@ -6,7 +6,6 @@ Development Notes
 - Switch to official jpackage tool in JDK 14.
 - Check for multiple application instances after switch to JDK14's jpackage tool.
 - Disable debug logging.
-- Detect router or SIM change and reset in-flight traffic stats to 0.
 - Historic data removal after retention period.
 
 ## Bugs:
