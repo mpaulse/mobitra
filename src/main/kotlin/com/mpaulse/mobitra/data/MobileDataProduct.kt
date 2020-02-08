@@ -22,7 +22,6 @@
 
 package com.mpaulse.mobitra.data
 
-import com.mpaulse.mobitra.DataAmountStringFormatter
 import java.time.LocalDate
 import java.util.UUID
 
@@ -42,11 +41,5 @@ data class MobileDataProduct(
 
     val expired: Boolean
         = LocalDate.now() > expiryDate
-
-    val displayName: String =
-        "$name (${DataAmountStringFormatter.toString(availableAmount)})"
-
-    val fullDisplayName: String =
-        "$msisdn - $displayName"
 
 }

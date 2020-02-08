@@ -386,7 +386,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         })
 
         for (product in activeProducts) {
-            val item = ActiveProductMenuItem(product.fullDisplayName, product.id)
+            val item = ActiveProductMenuItem("${product.msisdn} - ${product.name}", product.id)
             activeProductsMenu.items.add(item)
             if (product.id == selectedItem?.productId) {
                 selectedItem = item
@@ -458,10 +458,24 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
     }
 
     private fun setStatusBarProductInfoText(currentProduct: MobileDataProduct? = null) {
-        val currentProductDisplayName = currentProduct?.displayName ?: "Unknown"
+        val currentProductString =
+            if (currentProduct != null) "${currentProduct.name} (${DataAmountStringFormatter.toString(currentProduct.availableAmount)})"
+            else "Unknown"
         val msisdn = currentProduct?.msisdn ?: "Unknown"
-        statusBarLeftLabel.text = "SIM: $msisdn    Current Product: $currentProductDisplayName"
+        statusBarLeftLabel.text = "SIM: $msisdn    Current Product: $currentProductString"
         statusBarLeftLabel.styleClass.clear()
+    }
+
+    private fun getTotalUnrecordedDataUsage(): MobileDataUsage {
+        var download = 0L
+        var upload = 0L
+        var uncategorised = 0L
+        for (usage in unrecordedDataUsage) {
+            download += usage.downloadAmount
+            upload += usage.uploadAmount
+            uncategorised = usage.uncategorisedAmount
+        }
+        return MobileDataUsage(downloadAmount = download, uploadAmount = upload, uncategorisedAmount = uncategorised)
     }
 
     override fun onDataTrafficUpdate(delta: MobileDataUsage, total: MobileDataUsage) {
@@ -480,6 +494,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
                 }
             }
             unrecordedDataUsage += usage
+            val totalUnrecordedUsage = getTotalUnrecordedDataUsage()
 
             // Update charts with delta
             val selectedProductId = activeProductsMenu.selectionModel.selectedItem.productId
@@ -493,7 +508,8 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
             if (currentProduct != null) {
                 setStatusBarProductInfoText(
                     currentProduct.copy(
-                        availableAmount = currentProduct.availableAmount - delta.totalAmount))
+                        availableAmount = currentProduct.availableAmount - totalUnrecordedUsage.totalAmount,
+                        usedAmount = currentProduct.usedAmount + totalUnrecordedUsage.totalAmount))
             }
             val downloadAmountStr = DataAmountStringFormatter.toString(total.downloadAmount)
             val uploadAmountStr = DataAmountStringFormatter.toString(total.uploadAmount)

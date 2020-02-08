@@ -5,6 +5,9 @@
 ### Fixes:
 - Product expiry dates were exclusive rather than inclusive.
 - Telkom communication errors were reported when attempting to expunge expired products from the list of active products.
+- The available amount reported on the status bar and the daily cumulative chart was not updated correctly in realtime. 
+- The incorrect available amount was shown for a data point on the daily cumulative chart popup.
+- The "Today" label on the daily cumulative chart's x-axis could overlap the "Activation" and "Expiry" labels. 
 -->
 
 ## [0.8.1](https://github.com/mpaulse/mobitra/releases/tag/0.8.1) - 2020-02-04

@@ -8,14 +8,6 @@ Development Notes
 - Disable debug logging.
 - Historic data removal after retention period.
 
-## Bugs:
-- Available amount in status bar, active products menu and cummulative chart label not
-  updating.
-- Overlapping x-axis tick labels on the cumulative chart, e.g. the Today date overlaps
-  Activation or Expiry.
-- The "used" label overlaps the "total" label on the cumulative chart when the data is
-  exhausted and the current date is near or equal to the expiry date. 
-
 ## Ideas:
 - Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.
 - Create a separate Windows service to do monitoring, so that no Windows login is required

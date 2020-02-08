@@ -57,16 +57,16 @@ private fun timestampToXValue(timestamp: Instant, product: MobileDataProduct) =
 
 class CumulativeDataUsagePerDayChart(
     dataUsageList: List<MobileDataUsage>,
-    private val product: MobileDataProduct
+    product: MobileDataProduct
 ): Chart, BorderPane() {
 
-    private val xAxis = NumberAxis(0.0, dateToXValue(product.expiryDate.plusDays(5), product).toDouble(), 1.0)
+    private val product = product.copy()
+    private val xAxis = NumberAxis(0.0, dateToXValue(product.expiryDate.plusDays(7), product).toDouble(), 1.0)
     private val yAxis = NumberAxis()
     private val chart = AreaChart<Number, Number>(xAxis, yAxis)
     private val chartOverlay: CumulativeDataUsagePerDayChartOverlay
     private val dataSeries = Series<Number, Number>()
-
-    private var usedAmount = 0L
+    private var lastDataPointYValue = 0L
 
     init {
         chart.createSymbols = false
@@ -78,9 +78,12 @@ class CumulativeDataUsagePerDayChart(
             private val expiryDateXValue = dateToXValue(product.expiryDate, product)
             override fun toString(n: Number) =
                 when (n.toLong()) {
-                    0L -> "Activation\n${product.activationDate}"
-                    todayXValue -> "Today\n${LocalDate.now()}"
-                    expiryDateXValue -> "Expiry\n${product.expiryDate}"
+                    0L -> "Activation${if (todayXValue == 0L) " (Today)" else ""}\n${product.activationDate}"
+                    expiryDateXValue -> "Expiry${if (expiryDateXValue == todayXValue) " (Today)" else ""}\n${product.expiryDate}"
+                    todayXValue -> {
+                        if (todayXValue in 8..(expiryDateXValue-8)) "Today\n${LocalDate.now()}"
+                        else ""
+                    }
                     else -> ""
                 }
             override fun fromString(s: String) = null
@@ -95,10 +98,10 @@ class CumulativeDataUsagePerDayChart(
         // An upper bound line to express the product total amount.
         val upperBoundSeries = Series<Number, Number>()
         upperBoundSeries.data.add(Data(0, product.initialAvailableAmount))
-        upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate.minusDays(4), product), product.initialAvailableAmount))
+        upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate, product), product.initialAvailableAmount))
 
         chart.data.addAll(dataSeries, upperBoundSeries)
-        chartOverlay = CumulativeDataUsagePerDayChartOverlay(chart, product)
+        chartOverlay = CumulativeDataUsagePerDayChartOverlay(chart, this.product)
 
         val chartPane = StackPane()
         chartPane.children.addAll(chart, chartOverlay)
@@ -117,10 +120,10 @@ class CumulativeDataUsagePerDayChart(
     }
 
     private fun plotDataUsage(dataUsage: MobileDataUsage) {
-        usedAmount += dataUsage.totalAmount
+        lastDataPointYValue += dataUsage.totalAmount
         dataSeries.data.add(Data(
             timestampToXValue(dataUsage.timestamp, product),
-            usedAmount))
+            lastDataPointYValue))
     }
 
     override fun addDataUsage(dataUsage: MobileDataUsage) {
@@ -128,15 +131,17 @@ class CumulativeDataUsagePerDayChart(
         if (dataSeries.data.isNotEmpty()) {
             val lastDataPoint = dataSeries.data.last()
             if (timestampToXValue(dataUsage.timestamp, product) == lastDataPoint.xValue) {
-                usedAmount += dataUsage.totalAmount
-                lastDataPoint.yValue = usedAmount
+                lastDataPointYValue += dataUsage.totalAmount
+                lastDataPoint.yValue = lastDataPointYValue
                 lastDataPointUpdated = true
             }
         }
         if (!lastDataPointUpdated) {
             plotDataUsage(dataUsage)
         }
-        chartOverlay.refreshDataUsagePopup()
+        product.availableAmount -= dataUsage.totalAmount
+        product.usedAmount += dataUsage.totalAmount
+        chartOverlay.refreshDataUsageInfo()
     }
 
 }
@@ -150,6 +155,8 @@ private class CumulativeDataUsagePerDayChartOverlay(
     private val yAxis = chart.yAxis as NumberAxis
     private val dataSeries = chart.data[0].data
     private val upperBoundSeries = chart.data[1].data
+    private var totalAmountLabel: Label? = null
+    private var usedAmountLabel: Label? = null
     private var dataUsagePopup: CumulativeDataUsagePerDayPopup? = null
     private var dataUsagePopupMousePos: Point2D? = null
 
@@ -167,20 +174,25 @@ private class CumulativeDataUsagePerDayChartOverlay(
 
     private fun addChartLabels() {
         Platform.runLater {
-            val totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.initialAvailableAmount)} total")
-            setLabelDataPoint(totalAmountLabel,upperBoundSeries.last())
+            if (totalAmountLabel != null) {
+                children.remove(totalAmountLabel)
+            }
+            totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.initialAvailableAmount)} total")
+            setLabelDataPoint(totalAmountLabel!!, upperBoundSeries.last())
 
-            val usedAmountLabel = Label(
-                "${DataAmountStringFormatter.toString(product.usedAmount)} used"
-                    + " (${DataAmountStringFormatter.toString(product.availableAmount)} remaining)")
-            setLabelDataPoint(usedAmountLabel, dataSeries.last())
+            if (usedAmountLabel != null) {
+                children.remove(usedAmountLabel)
+            }
+            usedAmountLabel = Label(
+                "${DataAmountStringFormatter.toString(product.usedAmount)} used\n"
+                    + "${DataAmountStringFormatter.toString(product.availableAmount)} remaining")
+            setLabelDataPoint(usedAmountLabel!!, dataSeries.last())
 
             // Prevent the used amount label touching the upper bound line
-            if (usedAmountLabel.layoutY <= totalAmountLabel.layoutY + 8) {
-                usedAmountLabel.translateY = 8 - (totalAmountLabel.layoutY - usedAmountLabel.layoutY)
+            if (usedAmountLabel!!.layoutY <= totalAmountLabel!!.layoutY + 12) {
+                usedAmountLabel!!.translateY = 12 - (totalAmountLabel!!.layoutY - usedAmountLabel!!.layoutY)
             }
 
-            children.clear()
             children.addAll(totalAmountLabel, usedAmountLabel)
         }
     }
@@ -213,7 +225,8 @@ private class CumulativeDataUsagePerDayChartOverlay(
             if (closestPoint != null && x <= dataSeries.last().xValue.toLong() && y <= closestPoint.yValue.toLong()) {
                 val date = xValueToDate(x, product)
                 if (date != null) {
-                    dataUsagePopup = CumulativeDataUsagePerDayPopup(date, product.availableAmount, closestPoint.yValue.toLong())
+                    val usedAmount = closestPoint.yValue.toLong()
+                    dataUsagePopup = CumulativeDataUsagePerDayPopup(date, product.initialAvailableAmount - usedAmount, usedAmount)
                 }
             }
         }
@@ -225,7 +238,8 @@ private class CumulativeDataUsagePerDayChartOverlay(
         }
     }
 
-    fun refreshDataUsagePopup() {
+    fun refreshDataUsageInfo() {
+        addChartLabels()
         val mousePos = dataUsagePopupMousePos
         if (mousePos != null) {
             showPopup(mousePos)
