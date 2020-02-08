@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.8.2](https://github.com/mpaulse/mobitra/releases/tag/0.8.2) - 2020-02-08
+### Fixes:
+- Product expiry dates were exclusive rather than inclusive.
+
 ## [0.8.1](https://github.com/mpaulse/mobitra/releases/tag/0.8.1) - 2020-02-04
 ### Improvements:
 - Support HTTP redirection status codes.

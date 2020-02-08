@@ -9,6 +9,8 @@ Development Notes
 - Historic data removal after retention period.
 
 ## Bugs:
+- Available amount in status bar, active products menu and cummulative chart label not
+  updating.
 - Overlapping x-axis tick labels on the cumulative chart, e.g. the Today date overlaps
   Activation or Expiry.
 - The "used" label overlaps the "total" label on the cumulative chart when the data is

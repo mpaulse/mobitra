@@ -178,7 +178,7 @@ class MobileDataProductDB(
                         SELECT id, msisdn, name, type, available_amount, used_amount, activation_date, expiry_date
                         FROM mobile_data_products
                         """.trimIndent()
-                        + if (activeOnly) " WHERE expiry_date > NOW()" else "").use { rs ->
+                        + if (activeOnly) " WHERE expiry_date >= CURRENT_DATE" else "").use { rs ->
                     while (rs.next()) {
                         products += MobileDataProduct(
                             rs.getObject(1, UUID::class.java),
@@ -298,7 +298,7 @@ class MobileDataProductDB(
                     SELECT timestamp, download_amount, upload_amount, uncategorised_amount
                     FROM mobile_data_usage u
                     INNER JOIN mobile_data_products p ON u.id = p.id 
-                    WHERE expiry_date > NOW()
+                    WHERE expiry_date >= CURRENT_DATE
                     ORDER BY timestamp ASC
                     """.trimIndent()).use { stmt ->
                 stmt.executeQuery().use { rs ->
@@ -310,7 +310,7 @@ class MobileDataProductDB(
                         """
                         SELECT SUM(used_amount), MAX(update_timestamp)
                         FROM mobile_data_products
-                        WHERE expiry_date > NOW()
+                        WHERE expiry_date >= CURRENT_DATE
                         """.trimIndent()).use { rs ->
                     if (rs.next()) {
                         productUsageTotal = rs.getLong(1)
