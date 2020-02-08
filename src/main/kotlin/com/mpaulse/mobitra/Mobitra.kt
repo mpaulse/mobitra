@@ -386,7 +386,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         })
 
         for (product in activeProducts) {
-            val item = ActiveProductMenuItem("${product.msisdn} - ${product.name}", product.id)
+            val item = ActiveProductMenuItem("${product.msisdn} - ${product.name} (${product.activationDate})", product.id)
             activeProductsMenu.items.add(item)
             if (product.id == selectedItem?.productId) {
                 selectedItem = item
@@ -647,7 +647,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
                 }
                 yield()
                 activeProductsScreen.center = charts
-                if (selectedProductId == null || product.id == selectedProductId) {
+                if (selectedProductId == null || product.id == dataUsageMonitor.currentProduct?.id) {
                     for (du in unrecordedDataUsage) {
                         addDataUsageToChartScreen(du, activeProductsScreen)
                     }
