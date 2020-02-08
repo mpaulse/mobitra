@@ -133,8 +133,8 @@ class MobileDataProductDBTest {
                 MobileDataProductType.ANYTIME,
                 i.toLong(),
                 i.toLong(),
-                LocalDate.now().minusDays(1),
-                LocalDate.now())
+                LocalDate.now().minusDays(2),
+                LocalDate.now().minusDays(1))
             productDB.storeProduct(product)
         }
         for (i in 10..12) {
@@ -145,8 +145,8 @@ class MobileDataProductDBTest {
                 MobileDataProductType.ANYTIME,
                 i.toLong(),
                 i.toLong(),
-                LocalDate.now(),
-                LocalDate.now().plusDays(1))
+                LocalDate.now().minusDays(1),
+                LocalDate.now())
             productDB.storeProduct(product)
             activeProductList += product
         }
@@ -215,8 +215,8 @@ class MobileDataProductDBTest {
                 MobileDataProductType.ANYTIME,
                 7832478178423,
                 32895894578,
-                LocalDate.now().minusDays(1),
-                LocalDate.now())
+                LocalDate.now().minusDays(2),
+                LocalDate.now().minusDays(1))
             productDB.storeProduct(product)
             productDB.addDataUsage(product, MobileDataUsage(downloadAmount = 123, uploadAmount = 567))
         }
@@ -230,8 +230,8 @@ class MobileDataProductDBTest {
                 MobileDataProductType.ANYTIME,
                 7832478178423,
                 usedAmount,
-                LocalDate.now(),
-                LocalDate.now().plusDays(1))
+                LocalDate.now().minusDays(1),
+                LocalDate.now())
             productDB.storeProduct(product)
 
             productDB.addDataUsage(product, MobileDataUsage(downloadAmount = 1))
