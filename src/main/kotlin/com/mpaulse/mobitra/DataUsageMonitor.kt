@@ -158,10 +158,14 @@ class DataUsageMonitor(
                         }
                     }
 
+                    val expiredProductIds = mutableListOf<UUID>()
                     for (product in activeProductsMap.values) {
                         if (product.expired) {
-                            activeProductsMap.remove(product.id)
+                            expiredProductIds += product.id
                         }
+                    }
+                    for (productId in expiredProductIds) {
+                        activeProductsMap.remove(productId)
                     }
 
                     activeProductInUse = if (msisdn != null) getActiveProductInUse(msisdn) else null

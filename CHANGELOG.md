@@ -4,13 +4,14 @@
 ## [0.8.2](https://github.com/mpaulse/mobitra/releases/tag/0.8.2) - 2020-02-08
 ### Fixes:
 - Product expiry dates were exclusive rather than inclusive.
+- Telkom communication errors were reported when attempting to expunge expired products from the list of active products.
 -->
 
 ## [0.8.1](https://github.com/mpaulse/mobitra/releases/tag/0.8.1) - 2020-02-04
 ### Improvements:
 - Support HTTP redirection status codes.
 ### Fixes:
-- Fix an issue retrieving the Session ID HTTP cookie from B618 routers.
+- The Session ID HTTP cookie was not successfully retrieved from B618 routers.
 
 ## [0.8](https://github.com/mpaulse/mobitra/releases/tag/0.8) - 2020-02-03
 ### Improvements:
