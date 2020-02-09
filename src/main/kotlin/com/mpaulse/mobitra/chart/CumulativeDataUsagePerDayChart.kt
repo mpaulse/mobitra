@@ -179,21 +179,23 @@ private class CumulativeDataUsagePerDayChartOverlay(
             }
             totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.initialAvailableAmount)} total")
             setLabelDataPoint(totalAmountLabel!!, upperBoundSeries.last())
+            children += totalAmountLabel
 
             if (usedAmountLabel != null) {
                 children.remove(usedAmountLabel)
             }
-            usedAmountLabel = Label(
-                "${DataAmountStringFormatter.toString(product.usedAmount)} used\n"
-                    + "${DataAmountStringFormatter.toString(product.availableAmount)} remaining")
-            setLabelDataPoint(usedAmountLabel!!, dataSeries.last())
+            if (dataSeries.isNotEmpty()) {
+                usedAmountLabel = Label(
+                    "${DataAmountStringFormatter.toString(product.usedAmount)} used\n"
+                        + "${DataAmountStringFormatter.toString(product.availableAmount)} remaining")
+                setLabelDataPoint(usedAmountLabel!!, dataSeries.last())
 
-            // Prevent the used amount label touching the upper bound line
-            if (usedAmountLabel!!.layoutY <= totalAmountLabel!!.layoutY + 12) {
-                usedAmountLabel!!.translateY = 12 - (totalAmountLabel!!.layoutY - usedAmountLabel!!.layoutY)
+                // Prevent the used amount label touching the upper bound line
+                if (usedAmountLabel!!.layoutY <= totalAmountLabel!!.layoutY + 12) {
+                    usedAmountLabel!!.translateY = 12 - (totalAmountLabel!!.layoutY - usedAmountLabel!!.layoutY)
+                }
+                children += usedAmountLabel
             }
-
-            children.addAll(totalAmountLabel, usedAmountLabel)
         }
     }
 

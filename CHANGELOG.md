@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.1](https://github.com/mpaulse/mobitra/releases/tag/0.9.1) - 2020-02-09
+### Fixes:
+- Charts did not load on the Active Products screen for a newly activated product for which no usage data were captured yet.
+
 ## [0.9](https://github.com/mpaulse/mobitra/releases/tag/0.9) - 2020-02-08
 ### Fixes:
 - Product expiry dates were exclusive rather than inclusive.

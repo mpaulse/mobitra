@@ -131,6 +131,9 @@ class DataUsageBarChart(
         uploadDataSeries.data.clear()
         uncategorisedDataSeries.data.clear()
 
+        if (dataUsageList.isEmpty()) {
+            return
+        }
         if (dateRangeFrom <= timestampToDate(dataUsageList.last().timestamp)
                 && dateRangeTo >= timestampToDate(dataUsageList.first().timestamp)) {
             for (usage in dataUsageList) {
