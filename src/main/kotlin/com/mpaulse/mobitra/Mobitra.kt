@@ -518,7 +518,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
             sysTrayIcon?.toolTip =
                 """
                 $APP_NAME
-                Available amount: $availableAmountStr
+                Remaining: $availableAmountStr
                 Download: $downloadAmountStr
                 Upload: $uploadAmountStr
                 """.trimIndent()
