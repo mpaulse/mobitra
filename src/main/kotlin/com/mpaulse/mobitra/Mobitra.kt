@@ -504,22 +504,24 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
             addDataUsageToChartScreen(delta, historyScreen)
 
             // Update status bar and system tray tooltip
-            val currentProduct = dataUsageMonitor.currentProduct
+            var currentProduct = dataUsageMonitor.currentProduct
             if (currentProduct != null) {
-                setStatusBarProductInfoText(
-                    currentProduct.copy(
-                        availableAmount = currentProduct.availableAmount - totalUnrecordedUsage.totalAmount,
-                        usedAmount = currentProduct.usedAmount + totalUnrecordedUsage.totalAmount))
+                currentProduct = currentProduct.copy(
+                    availableAmount = currentProduct.availableAmount - totalUnrecordedUsage.totalAmount,
+                    usedAmount = currentProduct.usedAmount + totalUnrecordedUsage.totalAmount)
+                setStatusBarProductInfoText(currentProduct)
             }
+            val availableAmountStr = DataAmountStringFormatter.toString(currentProduct?.availableAmount ?: 0)
             val downloadAmountStr = DataAmountStringFormatter.toString(total.downloadAmount)
             val uploadAmountStr = DataAmountStringFormatter.toString(total.uploadAmount)
             statusBarRightLabel.text = "Current Download / Upload: $downloadAmountStr / $uploadAmountStr"
             sysTrayIcon?.toolTip =
                 """
-            $APP_NAME
-            Download: $downloadAmountStr
-            Upload: $uploadAmountStr
-            """.trimIndent()
+                $APP_NAME
+                Available amount: $availableAmountStr
+                Download: $downloadAmountStr
+                Upload: $uploadAmountStr
+                """.trimIndent()
         }
     }
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.2](https://github.com/mpaulse/mobitra/releases/tag/0.9.2) - 2020-02-14
+### Improvements:
+- Display the available amount for the current product in the system tray tooltip.
+
 ## [0.9.1](https://github.com/mpaulse/mobitra/releases/tag/0.9.1) - 2020-02-09
 ### Fixes:
 - Charts did not load on the Active Products screen for a newly activated product for which no usage data were captured yet.
