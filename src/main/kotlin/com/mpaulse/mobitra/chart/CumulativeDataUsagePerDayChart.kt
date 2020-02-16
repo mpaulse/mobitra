@@ -81,7 +81,7 @@ class CumulativeDataUsagePerDayChart(
                     0L -> "Activation${if (todayXValue == 0L) " (Today)" else ""}\n${product.activationDate}"
                     expiryDateXValue -> "Expiry${if (expiryDateXValue == todayXValue) " (Today)" else ""}\n${product.expiryDate}"
                     todayXValue -> {
-                        if (todayXValue in 8..(expiryDateXValue-8)) "Today\n${LocalDate.now()}"
+                        if (todayXValue in 4..(expiryDateXValue-4)) "Today\n${LocalDate.now()}"
                         else ""
                     }
                     else -> ""
