@@ -40,6 +40,6 @@ data class MobileDataProduct(
         get() = availableAmount + usedAmount
 
     val expired: Boolean
-        = LocalDate.now() > expiryDate
+        = availableAmount <= 0L || LocalDate.now() > expiryDate
 
 }

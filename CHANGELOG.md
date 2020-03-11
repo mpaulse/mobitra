@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.3](https://github.com/mpaulse/mobitra/releases/tag/0.9.3) - 2020-03-11
+### Fixes:
+- A product with a zero available amount was not considered expired, unless the expiry date elapsed.
+
 ## [0.9.2](https://github.com/mpaulse/mobitra/releases/tag/0.9.2) - 2020-02-14
 ### Improvements:
 - Display the available amount for the current product in the system tray tooltip.
