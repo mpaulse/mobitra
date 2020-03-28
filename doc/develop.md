@@ -3,10 +3,11 @@ Development Notes
 
 ## TODO:
 
-- Switch to official jpackage tool in JDK 14.
 - Check for multiple application instances after switch to JDK14's jpackage tool.
-- Disable debug logging.
 - Historic data removal after retention period.
+
+## Bugs:
+- When the monitor setup changes, the app window disappears offscreen and cannot be moved.
 
 ## Ideas:
 - Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.

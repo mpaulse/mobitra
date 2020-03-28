@@ -9,10 +9,10 @@ import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-version = "0.9.3"
+version = "0.10"
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.3.70"
+    id("org.jetbrains.kotlin.jvm") version "1.3.71"
     application
     id("org.openjfx.javafxplugin") version "0.0.8"
 }
@@ -24,8 +24,8 @@ repositories {
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.5")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.3")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.3")
     implementation("ch.qos.logback:logback-classic:1.2.3")
@@ -34,7 +34,7 @@ dependencies {
     implementation("net.java.dev.jna:jna-platform:5.5.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.6.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.6.1")
     testImplementation("com.github.tomakehurst:wiremock-jre8:2.26.3")
 }
 
@@ -105,15 +105,11 @@ tasks {
         into("src/main/resources")
     }
 
-    register<Copy>("copyJpackager") {
-        from("tools/jpackager/jpackager.exe")
-        into("${Jvm.current().javaHome}/bin")
-    }
-
     register<Copy>("copyLibs") {
         dependsOn("installDist")
         from("$buildDir/install/${project.name}/lib") {
-            exclude("javafx-*.jar")
+            exclude("javafx-*", "stax2*", "woodstox*")
+            exclude("jackson-core*", "jackson-annotations*", "jackson-databind*")
         }
         into("$buildDir/libs")
     }
@@ -121,40 +117,37 @@ tasks {
     register<Copy>("copyModules") {
         dependsOn("installDist")
         from("$buildDir/install/${project.name}/lib") {
-            include("javafx-*-win.jar")
+            include("javafx-*-win*", "stax2*", "woodstox*")
+            include("jackson-core*", "jackson-annotations*", "jackson-databind*")
         }
         into("$buildDir/modules")
     }
 
     register<Task>("buildRelease") {
-        dependsOn("copyJpackager", "copyLibs", "copyModules")
+        dependsOn("copyLibs", "copyModules")
         doLast {
             exec {
+                delete("$buildDir/release")
                 commandLine(
-                    "${Jvm.current().javaHome}/bin/java",
-                    "--module-path",
-                    "tools/jpackager",
-                    "--add-opens",
-                    "jdk.jlink/jdk.tools.jlink.internal.packager=jdk.packager",
-                    "--module",
-                    "jdk.packager/jdk.packager.Main",
-                    "create-image",
+                    "${Jvm.current().javaHome}/bin/jpackage",
+                    "--type",
+                    "app-image",
                     "--input",
                     "$buildDir/libs",
                     "--main-jar",
                     "${project.name}-$version.jar",
                     "--module-path",
-                    "$buildDir/modules;tools/jpackager",
+                    "$buildDir/modules",
                     "--add-modules",
-                    "javafx.controls,javafx.fxml",
-                    "--strip-native-commands",
-                    "--output",
-                    "build/release",
-                    "--identifier",
-                    "com.mpaulse.mobitra",
+                    "java.base,java.datatransfer,java.desktop,java.logging,java.management,java.naming,java.net.http,java.scripting,java.sql,java.transaction.xa,java.xml,"
+                        + "com.fasterxml.jackson.annotation,com.fasterxml.jackson.core,com.fasterxml.jackson.databind,"
+                        + "javafx.base,javafx.controls,javafx.fxml,javafx.graphics,"
+                        + "org.codehaus.stax2,com.ctc.wstx",
+                    "--dest",
+                    "$buildDir/release",
                     "--name",
                     "Mobitra",
-                    "--version",
+                    "--app-version",
                     version.toString(),
                     "--description",
                     "Mobitra - Telkom Mobile Prepaid LTE Data Usage Tracker",
@@ -164,13 +157,10 @@ tasks {
                     "Marlon Paulse",
                     "--copyright",
                     "Copyright (c) ${LocalDate.now().year} Marlon Paulse",
-                    "--license-file",
-                    "LICENSE.txt",
-                    "--singleton",
                     "--verbose")
             }
             delete {
-                delete("build/release/Mobitra/Mobitra.ico")
+                delete("build/release/Mobitra/Mobitra.ico", "build/release/Mobitra/.jpackage.xml")
             }
             copy {
                 from(".") {
