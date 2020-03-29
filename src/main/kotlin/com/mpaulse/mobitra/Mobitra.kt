@@ -34,7 +34,9 @@ import com.mpaulse.mobitra.data.MobileDataProductDB
 import com.mpaulse.mobitra.data.MobileDataProductType
 import com.mpaulse.mobitra.data.MobileDataUsage
 import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinReg
+import com.sun.jna.platform.win32.WinUser.SW_RESTORE
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.event.ActionEvent
@@ -130,6 +132,19 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
             logger.error("Application error", e)
         }
+
+        logger.info("$APP_NAME started")
+
+        val user32 = User32.INSTANCE
+        val existingWindow = user32.FindWindow(null, APP_NAME)
+        if (existingWindow != null) {
+            logger.info("Exiting: Another application instance detected")
+            user32.ShowWindow(existingWindow, SW_RESTORE)
+            user32.SetForegroundWindow(existingWindow)
+            Platform.exit()
+            return
+        }
+
         Runtime.getRuntime().addShutdownHook(thread(start = false) {
             onJVMShutdown()
         })
