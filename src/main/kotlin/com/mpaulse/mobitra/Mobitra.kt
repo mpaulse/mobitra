@@ -208,9 +208,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
     }
 
     private fun getLauncherPath(): Path? {
-        // CWD is the "app" directory containing the JAR.
-        // The EXE launcher should be in the parent directory.
-        val path = Paths.get("..", "$APP_NAME.exe").toAbsolutePath().normalize()
+        val path = Paths.get("$APP_NAME.exe").toAbsolutePath().normalize()
         return if (path.toFile().exists()) path else null
     }
 

@@ -5,9 +5,27 @@ Development Notes
 
 - Check for multiple application instances after switch to JDK14's jpackage tool.
 - Historic data removal after retention period.
+- Disable debugging.
 
 ## Bugs:
 - When the monitor setup changes, the app window disappears offscreen and cannot be moved.
+- "Unknown product" shown at start up:
+
+2020-03-29 09:34:01,608 DEBUG [Thread-3] com.mpaulse.mobitra.DataUsageMonitor - Store product: MobileDataProduct(id=da37ee96-23db-3999-8490-140b9aefcf37, msisdn=0679900324, name=Once-off LTE/LTE-A Anytime Data, type=ANYTIME, availableAmount=33116414500, usedAmount=203106786780, activationDate=2020-02-28, expiryDate=2020-04-28)
+2020-03-29 09:34:01,610 DEBUG [Thread-3] com.mpaulse.mobitra.DataUsageMonitor - Add data usage:
+	product: MobileDataProduct(id=da37ee96-23db-3999-8490-140b9aefcf37, msisdn=0679900324, name=Once-off LTE/LTE-A Anytime Data, type=ANYTIME, availableAmount=33116414500, usedAmount=203106786780, activationDate=2020-02-28, expiryDate=2020-04-28)
+	usage: MobileDataUsage(timestamp=2020-03-29T07:34:01.608319600Z, downloadAmount=49427, uploadAmount=6052, uncategorisedAmount=0)
+2020-03-29 09:34:11,677 DEBUG [DefaultDispatcher-worker-1] com.mpaulse.mobitra.DataUsageMonitor - Unrecorded traffic: download = 0 B, upload = 0 B
+2020-03-29 09:34:11,687 DEBUG [DefaultDispatcher-worker-1] com.mpaulse.mobitra.DataUsageMonitor - Data usage event: MobileDataUsage(timestamp=2020-03-29T07:34:11.680103100Z, downloadAmount=0, uploadAmount=0, uncategorisedAmount=0)
+2020-03-29 09:34:13,934 DEBUG [DefaultDispatcher-worker-2] com.mpaulse.mobitra.DataUsageMonitor - Store product: MobileDataProduct(id=da37ee96-23db-3999-8490-140b9aefcf37, msisdn=0679900324, name=Once-off LTE/LTE-A Anytime Data, type=ANYTIME, availableAmount=33116469979, usedAmount=203106731301, activationDate=2020-02-28, expiryDate=2020-04-28)
+2020-03-29 09:34:13,938 DEBUG [DefaultDispatcher-worker-2] com.mpaulse.mobitra.DataUsageMonitor - Add data usage:
+	product: MobileDataProduct(id=da37ee96-23db-3999-8490-140b9aefcf37, msisdn=0679900324, name=Once-off LTE/LTE-A Anytime Data, type=ANYTIME, availableAmount=33116469979, usedAmount=203106731301, activationDate=2020-02-28, expiryDate=2020-04-28)
+	usage: MobileDataUsage(timestamp=2020-03-29T07:34:13.938671300Z, downloadAmount=0, uploadAmount=0, uncategorisedAmount=-55479)
+2020-03-29 09:34:13,939 DEBUG [DefaultDispatcher-worker-2] com.mpaulse.mobitra.DataUsageMonitor - Forcing zero available amount for over-exhausted product: MobileDataProduct(id=da37ee96-23db-3999-8490-140b9aefcf37, msisdn=0679900324, name=Once-off LTE/LTE-A Anytime Data, type=ANYTIME, availableAmount=33116469979, usedAmount=203106731301, activationDate=2020-02-28, expiryDate=2020-04-28)
+2020-03-29 09:34:13,939 DEBUG [DefaultDispatcher-worker-2] com.mpaulse.mobitra.DataUsageMonitor - Over-exhausted usage: MobileDataUsage(timestamp=2020-03-29T07:34:13.938671300Z, downloadAmount=0, uploadAmount=0, uncategorisedAmount=-55479)
+2020-03-29 09:34:13,940 DEBUG [DefaultDispatcher-worker-2] com.mpaulse.mobitra.DataUsageMonitor - Store product: MobileDataProduct(id=3d07cc39-abab-3602-ae01-f7a20dc4b0d2, msisdn=0679900324, name=Once-off LTE/LTE-A Night Surfer Data, type=NIGHT_SURFER, availableAmount=40474542554, usedAmount=195748658726, activationDate=2020-02-28, expiryDate=2020-03-29)
+2020-03-29 09:34:13,941 DEBUG [DefaultDispatcher-worker-2] com.mpaulse.mobitra.DataUsageMonitor - Active product: null
+2020-03-29 09:34:13,941 DEBUG [DefaultDispatcher-worker-2] com.mpaulse.mobitra.DataUsageMonitor - Poll in 5000ms
 
 ## Ideas:
 - Create a separate Raspberry Pi app to do continuous monitoring, even while PC is shutdown.
