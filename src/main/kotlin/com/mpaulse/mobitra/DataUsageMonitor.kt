@@ -144,24 +144,28 @@ class DataUsageMonitor(
                         activeProductsMap[product.id] = product
 
                         if (product.usedAmount != prevUsedAmount) {
-                            var uncategorisedAmount = product.usedAmount - prevUsedAmount
-                            val dataUsageToAdd =
+                            val uncategorisedAmount = product.usedAmount - prevUsedAmount
+                            var dataUsageToAdd =
                                 if (activeProductInUse?.id == product.id) {
                                     dataUsage.copy(uncategorisedAmount = uncategorisedAmount - (dataUsage.downloadAmount + dataUsage.uploadAmount))
                                 } else {
                                     MobileDataUsage(uncategorisedAmount = uncategorisedAmount)
                                 }
-                            if (logger.isDebugEnabled) {
-                                logger.debug("Add data usage:\n\tproduct: $product\n\tusage: $dataUsageToAdd")
-                            }
-                            productDB.addDataUsage(product, dataUsageToAdd)
-                            if (dataUsageToAdd.totalAmount < 0) {
+                            if (dataUsageToAdd.totalAmount > product.availableAmount) {
+                                val overExhaustedAmount = dataUsageToAdd.totalAmount - product.availableAmount
                                 if (logger.isDebugEnabled) {
                                     logger.debug("Forcing zero available amount for over-exhausted product: $product")
-                                    logger.debug("Over-exhausted usage: $dataUsageToAdd")
+                                    logger.debug("Over-exhausted amount: $overExhaustedAmount")
                                 }
+                                dataUsageToAdd = dataUsageToAdd.copy(uncategorisedAmount = dataUsageToAdd.uncategorisedAmount - overExhaustedAmount)
                                 product.availableAmount = 0
                                 productDB.storeProduct(product)
+                            }
+                            if (dataUsageToAdd.totalAmount != 0L) {
+                                if (logger.isDebugEnabled) {
+                                    logger.debug("Add data usage:\n\tproduct: $product\n\tusage: $dataUsageToAdd")
+                                }
+                                productDB.addDataUsage(product, dataUsageToAdd)
                             }
                         }
                     }
