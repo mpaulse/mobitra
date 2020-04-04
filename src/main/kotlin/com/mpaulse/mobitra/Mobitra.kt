@@ -31,6 +31,7 @@ import com.mpaulse.mobitra.chart.DataUsageBarChartType
 import com.mpaulse.mobitra.data.ApplicationData
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
+import com.mpaulse.mobitra.data.MobileDataProductDBLockedException
 import com.mpaulse.mobitra.data.MobileDataProductType
 import com.mpaulse.mobitra.data.MobileDataUsage
 import com.sun.jna.platform.win32.Advapi32Util
@@ -136,9 +137,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         logger.info("$APP_NAME started")
 
         val user32 = User32.INSTANCE
-        val existingWindow = user32.FindWindow(null, APP_NAME)
+        val existingWindow = user32.FindWindow("GlassWndClass-GlassWindowClass-2", APP_NAME)
         if (existingWindow != null) {
-            logger.info("Exiting: Another application instance detected")
+            logger.warn("Another application instance detected\nExiting")
             user32.ShowWindow(existingWindow, SW_RESTORE)
             user32.SetForegroundWindow(existingWindow)
             Platform.exit()
@@ -149,7 +150,15 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
             onJVMShutdown()
         })
 
-        productDB = MobileDataProductDB(APP_HOME_PATH)
+        try {
+            productDB = MobileDataProductDB(APP_HOME_PATH)
+        } catch (e: MobileDataProductDBLockedException) {
+            logger.warn(e.message)
+            logger.warn("Another application instance detected\nExiting")
+            Platform.exit()
+            return
+        }
+
         dataUsageMonitor = DataUsageMonitor(appData.routerIPAddress, productDB, this)
         dataUsageMonitor.start()
 
@@ -223,7 +232,12 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
     }
 
     private fun getLauncherPath(): Path? {
-        val path = Paths.get("$APP_NAME.exe").toAbsolutePath().normalize()
+        val path = Paths.get(this.javaClass.protectionDomain.codeSource.location.toURI()) // Application JAR
+            .parent // "app" directory
+            .parent // root application directory
+            .resolve("$APP_NAME.exe")
+            .toAbsolutePath()
+            .normalize()
         return if (path.toFile().exists()) path else null
     }
 
@@ -265,9 +279,11 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         if (::productDB.isInitialized) {
             productDB.close()
         }
-        appData.windowPosition = mainWindow.x to mainWindow.y
-        appData.windowSize = mainWindow.width to mainWindow.height
-        appData.save()
+        if (::mainWindow.isInitialized) {
+            appData.windowPosition = mainWindow.x to mainWindow.y
+            appData.windowSize = mainWindow.width to mainWindow.height
+            appData.save()
+        }
     }
 
     private fun createMainWindow(stage: Stage) {

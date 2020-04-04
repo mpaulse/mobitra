@@ -1,5 +1,13 @@
 # Changelog
 
+<!--
+## [1.0](https://github.com/mpaulse/mobitra/releases/tag/1.0)
+### Improvements:
+- Smaller application runtime image.
+### Fixes:
+- 
+-->
+
 ## [0.9.3](https://github.com/mpaulse/mobitra/releases/tag/0.9.3) - 2020-03-11
 ### Fixes:
 - A product with a zero available amount was not considered expired, unless the expiry date elapsed.

@@ -46,7 +46,7 @@ class MobileDataProductDB(
         val dbLockFile = homePath.resolve("$DB_NAME.lck").toFile()
         if (dbLockFile.exists()) {
             if (!dbLockFile.delete()) {
-                throw MobileDataProductDBException("Unable to delete DB lock file: Another application instance detected")
+                throw MobileDataProductDBLockedException("Unable to delete DB lock file")
             }
         }
 
@@ -477,7 +477,11 @@ class MobileDataProductDB(
 
 }
 
-class MobileDataProductDBException(
+open class MobileDataProductDBException(
     message: String,
     cause: Throwable? = null
 ): Exception(message, cause)
+
+class MobileDataProductDBLockedException(
+    message: String
+): MobileDataProductDBException(message)
