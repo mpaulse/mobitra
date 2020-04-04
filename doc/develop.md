@@ -7,7 +7,6 @@ Development Notes
 - Disable debugging.
 
 ## Bugs:
-- When the monitor setup changes, the app window disappears offscreen and cannot be moved.
 - "Unknown product" shown at start up:
 
 2020-03-29 09:34:01,608 DEBUG [Thread-3] com.mpaulse.mobitra.DataUsageMonitor - Store product: MobileDataProduct(id=da37ee96-23db-3999-8490-140b9aefcf37, msisdn=0679912345, name=Once-off LTE/LTE-A Anytime Data, type=ANYTIME, availableAmount=33116414500, usedAmount=203106786780, activationDate=2020-02-28, expiryDate=2020-04-28)

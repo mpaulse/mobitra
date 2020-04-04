@@ -43,6 +43,7 @@ import javafx.application.Platform
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
+import javafx.geometry.Rectangle2D
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.ChoiceBox
@@ -60,6 +61,7 @@ import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
+import javafx.stage.Screen
 import javafx.stage.Stage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -139,7 +141,8 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         val user32 = User32.INSTANCE
         val existingWindow = user32.FindWindow("GlassWndClass-GlassWindowClass-2", APP_NAME)
         if (existingWindow != null) {
-            logger.warn("Another application instance detected\nExiting")
+            logger.warn("Another application instance detected")
+            logger.warn("Exiting")
             user32.ShowWindow(existingWindow, SW_RESTORE)
             user32.SetForegroundWindow(existingWindow)
             Platform.exit()
@@ -154,7 +157,8 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
             productDB = MobileDataProductDB(APP_HOME_PATH)
         } catch (e: MobileDataProductDBLockedException) {
             logger.warn(e.message)
-            logger.warn("Another application instance detected\nExiting")
+            logger.warn("Another application instance detected")
+            logger.warn("Exiting")
             Platform.exit()
             return
         }
@@ -203,8 +207,34 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
     }
 
     private fun showMainWindow() {
+        fitWindowOnScreen()
         mainWindow.show()
         mainWindow.toFront()
+    }
+
+    private fun fitWindowOnScreen() {
+        val mainWindowRect = Rectangle2D(mainWindow.x, mainWindow.y, mainWindow.width, mainWindow.height)
+        var screen: Screen? = null
+        for (s in Screen.getScreens()) {
+            if (s.visualBounds.intersects(mainWindowRect)) {
+                screen = s
+                break
+            }
+        }
+        if (screen == null) {
+            screen = Screen.getPrimary()
+        }
+        val screenBounds = screen!!.visualBounds
+        if (!screenBounds.contains(mainWindowRect)) {
+            if (screenBounds.width < mainWindow.width) {
+                mainWindow.width = screenBounds.width
+            }
+            if (screenBounds.height < mainWindow.height) {
+                mainWindow.height = screenBounds.height
+            }
+            mainWindow.centerOnScreen()
+            saveWindowSizeAndPosition()
+        }
     }
 
     private fun verifyAutoStartConfig() {
@@ -280,10 +310,14 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
             productDB.close()
         }
         if (::mainWindow.isInitialized) {
-            appData.windowPosition = mainWindow.x to mainWindow.y
-            appData.windowSize = mainWindow.width to mainWindow.height
-            appData.save()
+            saveWindowSizeAndPosition()
         }
+    }
+
+    private fun saveWindowSizeAndPosition() {
+        appData.windowPosition = mainWindow.x to mainWindow.y
+        appData.windowSize = mainWindow.width to mainWindow.height
+        appData.save()
     }
 
     private fun createMainWindow(stage: Stage) {
@@ -295,6 +329,11 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         mainWindow.minHeight = DEFAULT_MIN_WINDOW_HEIGHT
         mainWindow.height = if (appData.windowSize.second >= mainWindow.minHeight) appData.windowSize.second else mainWindow.minHeight
         mainWindow.icons.add(Image(APP_ICON))
+        mainWindow.iconifiedProperty().addListener { _, _, minimized ->
+            if (!minimized) {
+                fitWindowOnScreen()
+            }
+        }
 
         val pos = appData.windowPosition
         if (pos != null) {
@@ -302,7 +341,7 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
             mainWindow.y = pos.second
         } else {
             mainWindow.centerOnScreen()
-            appData.windowPosition = mainWindow.x to mainWindow.y
+            saveWindowSizeAndPosition()
         }
 
         mainWindow.title = APP_NAME

@@ -5,7 +5,8 @@
 ### Improvements:
 - Smaller application runtime image.
 ### Fixes:
-- 
+- The application window was not visible when the monitor screen configuration changed
+  and the window position was outside the bounds of the new screen configuration.
 -->
 
 ## [0.9.3](https://github.com/mpaulse/mobitra/releases/tag/0.9.3) - 2020-03-11
