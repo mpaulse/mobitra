@@ -9,7 +9,7 @@ import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-version = "0.10.1"
+version = "1.0"
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.3.71"

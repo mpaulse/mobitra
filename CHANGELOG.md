@@ -1,14 +1,12 @@
 # Changelog
 
-<!--
-## [1.0](https://github.com/mpaulse/mobitra/releases/tag/1.0)
+## [1.0](https://github.com/mpaulse/mobitra/releases/tag/1.0) - 2020-04-07
 ### Improvements:
 - Smaller application runtime image.
 ### Fixes:
 - The application window was not visible when the monitor screen configuration changed
   and the window position was outside the bounds of the new screen configuration.
 - "Unknown product" is sometimes shown in the status bar at start-up.
--->
 
 ## [0.9.3](https://github.com/mpaulse/mobitra/releases/tag/0.9.3) - 2020-03-11
 ### Fixes:
