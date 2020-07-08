@@ -297,7 +297,7 @@ class MobileDataProductDB(
                     SELECT timestamp, download_amount, upload_amount, uncategorised_amount
                     FROM mobile_data_usage u
                     INNER JOIN mobile_data_products p ON u.id = p.id 
-                    WHERE expiry_date >= CURRENT_DATE
+                    WHERE available_amount > 0 AND expiry_date >= CURRENT_DATE
                     ORDER BY timestamp ASC
                     """.trimIndent()).use { stmt ->
                 stmt.executeQuery().use { rs ->
@@ -309,7 +309,7 @@ class MobileDataProductDB(
                         """
                         SELECT SUM(used_amount), MAX(update_timestamp)
                         FROM mobile_data_products
-                        WHERE expiry_date >= CURRENT_DATE
+                        WHERE available_amount > 0 AND expiry_date >= CURRENT_DATE
                         """.trimIndent()).use { rs ->
                     if (rs.next()) {
                         productUsageTotal = rs.getLong(1)

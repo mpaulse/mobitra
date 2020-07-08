@@ -9,10 +9,10 @@ import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-version = "1.0"
+version = "1.0.1"
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.3.71"
+    id("org.jetbrains.kotlin.jvm") version "1.3.72"
     application
     id("org.openjfx.javafxplugin") version "0.0.8"
 }
@@ -24,22 +24,22 @@ repositories {
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.5")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.3")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.7")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.1")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.11.1")
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("org.slf4j:log4j-over-slf4j:1.7.30")
-    implementation("org.hsqldb:hsqldb:2.5.0")
+    implementation("org.hsqldb:hsqldb:2.5.1")
     implementation("net.java.dev.jna:jna-platform:5.5.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.6.1")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.26.3")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
+    testImplementation("com.github.tomakehurst:wiremock-jre8:2.27.1")
 }
 
 javafx {
-    version = "14"
+    version = "14.0.1"
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 

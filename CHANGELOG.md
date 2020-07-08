@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1](https://github.com/mpaulse/mobitra/releases/tag/1.0.1) - 2020-07-08
+### Fixes:
+- The "All" products option on the Active Products tab included exhausted products'
+  data when those products' expiration dates have not yet elapsed.
+
 ## [1.0](https://github.com/mpaulse/mobitra/releases/tag/1.0) - 2020-04-07
 ### Improvements:
 - Smaller application runtime image.
