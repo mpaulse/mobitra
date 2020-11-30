@@ -37,6 +37,7 @@ steps:
     jdkSourceOption: LocalDirectory
     jdkFile: $(jdkInstallPackage)
     jdkDestinationDirectory: '$(Agent.TempDirectory)'
+    cleanDestinationDirectory: false
 - task: Gradle@2
   displayName: Build and Test
   inputs:
