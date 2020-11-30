@@ -9,12 +9,12 @@ import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-version = "1.0.1"
+version = "1.0.2"
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.3.72"
+    id("org.jetbrains.kotlin.jvm") version "1.4.20"
     application
-    id("org.openjfx.javafxplugin") version "0.0.8"
+    id("org.openjfx.javafxplugin") version "0.0.9"
 }
 
 repositories {
@@ -24,27 +24,27 @@ repositories {
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.3.7")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.1")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.11.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.4.2")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.12.0")
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("org.slf4j:log4j-over-slf4j:1.7.30")
     implementation("org.hsqldb:hsqldb:2.5.1")
-    implementation("net.java.dev.jna:jna-platform:5.5.0")
+    implementation("net.java.dev.jna:jna-platform:5.6.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.27.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
+    testImplementation("com.github.tomakehurst:wiremock-jre8:2.27.2")
 }
 
 javafx {
-    version = "14.0.1"
+    version = "15.0.1"
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 application {
-    mainClassName = "com.mpaulse.mobitra.Mobitra"
+    mainClass.set("com.mpaulse.mobitra.Mobitra")
 }
 
 configure<SourceSetContainer> {
@@ -60,7 +60,7 @@ tasks {
     withType<KotlinCompile> {
         dependsOn("generateAppInfo", "copyLicenses")
         kotlinOptions {
-            jvmTarget = "12"
+            jvmTarget = "15"
         }
     }
 
