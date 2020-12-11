@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2](https://github.com/mpaulse/mobitra/releases/tag/1.0.2) - 2020-12-11
+### Fixes:
+- The tracked data usage amounts could drift from the actual totals reported by
+  Telkom, causing the daily and monthly graphs to be plotted incorrectly.
+
 ## [1.0.1](https://github.com/mpaulse/mobitra/releases/tag/1.0.1) - 2020-07-08
 ### Fixes:
 - The "All" products option on the Active Products tab included exhausted products'

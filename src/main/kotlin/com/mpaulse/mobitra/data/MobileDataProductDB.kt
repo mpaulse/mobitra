@@ -57,8 +57,42 @@ class MobileDataProductDB(
                 "mobitra",
                 "")
             createTables()
+            reconcileDataUsageTotals()
         } catch (e: Exception) {
-            throw MobileDataProductDBException("Resource store connection failure", e)
+            throw MobileDataProductDBException("Mobile product DB init failure", e)
+        }
+    }
+
+    private fun reconcileDataUsageTotals() {
+        try {
+            val reconciledProductUsages = mutableMapOf<UUID, MobileDataUsage>()
+            conn.prepareStatement(
+                    """
+                    SELECT
+                    id,
+                    used_amount,
+                    SUM(download_amount + upload_amount + uncategorised_amount) AS tracked_used_amount,
+                    MAX(timestamp) AS last_timestamp
+                    FROM mobile_data_products p INNER JOIN mobile_data_usage u on p.id = u.id
+                    GROUP BY id
+                    """.trimIndent()).use { stmt ->
+                stmt.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        val usedAmountDiff = rs.getLong(2) - rs.getLong(3)
+                        if (usedAmountDiff != 0L) {
+                            val productId = rs.getObject(1, UUID::class.java)
+                            reconciledProductUsages[productId] = MobileDataUsage(
+                                timestamp = rs.getTimestamp(4).toInstant(),
+                                uncategorisedAmount = usedAmountDiff)
+                        }
+                    }
+                }
+            }
+            for ((productId, usage) in reconciledProductUsages) {
+                addDataUsage(productId, usage)
+            }
+        } catch (e: SQLException) {
+            throw MobileDataProductDBException("Error reconciling product data usages", e)
         }
     }
 
@@ -67,7 +101,7 @@ class MobileDataProductDB(
         try {
             conn.autoCommit = false
 
-            var exists = false
+            var exists: Boolean
             conn.prepareStatement("SELECT id FROM mobile_data_products WHERE id = ?").use { stmt ->
                 stmt.setObject(1, product.id)
                 stmt.executeQuery().use { rs ->
@@ -197,11 +231,11 @@ class MobileDataProductDB(
         return products
     }
 
+    fun addDataUsage(product: MobileDataProduct, dataUsage: MobileDataUsage) =
+        addDataUsage(product.id, dataUsage)
+
     @Synchronized
-    fun addDataUsage(
-        product: MobileDataProduct,
-        dataUsage: MobileDataUsage
-    ) {
+    fun addDataUsage(productId: UUID, dataUsage: MobileDataUsage) {
         try {
             conn.prepareStatement(
                     """
@@ -209,7 +243,7 @@ class MobileDataProductDB(
                         id, timestamp, download_amount, upload_amount, uncategorised_amount
                     ) VALUES (?, ?, ?, ?, ?)
                     """.trimIndent()).use { stmt ->
-                stmt.setObject(1, product.id)
+                stmt.setObject(1, productId)
                 stmt.setTimestamp(2, Timestamp.from(dataUsage.timestamp))
                 stmt.setLong(3, dataUsage.downloadAmount);
                 stmt.setLong(4, dataUsage.uploadAmount)
@@ -227,7 +261,7 @@ class MobileDataProductDB(
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
     ): MutableList<MobileDataUsage> {
         val dataUsage = LinkedList<MobileDataUsage>()
-        var dataUsageTotal = 0L
+        var dataUsageTotal: Long
         var productUsageTotal = 0L
         var productUpdateTimestamp: Instant = Instant.now()
 
@@ -287,7 +321,7 @@ class MobileDataProductDB(
         timestampsEqual: ((t1: Instant, t2: Instant) -> Boolean)? = null
     ): MutableList<MobileDataUsage> {
         val dataUsage = LinkedList<MobileDataUsage>()
-        var dataUsageTotal = 0L
+        var dataUsageTotal: Long
         var productUsageTotal = 0L
         var productUpdateTimestamp: Instant = Instant.now()
 
