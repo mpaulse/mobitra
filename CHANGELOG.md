@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3](https://github.com/mpaulse/mobitra/releases/tag/1.0.3) - 2021-01-01
+### Fixes:
+- Data usage between 23:00 and 23:59 were allocated to the next day.
+
 ## [1.0.2](https://github.com/mpaulse/mobitra/releases/tag/1.0.2) - 2020-12-11
 ### Fixes:
 - The tracked data usage amounts could drift from the actual totals reported by

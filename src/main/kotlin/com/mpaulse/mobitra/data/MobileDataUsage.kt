@@ -23,9 +23,23 @@
 package com.mpaulse.mobitra.data
 
 import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoField.HOUR_OF_DAY
+import java.time.temporal.ChronoField.MILLI_OF_SECOND
+import java.time.temporal.ChronoField.MINUTE_OF_HOUR
+import java.time.temporal.ChronoField.SECOND_OF_MINUTE
+
+fun defaultTimestamp(): Instant {
+    val now = Instant.now()
+    val time = now.atZone(ZoneId.systemDefault()).toLocalTime()
+    if (time.get(HOUR_OF_DAY) == 0 && time.get(MINUTE_OF_HOUR) == 0 && time.get(SECOND_OF_MINUTE) == 0) {
+        return now.minusMillis(now.get(MILLI_OF_SECOND) + 1L)
+    }
+    return now
+}
 
 data class MobileDataUsage(
-    val timestamp: Instant = Instant.now(),
+    val timestamp: Instant = defaultTimestamp(),
     val downloadAmount: Long = 0,
     val uploadAmount: Long = 0,
     val uncategorisedAmount: Long = 0

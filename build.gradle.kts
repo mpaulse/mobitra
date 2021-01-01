@@ -9,10 +9,10 @@ import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-version = "1.0.2"
+version = "1.0.3"
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.4.20"
+    kotlin("jvm") version "1.4.21"
     application
     id("org.openjfx.javafxplugin") version "0.0.9"
 }
@@ -22,8 +22,6 @@ repositories {
 }
 
 dependencies {
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.4.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0")
