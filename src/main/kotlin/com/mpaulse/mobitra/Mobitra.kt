@@ -34,6 +34,7 @@ import com.mpaulse.mobitra.data.MobileDataProductDB
 import com.mpaulse.mobitra.data.MobileDataProductDBLockedException
 import com.mpaulse.mobitra.data.MobileDataProductType
 import com.mpaulse.mobitra.data.MobileDataUsage
+import com.mpaulse.mobitra.data.UNLIMITED_AMOUNT
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinReg
@@ -439,9 +440,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
         val activeProducts = dataUsageMonitor.activeProducts.values.sortedWith(Comparator {
             p1: MobileDataProduct, p2: MobileDataProduct ->
             var c = 0
-            if (p1.availableAmount == 0L && p2.availableAmount > 0L) {
+            if (p1.isUnlimited || (p1.availableAmount == 0L && p2.availableAmount > 0L)) {
                 c = 1
-            } else if (p2.availableAmount == 0L && p1.availableAmount > 0L) {
+            } else if (p2.isUnlimited || (p2.availableAmount == 0L && p1.availableAmount > 0L)) {
                 c = -1
             }
             if (c == 0) {
@@ -575,7 +576,9 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
             var currentProduct = dataUsageMonitor.currentProduct
             if (currentProduct != null) {
                 currentProduct = currentProduct.copy(
-                    availableAmount = currentProduct.availableAmount - totalUnrecordedUsage.totalAmount,
+                    availableAmount =
+                        if (currentProduct.isUnlimited) UNLIMITED_AMOUNT
+                        else currentProduct.availableAmount - totalUnrecordedUsage.totalAmount,
                     usedAmount = currentProduct.usedAmount + totalUnrecordedUsage.totalAmount)
                 setStatusBarProductInfoText(currentProduct)
             }
@@ -683,7 +686,13 @@ class MobitraApplication: Application(), CoroutineScope by MainScope(), DataUsag
                     var activationDate: LocalDate? = null
                     var expiryDate: LocalDate? = null
                     for (p in dataUsageMonitor.activeProducts.values) {
-                        availableAmount += p.availableAmount
+                        if (availableAmount != UNLIMITED_AMOUNT) {
+                            if (p.isUnlimited) {
+                                availableAmount = UNLIMITED_AMOUNT
+                            } else {
+                                availableAmount += p.availableAmount
+                            }
+                        }
                         usedAmount += p.usedAmount
                         if (activationDate == null || activationDate > p.activationDate) {
                             activationDate = p.activationDate

@@ -22,6 +22,7 @@
 
 package com.mpaulse.mobitra
 
+import com.mpaulse.mobitra.data.UNLIMITED_AMOUNT
 import javafx.util.StringConverter
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -36,6 +37,9 @@ private val decimalFormat = DecimalFormat("#.##", DecimalFormatSymbols.getInstan
 object DataAmountStringFormatter: StringConverter<Number>() {
 
     override fun toString(n: Number): String {
+        if (n == UNLIMITED_AMOUNT) {
+            return "Unlimited"
+        }
         val d = n.toDouble()
         if (d >= GB) {
             return "${decimalFormat.format(d / GB)} GB"

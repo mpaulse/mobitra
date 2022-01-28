@@ -83,15 +83,15 @@ class TelkomFreeResourceTest {
     }
 
     @Test
-    fun `activationDate - anytime data less than 20GB`() {
+    fun `activationDate - anytime data less than 3GB`() {
         val resource = TelkomFreeResource(
             "0123456789",
             "5127",
             "LTE",
             "GPRS",
-            21_451_404_047,
+            3_197_793_040,
             23432432,
-            LocalDate.of(2019, Month.DECEMBER, 31))
+            LocalDate.of(2019, Month.DECEMBER, 14))
         assertEquals(LocalDate.of(2019, Month.DECEMBER, 1), resource.activationDate)
     }
 

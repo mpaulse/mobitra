@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.mpaulse.mobitra.data.UNLIMITED_AMOUNT
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -99,13 +100,19 @@ private class TelkomFreeResourcesDeserializer
                         resource["totalAmount"]?.asText()?.toLong()
                             ?: throw MonitoringAPIException("Missing subscriberFreeResource totalAmount")
                     } catch (e: NumberFormatException) {
-                        throw MonitoringAPIException("Invalid subscriberFreeResource usedAmount: ${resource["totalAmount"]?.asText()}")
+                        if (resource["totalAmount"]?.asText()?.toLowerCase() == "unlimited")
+                            UNLIMITED_AMOUNT
+                        else
+                            throw MonitoringAPIException("Invalid subscriberFreeResource usedAmount: ${resource["totalAmount"]?.asText()}")
                     },
                     try {
                         resource["usedAmount"]?.asText()?.toLong()
                             ?: throw MonitoringAPIException("Missing subscriberFreeResource usedAmount")
                     } catch (e: NumberFormatException) {
-                        throw MonitoringAPIException("Invalid subscriberFreeResource usedAmount: ${resource["usedAmount"]?.asText()}")
+                        if (resource["usedAmount"]?.asText()?.toLowerCase() == "unlimited")
+                            0
+                        else
+                            throw MonitoringAPIException("Invalid subscriberFreeResource usedAmount: ${resource["usedAmount"]?.asText()}")
                     },
                     try {
                         LocalDate.parse(

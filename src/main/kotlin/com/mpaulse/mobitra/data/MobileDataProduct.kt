@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Marlon Paulse
+ * Copyright (c) 2022 Marlon Paulse
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,8 @@ package com.mpaulse.mobitra.data
 import java.time.LocalDate
 import java.util.UUID
 
+const val UNLIMITED_AMOUNT = Long.MIN_VALUE
+
 data class MobileDataProduct(
     val id: UUID,
     val msisdn: String,
@@ -39,7 +41,10 @@ data class MobileDataProduct(
     val initialAvailableAmount: Long
         get() = availableAmount + usedAmount
 
-    val expired: Boolean
-        = availableAmount <= 0L || LocalDate.now() > expiryDate
+    val isUnlimited: Boolean
+        = availableAmount == UNLIMITED_AMOUNT
+
+    val isExpired: Boolean
+        = (!isUnlimited && availableAmount <= 0L) || LocalDate.now() > expiryDate
 
 }
