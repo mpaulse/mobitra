@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Marlon Paulse
+ * Copyright (c) 2022 Marlon Paulse
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.mpaulse.mobitra.APP_NAME
 import com.mpaulse.mobitra.APP_VERSION
+import com.mpaulse.mobitra.data.UNLIMITED_AMOUNT
 import com.mpaulse.mobitra.devModeEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -141,7 +142,7 @@ class MonitoringAPIClient(
                    r.type,
                    r.name,
                    r.service,
-                   r.availableAmount + r2.availableAmount,
+                   if (r.isUnlimited || r2.isUnlimited) UNLIMITED_AMOUNT else r.availableAmount + r2.availableAmount,
                    r.usedAmount + r2.usedAmount,
                    r.expiryDate)
             } else {

@@ -10,9 +10,9 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  jdkVersion: 15.0.1
-  jdkVersionMajor: 15
-  jdkDownloadUrl: https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_windows-x64_bin.zip
+  jdkVersion: 17.0.2
+  jdkVersionMajor: 17
+  jdkDownloadUrl: https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_windows-x64_bin.zip
   jdkInstallPackage: '$(Agent.TempDirectory)\jdk-$(jdkVersion).zip'
 
 steps:

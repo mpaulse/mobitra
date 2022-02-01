@@ -22,6 +22,9 @@
 
 package com.mpaulse.mobitra.data
 
+import com.mpaulse.mobitra.data.MobileDataProductType.ANYTIME
+import com.mpaulse.mobitra.data.MobileDataProductType.NIGHT_SURFER
+import com.mpaulse.mobitra.data.MobileDataProductType.OFF_PEAK
 import java.nio.file.Path
 import java.sql.Connection
 import java.sql.Date
@@ -497,15 +500,17 @@ class MobileDataProductDB(
 
     private fun intToProductType(type: Int) =
         when (type) {
-            0 -> MobileDataProductType.ANYTIME
-            1 -> MobileDataProductType.NIGHT_SURFER
+            0 -> ANYTIME
+            1 -> NIGHT_SURFER
+            2 -> OFF_PEAK
             else -> throw MobileDataProductDBException("Invalid MobileDataProductType value: $type")
         }
 
     private fun productTypeToInt(type: MobileDataProductType) =
         when (type) {
-            MobileDataProductType.ANYTIME -> 0
-            MobileDataProductType.NIGHT_SURFER -> 1
+            ANYTIME -> 0
+            NIGHT_SURFER -> 1
+            OFF_PEAK -> 2
             else -> throw MobileDataProductDBException("Invalid MobileDataProductType: $type")
         }
 

@@ -9,35 +9,35 @@ import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-version = "1.0.3"
+version = "1.1.0"
 
 plugins {
-    kotlin("jvm") version "1.4.21"
+    kotlin("jvm") version "1.6.10"
     application
-    id("org.openjfx.javafxplugin") version "0.0.9"
+    id("org.openjfx.javafxplugin") version "0.0.11"
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.4.2")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.12.0")
-    implementation("ch.qos.logback:logback-classic:1.2.3")
-    implementation("org.slf4j:log4j-over-slf4j:1.7.30")
-    implementation("org.hsqldb:hsqldb:2.5.1")
-    implementation("net.java.dev.jna:jna-platform:5.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.6.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.1")
+    implementation("ch.qos.logback:logback-classic:1.2.10")
+    implementation("org.slf4j:log4j-over-slf4j:1.7.35")
+    implementation("org.hsqldb:hsqldb:2.6.1")
+    implementation("net.java.dev.jna:jna-platform:5.10.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.27.2")
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("com.github.tomakehurst:wiremock-jre8:2.32.0")
 }
 
 javafx {
-    version = "15.0.1"
+    version = "17.0.2"
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 
@@ -58,7 +58,7 @@ tasks {
     withType<KotlinCompile> {
         dependsOn("generateAppInfo", "copyLicenses")
         kotlinOptions {
-            jvmTarget = "15"
+            jvmTarget = "17"
         }
     }
 

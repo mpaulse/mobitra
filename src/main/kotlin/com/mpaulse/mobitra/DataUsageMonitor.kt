@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Marlon Paulse
+ * Copyright (c) 2022 Marlon Paulse
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,14 @@ package com.mpaulse.mobitra
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataProductDB
 import com.mpaulse.mobitra.data.MobileDataProductType
+import com.mpaulse.mobitra.data.MobileDataProductType.ANYTIME
+import com.mpaulse.mobitra.data.MobileDataProductType.NIGHT_SURFER
+import com.mpaulse.mobitra.data.MobileDataProductType.OFF_PEAK
+import com.mpaulse.mobitra.data.MobileDataProductType.UNSPECIFIED
 import com.mpaulse.mobitra.data.MobileDataUsage
 import com.mpaulse.mobitra.net.HuaweiMonitoringInfo
+import com.mpaulse.mobitra.net.LTE_ONCE_OFF_10MBPS_OFF_PEAK_DATA_RESOURCE_TYPE
+import com.mpaulse.mobitra.net.LTE_ONCE_OFF_4MBPS_OFF_PEAK_DATA_RESOURCE_TYPE
 import com.mpaulse.mobitra.net.LTE_ONCE_OFF_ANYTIME_DATA_RESOURCE_TYPE
 import com.mpaulse.mobitra.net.LTE_ONCE_OFF_NIGHT_SURFER_DATA_RESOURCE_TYPE
 import com.mpaulse.mobitra.net.MonitoringAPIClient
@@ -37,7 +43,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
@@ -46,6 +51,7 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.HOURS
 import java.time.temporal.ChronoUnit.MILLIS
 import java.util.Collections
+import java.util.Locale
 import java.util.UUID
 
 class DataUsageMonitor(
@@ -102,7 +108,9 @@ class DataUsageMonitor(
         if (product != null) {
             val dataUsage = MobileDataUsage(downloadAmount = downloadAmountUnrecorded, uploadAmount = uploadAmountUnrecorded)
             if (dataUsage.totalAmount > 0) {
-                product.availableAmount -= dataUsage.totalAmount
+                if (!product.isUnlimited) {
+                    product.availableAmount -= dataUsage.totalAmount
+                }
                 product.usedAmount += dataUsage.totalAmount
 
                 if (logger.isDebugEnabled) {
@@ -151,7 +159,7 @@ class DataUsageMonitor(
                                 } else {
                                     MobileDataUsage(uncategorisedAmount = uncategorisedAmount)
                                 }
-                            if (dataUsageToAdd.totalAmount > product.availableAmount) {
+                            if (!product.isUnlimited && dataUsageToAdd.totalAmount > product.availableAmount) {
                                 val overExhaustedAmount = dataUsageToAdd.totalAmount - product.availableAmount
                                 if (logger.isDebugEnabled) {
                                     logger.debug("Forcing zero available amount for over-exhausted product: $product")
@@ -172,7 +180,7 @@ class DataUsageMonitor(
 
                     val expiredProductIds = mutableListOf<UUID>()
                     for (product in activeProductsMap.values) {
-                        if (product.expired) {
+                        if (product.isExpired) {
                             expiredProductIds += product.id
                         }
                     }
@@ -240,6 +248,7 @@ class DataUsageMonitor(
                     if (updateProducts
                             || (downloadAmountPolled < 0 || uploadAmountPolled < 0)
                             || (activeProductInUse != null
+                                && !activeProductInUse!!.isUnlimited
                                 && (downloadAmountUnrecorded + uploadAmountUnrecorded) >= activeProductInUse!!.availableAmount)) {
                         emit(MobileDataUsage(
                             downloadAmount = downloadAmountUnrecorded,
@@ -281,13 +290,19 @@ class DataUsageMonitor(
 
     private fun resourceToProduct(resource: TelkomFreeResource): MobileDataProduct? {
         val activationDate = resource.activationDate ?: return null
-        val type = when (resource.type) {
-            LTE_ONCE_OFF_ANYTIME_DATA_RESOURCE_TYPE -> MobileDataProductType.ANYTIME
-            LTE_ONCE_OFF_NIGHT_SURFER_DATA_RESOURCE_TYPE -> MobileDataProductType.NIGHT_SURFER
-            else -> MobileDataProductType.UNSPECIFIED
+        var type = when (resource.type) {
+            LTE_ONCE_OFF_ANYTIME_DATA_RESOURCE_TYPE -> ANYTIME
+            LTE_ONCE_OFF_NIGHT_SURFER_DATA_RESOURCE_TYPE -> NIGHT_SURFER
+            LTE_ONCE_OFF_4MBPS_OFF_PEAK_DATA_RESOURCE_TYPE,
+            LTE_ONCE_OFF_10MBPS_OFF_PEAK_DATA_RESOURCE_TYPE -> OFF_PEAK
+            else -> UNSPECIFIED
         }
-        if (type == MobileDataProductType.UNSPECIFIED) {
-            return null
+        if (type == UNSPECIFIED) {
+            if ("off peak" in resource.name.lowercase(Locale.getDefault())) {
+                type = OFF_PEAK // Unlimited
+            } else {
+                return null
+            }
         }
         return MobileDataProduct(
             resource.id,
@@ -302,11 +317,15 @@ class DataUsageMonitor(
 
     private fun getActiveProductInUse(msisdn: String): MobileDataProduct? {
         var productInUse: MobileDataProduct? = null
-        if (LocalDateTime.now().hour in 0..6) {
-            productInUse = getProductInUseOfType(msisdn, MobileDataProductType.NIGHT_SURFER)
+        val now = LocalDateTime.now()
+        if (now.hour in 0..6) {
+            productInUse = getProductInUseOfType(msisdn, NIGHT_SURFER)
+        }
+        if (productInUse == null && now.hour in 0..18) {
+            productInUse = getProductInUseOfType(msisdn, OFF_PEAK)
         }
         if (productInUse == null) {
-            productInUse = getProductInUseOfType(msisdn, MobileDataProductType.ANYTIME)
+            productInUse = getProductInUseOfType(msisdn, ANYTIME)
         }
         return productInUse
     }
@@ -314,9 +333,9 @@ class DataUsageMonitor(
     private fun getProductInUseOfType(msisdn: String, type: MobileDataProductType): MobileDataProduct? {
         var productInUse: MobileDataProduct? = null
         for (product in activeProductsMap.values) {
-            if (product.availableAmount > 0
-                && product.msisdn == msisdn
+            if (product.msisdn == msisdn
                 && product.type == type
+                && (product.isUnlimited || (!product.isUnlimited && product.availableAmount > 0))
                 && (productInUse == null || product.activationDate <= productInUse.activationDate)) {
                 productInUse = product
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Marlon Paulse
+ * Copyright (c) 2022 Marlon Paulse
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,5 +25,6 @@ package com.mpaulse.mobitra.data
 enum class MobileDataProductType {
     ANYTIME,
     NIGHT_SURFER,
+    OFF_PEAK,
     UNSPECIFIED
 }

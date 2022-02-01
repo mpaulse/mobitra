@@ -25,6 +25,7 @@ package com.mpaulse.mobitra.chart
 import com.mpaulse.mobitra.DataAmountStringFormatter
 import com.mpaulse.mobitra.data.MobileDataProduct
 import com.mpaulse.mobitra.data.MobileDataUsage
+import com.mpaulse.mobitra.data.UNLIMITED_AMOUNT
 import javafx.application.Platform
 import javafx.geometry.Point2D
 import javafx.geometry.Pos.CENTER
@@ -63,7 +64,7 @@ class CumulativeDataUsagePerDayChart(
     private val product = product.copy()
     private val xAxis = NumberAxis(0.0, dateToXValue(product.expiryDate.plusDays(7), product).toDouble(), 1.0)
     private val yAxis = NumberAxis()
-    private val chart = AreaChart<Number, Number>(xAxis, yAxis)
+    private val chart = AreaChart(xAxis, yAxis)
     private val chartOverlay: CumulativeDataUsagePerDayChartOverlay
     private val dataSeries = Series<Number, Number>()
     private var lastDataPointYValue = 0L
@@ -97,8 +98,10 @@ class CumulativeDataUsagePerDayChart(
 
         // An upper bound line to express the product total amount.
         val upperBoundSeries = Series<Number, Number>()
-        upperBoundSeries.data.add(Data(0, product.initialAvailableAmount))
-        upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate, product), product.initialAvailableAmount))
+        if (!product.isUnlimited) {
+            upperBoundSeries.data.add(Data(0, product.initialAvailableAmount))
+            upperBoundSeries.data.add(Data(dateToXValue(product.expiryDate, product), product.initialAvailableAmount))
+        }
 
         chart.data.addAll(dataSeries, upperBoundSeries)
         chartOverlay = CumulativeDataUsagePerDayChartOverlay(chart, this.product)
@@ -139,7 +142,9 @@ class CumulativeDataUsagePerDayChart(
         if (!lastDataPointUpdated) {
             plotDataUsage(dataUsage)
         }
-        product.availableAmount -= dataUsage.totalAmount
+        if (!product.isUnlimited) {
+            product.availableAmount -= dataUsage.totalAmount
+        }
         product.usedAmount += dataUsage.totalAmount
         chartOverlay.refreshDataUsageInfo()
     }
@@ -177,9 +182,11 @@ private class CumulativeDataUsagePerDayChartOverlay(
             if (totalAmountLabel != null) {
                 children.remove(totalAmountLabel)
             }
-            totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.initialAvailableAmount)} total")
-            setLabelDataPoint(totalAmountLabel!!, upperBoundSeries.last())
-            children += totalAmountLabel
+            if (!product.isUnlimited) {
+                totalAmountLabel = Label("${DataAmountStringFormatter.toString(product.initialAvailableAmount)} total")
+                setLabelDataPoint(totalAmountLabel!!, upperBoundSeries.last())
+                children += totalAmountLabel
+            }
 
             if (usedAmountLabel != null) {
                 children.remove(usedAmountLabel)
@@ -191,7 +198,7 @@ private class CumulativeDataUsagePerDayChartOverlay(
                 setLabelDataPoint(usedAmountLabel!!, dataSeries.last())
 
                 // Prevent the used amount label touching the upper bound line
-                if (usedAmountLabel!!.layoutY <= totalAmountLabel!!.layoutY + 12) {
+                if (!product.isUnlimited && usedAmountLabel!!.layoutY <= totalAmountLabel!!.layoutY + 12) {
                     usedAmountLabel!!.translateY = 12 - (totalAmountLabel!!.layoutY - usedAmountLabel!!.layoutY)
                 }
                 children += usedAmountLabel
@@ -228,7 +235,10 @@ private class CumulativeDataUsagePerDayChartOverlay(
                 val date = xValueToDate(x, product)
                 if (date != null) {
                     val usedAmount = closestPoint.yValue.toLong()
-                    dataUsagePopup = CumulativeDataUsagePerDayPopup(date, product.initialAvailableAmount - usedAmount, usedAmount)
+                    dataUsagePopup = CumulativeDataUsagePerDayPopup(
+                        date,
+                        if (product.isUnlimited) UNLIMITED_AMOUNT else product.initialAvailableAmount - usedAmount,
+                        usedAmount)
                 }
             }
         }
@@ -272,7 +282,7 @@ private class CumulativeDataUsagePerDayPopup(
     init {
         val layout = VBox()
         layout.children.addAll(
-            Label("Date: ${date}"),
+            Label("Date: $date"),
             Label("Data used: ${DataAmountStringFormatter.toString(usedAmount)}"),
             Label("Data remaining: ${DataAmountStringFormatter.toString(availableAmount)}"))
         children += layout

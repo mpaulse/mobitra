@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0](https://github.com/mpaulse/mobitra/releases/tag/1.1.0) - 2021-02-01
+### Improvements:
+- Support off-peak unlimited prepaid products.
+
 ## [1.0.3](https://github.com/mpaulse/mobitra/releases/tag/1.0.3) - 2021-01-01
 ### Fixes:
 - Data usage between 23:00 and 23:59 were allocated to the next day.
