@@ -331,16 +331,29 @@ class DataUsageMonitor(
     }
 
     private fun getProductInUseOfType(msisdn: String, type: MobileDataProductType): MobileDataProduct? {
-        var productInUse: MobileDataProduct? = null
+        val candidateProducts = mutableListOf<MobileDataProduct>()
         for (product in activeProductsMap.values) {
             if (product.msisdn == msisdn
-                && product.type == type
-                && (product.isUnlimited || (!product.isUnlimited && product.availableAmount > 0))
-                && (productInUse == null || product.activationDate <= productInUse.activationDate)) {
-                productInUse = product
+                    && product.type == type
+                    && (product.isUnlimited || (!product.isUnlimited && product.availableAmount > 0))) {
+                if (candidateProducts.isEmpty()) {
+                    candidateProducts += product
+                } else {
+                    val p = candidateProducts[0]
+                    if (product.activationDate < p.activationDate) {
+                        candidateProducts.clear()
+                    }
+                    if (product.activationDate <= p.activationDate) {
+                        candidateProducts += product
+                    }
+                }
             }
         }
-        return productInUse
+        candidateProducts.sortBy {
+            it.initialAvailableAmount
+        }
+        return if (candidateProducts.isEmpty()) null
+            else candidateProducts[candidateProducts.size - 1]
     }
 
 }

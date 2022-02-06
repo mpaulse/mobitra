@@ -1,8 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/mpaulse/mobitra/releases/tag/1.1.1) - 2021-02-06
+### Fixes:
+- Off-peak unlimited products not loaded as active products from the database.
+- Off-peak unlimited product incorrectly selected when determining the currently active product.
+
 ## [1.1.0](https://github.com/mpaulse/mobitra/releases/tag/1.1.0) - 2021-02-01
 ### Improvements:
-- Support off-peak unlimited prepaid products.
+- Support off-peak unlimited products.
 
 ## [1.0.3](https://github.com/mpaulse/mobitra/releases/tag/1.0.3) - 2021-01-01
 ### Fixes:

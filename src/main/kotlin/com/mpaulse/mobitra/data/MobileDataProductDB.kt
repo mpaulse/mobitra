@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Marlon Paulse
+ * Copyright (c) 2022 Marlon Paulse
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -214,7 +214,11 @@ class MobileDataProductDB(
                         SELECT id, msisdn, name, type, available_amount, used_amount, activation_date, expiry_date
                         FROM mobile_data_products
                         """.trimIndent()
-                        + if (activeOnly) " WHERE available_amount > 0 AND expiry_date >= CURRENT_DATE" else "").use { rs ->
+                        + if (activeOnly)
+                            " WHERE (available_amount > 0 OR available_amount = " + UNLIMITED_AMOUNT
+                                + ") AND expiry_date >= CURRENT_DATE"
+                            else ""
+                ).use { rs ->
                     while (rs.next()) {
                         products += MobileDataProduct(
                             rs.getObject(1, UUID::class.java),
