@@ -9,7 +9,7 @@ import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-version = "1.1.0"
+version = "1.1.1"
 
 plugins {
     kotlin("jvm") version "1.6.10"
