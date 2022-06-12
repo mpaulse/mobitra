@@ -170,6 +170,7 @@ tasks {
     }
 
     register<Zip>("zipRelease") {
+        dependsOn("buildRelease")
         val archive = "Mobitra-${project.version}.zip"
         archiveFileName.set(archive)
         destinationDirectory.set(File("build/release"))
@@ -196,7 +197,7 @@ tasks {
     }
 
     register<Task>("release") {
-        dependsOn("buildRelease", "zipRelease")
+        dependsOn("zipRelease")
     }
 
     clean {

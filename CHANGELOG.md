@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.2](https://github.com/mpaulse/mobitra/releases/tag/1.1.2) - 2022-06-11
+## [1.1.2](https://github.com/mpaulse/mobitra/releases/tag/1.1.2) - 2022-06-12
 ### Fixes:
 - Telkom incorrectly reports zero usage amount.
 

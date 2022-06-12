@@ -100,7 +100,7 @@ private class TelkomFreeResourcesDeserializer
                         resource["totalAmount"]?.asText()?.toLong()
                             ?: throw MonitoringAPIException("Missing subscriberFreeResource totalAmount")
                     } catch (e: NumberFormatException) {
-                        if (resource["totalAmount"]?.asText()?.toLowerCase() == "unlimited")
+                        if (resource["totalAmount"]?.asText()?.lowercase() == "unlimited")
                             UNLIMITED_AMOUNT
                         else
                             throw MonitoringAPIException("Invalid subscriberFreeResource usedAmount: ${resource["totalAmount"]?.asText()}")
@@ -109,7 +109,7 @@ private class TelkomFreeResourcesDeserializer
                         resource["usedAmount"]?.asText()?.toLong()
                             ?: throw MonitoringAPIException("Missing subscriberFreeResource usedAmount")
                     } catch (e: NumberFormatException) {
-                        if (resource["usedAmount"]?.asText()?.toLowerCase() == "unlimited")
+                        if (resource["usedAmount"]?.asText()?.lowercase() == "unlimited")
                             0
                         else
                             throw MonitoringAPIException("Invalid subscriberFreeResource usedAmount: ${resource["usedAmount"]?.asText()}")
