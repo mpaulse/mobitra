@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.2](https://github.com/mpaulse/mobitra/releases/tag/1.1.2) - 2022-06-11
+### Fixes:
+- Telkom incorrectly reports zero usage amount.
+
 ## [1.1.1](https://github.com/mpaulse/mobitra/releases/tag/1.1.1) - 2021-02-06
 ### Fixes:
 - Off-peak unlimited products not loaded as active products from the database.

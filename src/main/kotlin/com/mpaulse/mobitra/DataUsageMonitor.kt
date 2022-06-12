@@ -145,6 +145,14 @@ class DataUsageMonitor(
                         val prevProductInfo = productDB.getProduct(product.id)
                         val prevUsedAmount = prevProductInfo?.usedAmount ?: 0
 
+                        // Correct zero usage amount reported by Telkom.
+                        if (product.usedAmount == 0L) {
+                            product.usedAmount = prevUsedAmount
+                            if (prevProductInfo != null && product.availableAmount < prevProductInfo.availableAmount) {
+                                product.usedAmount += prevProductInfo.availableAmount - product.availableAmount
+                            }
+                        }
+
                         if (logger.isDebugEnabled) {
                             logger.debug("Store product: $product")
                         }
